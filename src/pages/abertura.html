@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RangoRaro – Trocas</title>
+    <link rel="icon" href="../assets/icons/icon-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/abertura.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="../js/firebase-auth.js"></script>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="../assets/icons/icon-logo.png" alt="Logo RangoRaro">
+            <span>RangoRaro</span>
+        </a>
+        
+        <nav class="nav-center">
+            <a href="pacotes.html" class="nav-item">
+                <img src="../assets/icons/icon-pacotes.png" alt="Ícone Pacotes">
+                <span>Pacotes</span>
+            </a>
+            <a href="trocas.html" class="nav-item">
+                <img src="../assets/icons/icon-trocas.png" alt="Ícone Trocas">
+                <span>Trocas</span>
+            </a>
+            <a href="rifa.html" class="nav-item">
+                <img src="../assets/icons/icon-rifa.png" alt="Ícone Eventos">
+                <span>Eventos</span>
+            </a>
+            <a href="premios.html" class="nav-item">
+                <img src="../assets/icons/icon-premios.png" alt="Ícone Prêmios">
+                <span>Prêmios</span>
+            </a>
+        </nav>
+        
+        <div class="header-buttons">
+            <button class="btn-outline">Login</button>
+            <button class="btn-primary">Registrar</button>
+        </div>
+
+        <div class="header-right" style="display: none;">
+            <button class="cart">Carrinho <span class="cart-count">0</span></button>
+            <div class="balance">R$ 0,00</div>
+            <div class="profile-pic"></div>
+        </div>
+    </header>
+
+    <!-- MODAL DE AUTENTICAÇÃO -->
+    <div class="auth-modal-overlay">
+        <div class="auth-modal">
+            <h2>Bem-vindo ao RangoRaro</h2>
+            <p>Entre para Acessar Sua Conta</p>
+            <button onclick="handleGoogleLogin()">Entrar com <b>Google</b></button>
+            <div class="age-check-container">
+                <input type="checkbox" id="age-check">
+                <label for="age-check">Ao acessar o site eu declaro que tenho pelo menos 18 anos.</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <main class="main-content">
+
+            <section class="package-opener">
+                <div class="top-bar">
+                    <a href="pacotes.html" class="back-button">
+                        <svg width="10" height="18" viewBox="0 0 10 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 1L1 9L9 17" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                        <span>Voltar para pacotes</span>
+                    </a>
+                    <div class="provably-fair-inputs">
+                        <div style="display: none;">
+                            <div>
+                                <p type="text" id="client-seed-input"></p>
+                            </div>
+                    </div>
+                </div>
+                </div>
+
+                <div class="roulette-area">
+                    <div class="prize-marker"></div>
+                    <div class="items-track">
+                        <div class="item-box" data-rarity="lendario">
+                            <img class="item-image" src="--" alt="Produto">
+                            <div class="item-info">
+                                <p class="item-name">Null</p>
+                                <p class="item-price">R$ Null</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-open">
+                        <span class="button-content">
+                            Abrir <span class="price-tag">R$ Null</span>
+                        </span>
+                    </button>
+                    <div class="side-buttons">
+                        <button class="btn btn-side">
+                            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M13 7C13 9.25667 11.6667 12.0833 9.5 13C7.33333 13.9167 4.66667 13.0833 3 12C1.33333 10.9167 0.5 8.75 0.5 6.5C0.5 4.24333 1.58333 1.91667 3.5 1C5.41667 0.0833333 8.16667 0.416667 10 2" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                <path d="M10 4.5V1.5H13" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <span>Demonstração</span>
+                        </button>
+                        <button class="btn btn-icon" id="speed-toggle">
+                            <svg width="16" height="22" viewBox="0 0 16 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                <path d="M6.3335 1L1.00016 12.3333H8.3335L9.66683 21L15.0002 9.66667H7.66683L6.3335 1Z" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <div class="box-info">
+                <img class="box-image" src="--" alt="Imagem do Pacote">
+                <div class="box-text">
+                    <h3 class="box-title">Null</h3>
+                    <p class="box-item-count">Contém Null itens</p>
+                </div>
+            </div>
+
+            <section class="products">
+                <!-- Exemplos de cards (repita ou substitua dinamicamente) -->
+                <div class="product-card" data-rarity="lendario">
+                    <div class="product-content">
+                        <span class="product-percentage">100%</span>
+                        <div class="image-container">
+                            <div class="rarity-glow"></div>
+                            <img class="product-image" src="https://i.imgur.com/WbXy107.png" alt="Null">
+                        </div>
+                        <h3 class="product-name">Null</h3>
+                        <p class="product-price">R$ Null</p>
+                    </div>
+                </div>
+
+                
+                <!-- …adicione mais cards conforme necessário -->
+            </section>
+        </main>
+
+    </div>
+
+    <script src="../js/lib/canvas-confetti.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="../js/abertura.js"></script>
+    
+</body>
+</html>

@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Ferramenta Definitiva de Criação de Pacotes - RangoRaro</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cor-fundo: #1a1a1a; --cor-fundo-secundaria: #2a2a2a; --cor-borda: #444;
+            --cor-texto-principal: #f0f0f0; --cor-texto-secundario: #aaa; --cor-destaque: #007bff;
+        }
+        body { font-family: 'Jost', sans-serif; background-color: var(--cor-fundo); color: var(--cor-texto-principal); padding: 20px; max-width: 900px; margin: auto; }
+        .container { background-color: var(--cor-fundo-secundaria); padding: 30px; border-radius: 12px; border: 1px solid var(--cor-borda); }
+        h1, p { text-align: center; }
+        h1 { margin-bottom: 10px; }
+        p { margin-bottom: 30px; color: var(--cor-texto-secundario); }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .form-group { display: flex; flex-direction: column; }
+        .full-width { grid-column: 1 / -1; }
+        label { margin-bottom: 8px; font-weight: 500; color: var(--cor-texto-secundario); font-size: 14px; }
+        input, textarea { padding: 12px; border-radius: 8px; border: 1px solid var(--cor-borda); background: var(--cor-fundo); color: var(--cor-texto-principal); font-size: 16px; font-family: 'Jost', sans-serif; }
+        input[readonly] { background-color: #111; color: #888; }
+        textarea { height: 250px; resize: vertical; }
+        button { font-size: 18px; padding: 15px; cursor: pointer; border-radius: 8px; border: none; background-color: var(--cor-destaque); color: white; margin-top: 20px; font-weight: 600; width: 100%; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        #log { margin-top: 20px; background-color: #111; padding: 15px; border-radius: 8px; max-height: 300px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; border: 1px solid var(--cor-borda); }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .info { color: #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Ferramenta Definitiva de Criação de Pacotes</h1>
+        <p>Preencha os dados, cole a tabela de itens e crie o pacote e seus itens no Firebase de uma só vez.</p>
+        
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="pacoteId">ID do Documento do Pacote (ex: 'labaguet')</label>
+                <input type="text" id="pacoteId">
+            </div>
+             <div class="form-group">
+                <label for="pacoteNome">Nome do Pacote (ex: 'LA BAGUET')</label>
+                <input type="text" id="pacoteNome">
+            </div>
+             <div class="form-group">
+                <label for="pacotePreco">Preço do Pacote (ex: 22.90)</label>
+                <input type="number" id="pacotePreco">
+            </div>
+             <div class="form-group">
+                <label for="cdnFolder">Pasta das Imagens no CDN (automático)</label>
+                <input type="text" id="cdnFolder" readonly>
+            </div>
+            <div class="form-group full-width">
+                <label for="pacoteImagemUrl">URL da Imagem Principal do Pacote (automático)</label>
+                <input type="text" id="pacoteImagemUrl" readonly>
+            </div>
+            <div class="form-group full-width">
+                <label for="tabelaItens">Cole a Tabela de Itens Aqui (copie direto do Excel / CSV)</label>
+                <textarea id="tabelaItens" placeholder="Raridade   Item   Valor (R$)   Probabilidade (%)..."></textarea>
+            </div>
+        </div>
+
+        <button id="uploadButton">Criar Pacote Completo</button>
+        <div id="log">Aguardando dados...</div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2vtEfyZ9y7JUVbjCHFoK2BpvbFVSE4yM", authDomain: "rangoraro-app.firebaseapp.com",
+            projectId: "rangoraro-app", storageBucket: "rangoraro-app.appspot.com",
+            messagingSenderId: "828393845765", appId: "1:828393845765:web:49323f020de4ffb6e2586c"
+        };
+
+        const pacoteIdInput = document.getElementById('pacoteId');
+        const pacoteImagemUrlInput = document.getElementById('pacoteImagemUrl');
+        const cdnFolderInput = document.getElementById('cdnFolder');
+
+        pacoteIdInput.addEventListener('input', () => {
+            const id = pacoteIdInput.value.trim();
+            if (id) {
+                pacoteImagemUrlInput.value = `https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/${id}.png`;
+                cdnFolderInput.value = id;
+            } else {
+                pacoteImagemUrlInput.value = '';
+                cdnFolderInput.value = '';
+            }
+        });
+
+        function createIdFromString(str) {
+            return str.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-');
+        }
+        
+        function parseTableData(rawText, cdnFolder) {
+            const lines = rawText.trim().split('\n');
+            if (lines.length === 0) return [];
+
+            let delimiter = '\t';
+            if (lines[0].includes(';')) delimiter = ';';
+            else if (lines[0].includes(',')) delimiter = ',';
+
+            const items = [];
+            for (const line of lines) {
+                if (line.toLowerCase().includes('raridade') || line.toLowerCase().includes('totais')) continue;
+                const parts = line.split(delimiter);
+                if (parts.length < 4) continue;
+                
+                try {
+                    const raridade = parts[0].trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                    const nome = parts[1].trim().replace(/"/g, '');
+                    const valor = parseFloat(parts[2].replace('R$', '').replace(/"/g, '').replace(',', '.').trim());
+                    const chance = parseFloat(parts[3].replace('%', '').replace(/"/g, '').replace(',', '.').trim());
+                    const id = createIdFromString(nome);
+                    const imagemUrl = `https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/${cdnFolder}/${id}.png`;
+                    items.push({ id, nome, valor, raridade, chance, imagemUrl });
+                } catch(e) { console.error("Erro ao processar linha:", line, e); }
+            }
+            return items;
+        }
+
+        document.getElementById('uploadButton').addEventListener('click', async () => {
+            const uploadButton = document.getElementById('uploadButton');
+            const logDiv = document.getElementById('log');
+            uploadButton.disabled = true;
+            uploadButton.textContent = "Processando...";
+            logDiv.innerHTML = "";
+
+            const pacoteId = document.getElementById('pacoteId').value.trim();
+            const cdnFolder = document.getElementById('cdnFolder').value.trim();
+            const pacoteNome = document.getElementById('pacoteNome').value.trim();
+            const pacotePreco = parseFloat(document.getElementById('pacotePreco').value);
+            const pacoteImagemUrl = document.getElementById('pacoteImagemUrl').value.trim();
+            const tabelaItens = document.getElementById('tabelaItens').value;
+
+            if (!pacoteId || !cdnFolder || !pacoteNome || !pacotePreco || !tabelaItens || !pacoteImagemUrl) {
+                logDiv.innerHTML = `<span class="error">ERRO:</span> Preencha todos os campos.`;
+                uploadButton.disabled = false;
+                uploadButton.textContent = 'Criar Pacote Completo';
+                return;
+            }
+
+            const itensParaUpload = parseTableData(tabelaItens, cdnFolder);
+            if (itensParaUpload.length === 0) {
+                logDiv.innerHTML = `<span class="error">ERRO:</span> Nenhum item válido encontrado na tabela. Verifique o formato do texto colado.`;
+                uploadButton.disabled = false;
+                uploadButton.textContent = 'Criar Pacote Completo';
+                return;
+            }
+
+            try {
+                if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+                const db = firebase.firestore();
+                
+                logDiv.innerHTML += '<span class="info">--- Iniciando Upload dos Itens (sem raridade)... ---</span>\n';
+                const itemPromises = itensParaUpload.map(item => {
+                    const docId = item.id;
+                    // Salva o item apenas com seus dados base
+                    const itemData = { 
+                        nome: item.nome, 
+                        valor: item.valor, 
+                        imagemUrl: item.imagemUrl 
+                    };
+                    return db.collection('itens').doc(docId).set(itemData)
+                        .then(() => logDiv.innerHTML += `<span class="success">SUCESSO:</span> Item "${docId}" enviado.\n`)
+                        .catch(e => logDiv.innerHTML += `<span class="error">ERRO:</span> Falha no item "${docId}": ${e.message}\n`);
+                });
+                await Promise.all(itemPromises);
+
+                logDiv.innerHTML += '\n<span class="info">--- Iniciando Criação do Pacote (com raridade e chance)... ---</span>\n';
+                
+                // Transforma a lista de itens para o formato final
+                const itensDoPacote = itensParaUpload.map(item => ({
+                    itemId: item.id,
+                    chance: item.chance,
+                    raridade: item.raridade // Agora inclui a raridade
+                }));
+
+                // Cria o objeto do pacote com o campo 'itens' no formato correto
+                const pacoteData = {
+                    nome: pacoteNome,
+                    preco: pacotePreco,
+                    imagemUrl: pacoteImagemUrl,
+                    itens: itensDoPacote 
+                };
+                
+                await db.collection('pacotes').doc(pacoteId).set(pacoteData);
+                logDiv.innerHTML += `<span class="success">SUCESSO:</span> Pacote "${pacoteId}" criado com a estrutura correta.\n`;
+
+                logDiv.innerHTML += '\n\n<span class="success">PROCESSO CONCLUÍDO!</span>';
+                uploadButton.textContent = "Concluído!";
+
+            } catch (e) {
+                logDiv.innerHTML += `<span class="error">ERRO GERAL:</span> ${e.message}\nVerifique suas Regras de Segurança.`;
+                uploadButton.textContent = "Erro";
+                uploadButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RangoRaro – Trocas</title>
+    <link rel="icon" href="../assets/icons/icon-logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../css/trocas.css">
+    <link rel="stylesheet" href="../css/header.css">
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="../js/firebase-auth.js"></script>
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="../assets/icons/icon-logo.png" alt="Logo RangoRaro">
+            <span>RangoRaro</span>
+        </a>
+
+        <nav class="nav-center">
+            <a href="pacotes.html" class="nav-item">
+                <img src="../assets/icons/icon-pacotes.png" alt="Ícone Pacotes">
+                <span>Pacotes</span>
+            </a>
+            <a href="trocas.html" class="nav-item">
+                <img src="../assets/icons/icon-trocas.png" alt="Ícone Trocas">
+                <span>Trocas</span>
+            </a>
+            <a href="rifa.html" class="nav-item">
+                <img src="../assets/icons/icon-rifa.png" alt="Ícone Eventos">
+                <span>Eventos</span>
+            </a>
+            <a href="premios.html" class="nav-item">
+                <img src="../assets/icons/icon-premios.png" alt="Ícone Prêmios">
+                <span>Prêmios</span>
+            </a>
+        </nav>
+
+        <div class="header-buttons">
+            <button class="btn-outline">Login</button>
+            <button class="btn-primary">Registrar</button>
+        </div>
+
+        <div class="header-right" style="display: none;">
+            <button class="cart">Carrinho <span class="cart-count">0</span></button>
+            <div class="balance">R$ 0,00</div>
+            <div class="profile-pic"></div>
+        </div>
+    </header>
+
+    <!-- MODAL DE AUTENTICAÇÃO -->
+    <div class="auth-modal-overlay">
+        <div class="auth-modal">
+            <h2>Bem-vindo ao RangoRaro</h2>
+            <p>Entre para Acessar Sua Conta</p>
+            <button onclick="handleGoogleLogin()">Entrar com <b>Google</b></button>
+            <div class="age-check-container">
+                <input type="checkbox" id="age-check">
+                <label for="age-check">Ao acessar o site eu declaro que tenho pelo menos 18 anos.</label>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <main class="main-content">
+            <!-- TRÊS PAINÉIS -->
+            <section class="panels">
+                <!-- Painel 1 – Chance -->
+                <div class="panel chance-panel">
+                    <label for="price-input">Preço</label>
+                    <div class="price-input-group">
+                        <span>R$</span>
+                        <input id="price-input" type="number" value="0" min="0" step="0.01">
+                        <button id="max-price">max</button>
+                    </div>
+
+                    <div class="result-slider-container">
+                        <label>Resultado <span id="result-percent">0,00%</span></label>
+                        <div class="slider-track">
+                            <div class="slider-handle" id="result-slider-handle"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="shortcut-buttons">
+                        <button data-value="1"   class="shortcut">min</button>
+                        <button data-value="10"  class="shortcut">10%</button>
+                        <button data-value="25"  class="shortcut">25%</button>
+                        <button data-value="50"  class="shortcut">50%</button>
+                        <button data-value="80" class="shortcut">max</button>
+                    </div>
+
+                    <button id="reset-btn">Reiniciar</button>
+                </div>
+
+                <!-- Painel 2 – Roleta -->
+                <div class="panel roulette-panel">
+                    <div class="roulette-container">
+                        <div class="roulette-arrow"></div>
+                        <svg class="roulette-svg" viewBox="0 0 200 200">
+                            <circle class="roulette-track" cx="100" cy="100" r="90" />
+                            <path class="roulette-progress"></path> 
+                        </svg>
+                        <div class="roulette-handle handle-start"></div>
+                        <div class="roulette-handle handle-end"></div>
+                        <span id="roulette-percent">0,00%</span>
+                    </div>
+                    <div class="roulette-buttons">
+                        <button id="select-range">Girar</button>
+                        <button id="demo-btn">Demonstração</button>
+                    </div>
+                </div>
+
+                <!-- Painel 3 – Pré-visualização -->
+                <div class="panel preview-panel">
+                    <div class="preview-image" id="preview-image-placeholder"></div>
+                    <div class="preview-text">Selecione um Rango abaixo para começar</div>
+                    <div class="preview-info">
+                        <span class="price">R$0,00</span>
+                        <span class="multiplier">x0,00</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- FILTROS -->
+            <section class="filters">
+                <div class="search-bar">
+                    <input type="text" placeholder="Pesquisar...">
+                </div>
+                <div class="sort-price">Preço do maior para o menor</div>
+
+                <div class="filter-price-range">
+                    <label for="min-price">min</label>
+                    <input type="number" id="min-price" value="1" min="0">
+
+                    <label for="max-price-filter">max</label>
+                    <input type="number" id="max-price-filter" value="999" min="0">
+                </div>
+                <div class="pagination">
+                    <button id="prev-page">Anterior</button>
+                    <button id="next-page">Próximo</button>
+                </div>
+            </section>
+
+            <!-- LISTA DE LANCHES -->
+            <section class="products">
+                <!-- Cards de produtos serão inseridos aqui pelo JS -->
+            </section>
+        </main>
+    </div>
+
+    <!-- MODAL DE RESULTADO (será gerado via JS) -->
+
+    <script src="../js/lib/canvas-confetti.min.js"></script>
+    <script src="../js/trocas.js"></script>
+</body>
+</html>

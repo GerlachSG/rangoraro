@@ -1,0 +1,576 @@
+
+
+/* Main Container */
+.main-container { 
+    padding-top: 9vh; 
+}
+/* CONTAINER PRINCIPAL
+   Adiciona espaço no topo para compensar o header fixo */
+
+.main-content { 
+    width: 90%; 
+    max-width: 1200px; 
+    margin: 0 auto; 
+    padding: 2rem 0; 
+}
+/* CONTEÚDO PRINCIPAL
+   Centraliza e limita a largura máxima do conteúdo */
+
+/* Layout dos Painéis */
+.panels {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 20px;
+    margin-bottom: 30px;
+    height: 24rem;
+}
+/* LAYOUT DOS PAINÉIS
+   Grid de três colunas para organizar os painéis principais */
+
+.panel {
+    background-color: #2b2226;
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+}
+/* PAINEL BASE
+   Estilo base para todos os painéis da interface */
+
+.chance-panel { 
+    justify-content: center; 
+}
+/* PAINEL DE CHANCE
+   Centraliza o conteúdo verticalmente */
+
+.roulette-panel { 
+    align-items: center; 
+    justify-content: center; 
+    gap: 20px; 
+}
+/* PAINEL DA ROLETA
+   Centraliza a roleta e botões com espaçamento */
+
+.preview-panel { 
+    align-items: center; 
+    justify-content: center; 
+    gap: 15px; 
+    text-align: center; 
+}
+/* PAINEL DE PREVIEW
+   Centraliza o preview do item selecionado */
+
+/* Painel Chance */
+.chance-panel label { 
+    display: block; 
+    font-size: .9em; 
+    color: #aaa; 
+    margin-bottom: 8px; 
+}
+/* RÓTULOS DO PAINEL DE CHANCE
+   Estilo para os labels dos inputs */
+
+.price-input-group { 
+    display: flex; 
+    align-items: center; 
+    margin-bottom: 20px; 
+    background-color: #3c3136; 
+    border-radius: 5px; 
+    padding: 5px; 
+}
+/* GRUPO DE INPUT DE PREÇO
+   Container para o input de preço com símbolo da moeda */
+
+.price-input-group span { 
+    padding: 0 10px; 
+    color: #aaa; 
+}
+/* SÍMBOLO DA MOEDA
+   Exibe "R$" antes do input de preço */
+
+input[type=number] { 
+    flex-grow: 1; 
+    border: none; 
+    padding: 8px 10px; 
+    background-color: transparent; 
+    color: #fff; 
+    font-size: 1rem; 
+}
+/* INPUT DE NÚMEROS
+   Estilo para campos de entrada numérica */
+
+input[type=number]:focus { 
+    outline: none; 
+}
+/* FOCO NO INPUT
+   Remove outline padrão quando o input está em foco */
+
+.price-input-group button { 
+    background-color: #4a3c41; 
+    color: #fff; 
+    border: none; 
+    border-radius: 4px; 
+    padding: 8px 12px; 
+    cursor: pointer; 
+}
+/* BOTÃO NO GRUPO DE PREÇO
+   Estilo para botão "Máx" no grupo de input */
+
+.shortcut-buttons { 
+    display: flex; 
+    gap: 8px; 
+    margin-top: 20px; 
+    margin-bottom: 20px; 
+}
+/* CONTAINER DE BOTÕES DE ATALHO
+   Layout flexível para os botões de porcentagem rápida */
+
+.shortcut { 
+    flex-grow: 1; 
+    background-color: #3c3136; 
+    border: none; 
+    padding: 8px 10px; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    color: #c8b9b7; 
+    transition: background-color 0.3s; 
+}
+/* BOTÕES DE ATALHO
+   Botões para definir porcentagens rapidamente (10%, 25%, etc) */
+
+.shortcut:hover { 
+    background-color: #4a3c41; 
+}
+/* HOVER DOS BOTÕES DE ATALHO
+   Escurece o fundo quando o mouse passa por cima */
+
+#reset-btn { 
+    background-color: #3c3136; 
+    border: 1px solid #3c3136;
+    padding: 12px; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    color: #fff; 
+    font-size: 1rem; 
+    width: 100%; 
+    transition: background-color 0.3s; 
+}
+/* BOTÃO DE RESET
+   Botão para limpar todas as seleções */
+
+#reset-btn:hover { 
+    background-color: #4a3c41; 
+}
+/* HOVER DO BOTÃO RESET
+   Efeito visual no hover do botão de reset */
+
+/* Novo Slider de Resultado */
+.result-slider-container {
+    width: 100%;
+    margin-bottom: 20px;
+}
+
+.result-slider-container label {
+    margin-bottom: 8px;
+}
+
+.slider-track {
+    position: relative;
+    width: 100%;
+    height: 40px;
+    background-color: #3c3136;
+    border-radius: 5px;
+    cursor: grab;
+}
+
+.slider-handle {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 20px; /* Largura da barra arrastável */
+    height: 100%;
+    background-color: #48BB78; /* Cor da barra */
+    border-radius: 5px;
+    cursor: grab;
+    transition: background-color 0.1s;
+}
+
+.slider-handle:hover {
+    background-color: #39925e;
+}
+/* FIM: Novo Slider de Resultado */
+
+/* Painel Roleta */
+.roulette-container { 
+    position: relative; 
+    width: 200px; 
+    height: 200px; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
+    cursor: grab; 
+}
+/* CONTAINER DA ROLETA
+   Container principal que contém todos os elementos da roleta */
+
+.roulette-arrow {
+    position: absolute;
+    top: -10px;
+    left: calc(50% - 10px);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 18px solid #ffffff;
+    z-index: 5;
+    transform-origin: 10px 110px;
+    transition: transform 4s cubic-bezier(0.25, 1, 0.5, 1);
+    opacity: 0;
+    pointer-events: none;
+}
+/* SETA DA ROLETA
+   Seta triangular que gira e indica onde a roleta parou */
+
+.roulette-arrow.show { 
+    opacity: 1; 
+}
+/* SETA VISÍVEL
+   Torna a seta visível durante o giro */
+
+.roulette-svg { 
+    width: 100%; 
+    height: 100%; 
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    overflow: visible;
+}
+/* SVG DA ROLETA
+   Container SVG para desenhar os elementos gráficos da roleta */
+
+.roulette-svg circle, .roulette-svg path { 
+    stroke-linecap: butt; 
+}
+/* ELEMENTOS SVG
+   Define o estilo das linhas dos elementos SVG */
+
+.roulette-track { 
+    fill: none; 
+    stroke: #3c3136; 
+    stroke-width: 16px; 
+}
+/* TRILHA DA ROLETA
+   Círculo de fundo cinza da roleta */
+
+.roulette-progress { 
+    fill: none; 
+    stroke: #48BB78; 
+    stroke-width: 16px; 
+    cursor: grabbing; 
+}
+/* PROGRESSO DA ROLETA
+   Arco verde que representa a área de vitória */
+
+.roulette-handle {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 7px;
+    height: 7px;
+    background-color: #fff;
+    border-width: 10px; 
+    color:#48BB78;
+    border-radius: 100%;
+    z-index: 10;
+    cursor: ew-resize;
+    user-select: none;
+}
+/* CONTROLES DA ROLETA
+   Pontos brancos para arrastar e ajustar a área de vitória */
+
+#roulette-percent { 
+    font-size: 2em; 
+    font-weight: 700; 
+    z-index: 1; 
+    pointer-events: none; 
+}
+/* TEXTO DE PORCENTAGEM
+   Exibe a porcentagem no centro da roleta */
+
+.roulette-buttons { 
+    display: flex; 
+    gap: 10px; 
+    width: 100%; 
+    max-width: 300px; 
+}
+/* CONTAINER DOS BOTÕES DA ROLETA
+   Layout para os botões de girar e demonstração */
+
+#select-range, #demo-btn { 
+    flex-grow: 1; 
+    border: none; 
+    padding: 12px 15px; 
+    border-radius: 5px; 
+    cursor: pointer; 
+    color: #fff; 
+    font-size: 1rem; 
+    transition: background-color 0.3s; 
+}
+/* BOTÕES DA ROLETA
+   Estilo base para os botões de ação da roleta */
+
+#select-range { 
+    background-color: #48BB78; 
+}
+/* BOTÃO PRINCIPAL DE GIRAR
+   Botão verde para executar o giro com aposta real */
+
+#select-range:hover:not(:disabled) { 
+    background-color: #39925e; 
+}
+/* HOVER DO BOTÃO GIRAR
+   Escurece o botão verde quando habilitado */
+
+#demo-btn { 
+    background-color: transparent; 
+    border: 1px solid #3c3136;
+}
+/* BOTÃO DE DEMONSTRAÇÃO
+   Botão transparente para giro de demonstração */
+
+#demo-btn:hover { 
+    background-color: #3c3136; 
+}
+/* HOVER DO BOTÃO DEMO
+   Adiciona fundo sutil no hover */
+
+#select-range:disabled { 
+    background-color: #3c3136; 
+    cursor: not-allowed; 
+}
+/* BOTÃO DESABILITADO
+   Estado visual quando o botão de girar está desabilitado */
+
+/* Painel Preview */
+.preview-image { 
+    width: 150px; 
+    height: 150px; 
+    background-color: #3c3136; 
+    border-radius: 8px; 
+    background-size: 100%;
+    background-repeat: no-repeat;
+    background-position: center; 
+    border: 1px solid #3c3136;
+}
+/* IMAGEM DE PREVIEW
+   Exibe a imagem do item selecionado */
+
+.preview-text { 
+    font-size: 1.1em; 
+}
+/* TEXTO DO PREVIEW
+   Nome do item selecionado */
+
+.preview-info { 
+    display: flex; 
+    gap: 15px; 
+    color: #d6cb27; 
+    font-weight: bold; 
+    font-size: 1.2em; 
+    justify-content: center; 
+}
+/* INFORMAÇÕES DO PREVIEW
+   Exibe preço e multiplicador em destaque dourado */
+
+/* Filtros */
+.filters { 
+    display: grid; 
+    grid-template-columns: 2fr 1fr 2fr 1fr; 
+    align-items: center; 
+    gap: 15px; 
+    padding: 15px; 
+    background-color: #2b2226; 
+    border-radius: 8px; 
+    margin-bottom: 20px; 
+}
+/* CONTAINER DE FILTROS
+   Layout em grid para os controles de filtragem dos produtos */
+
+.search-bar input { 
+    width: 90%; 
+    padding: 12px; 
+    border-radius: 5px; 
+    border: 1px solid #3c3136;
+    background-color: #3c3136; 
+    color: #fff; 
+}
+/* BARRA DE PESQUISA
+   Campo de busca por nome dos produtos */
+
+.sort-price { 
+    cursor: pointer; 
+    padding: 10px; 
+    background-color: #3c3136; 
+    border-radius: 5px; 
+    text-align: center; 
+    white-space: nowrap; 
+    transition: background-color 0.3s; 
+}
+/* BOTÃO DE ORDENAÇÃO
+   Botão para alternar entre ordem crescente/decrescente de preço */
+
+.sort-price:hover { 
+    background-color: #4a3c41; 
+}
+/* HOVER DA ORDENAÇÃO
+   Efeito visual no hover do botão de ordenação */
+
+.filter-price-range { 
+    display: flex; 
+    align-items: center; 
+    gap: 10px; 
+}
+/* FILTRO DE FAIXA DE PREÇO
+   Container para os inputs de preço mínimo e máximo */
+
+.filter-price-range input { 
+    width: 100%; 
+    background-color: #3c3136; 
+    color: #fff; 
+    border: 1px solid #3c3136; 
+    padding: 10px; 
+    border-radius: 4px; 
+}
+/* INPUTS DE FAIXA DE PREÇO
+   Campos para definir preços mínimo e máximo */
+
+.pagination { 
+    display: flex; 
+    gap: 10px; 
+}
+/* PAGINAÇÃO
+   Container para controles de navegação entre páginas */
+
+#prev-page, #next-page { 
+    width: 100%; 
+    padding: 10px; 
+    border-radius: 5px; 
+    border: 1px solid #3c3136; 
+    background-color: #3c3136; 
+    color: #fff; 
+    cursor: pointer; 
+}
+/* BOTÕES DE PAGINAÇÃO
+   Botões para navegar entre páginas anteriores e próximas */
+
+#prev-page:hover, #next-page:hover { 
+    background-color: #4a3c41; 
+}
+/* HOVER DOS BOTÕES DE PAGINAÇÃO
+   Efeito visual nos botões de navegação */
+
+/* Lista de produtos */
+.products { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); 
+    gap: 15px; 
+}
+/* GRID DE PRODUTOS
+   Layout responsivo em grid para exibir os produtos */
+
+.product-card { 
+    background-color: #2b2226; 
+    padding: 10px; 
+    border-radius: 8px; 
+    text-align: center; 
+    cursor: pointer; 
+    transition: all 0.3s ease; 
+    border: 2px solid transparent; 
+}
+/* CARD DO PRODUTO
+   Container individual para cada produto */
+
+.product-card:hover { 
+    transform: translateY(-3px); 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+}
+/* HOVER DO CARD
+   Levanta o card e adiciona sombra no hover */
+
+.product-card.selected { 
+    border-color: #48BB78; 
+    background-color: #3c3136; 
+}
+/* CARD SELECIONADO
+   Destaca o produto selecionado com borda verde */
+
+.product-card img { 
+    width: 100%; 
+    height: 120px; 
+    object-fit: contain; 
+    object-position: 50% 80%;
+    border-radius: 8px; 
+    margin-bottom: 8px; 
+}
+/* IMAGEM DO PRODUTO
+   Imagem do produto com proporções fixas */
+
+.product-name { 
+    font-size: 1em; 
+    margin-bottom: 5px; 
+    white-space: nowrap; 
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+}
+/* NOME DO PRODUTO
+   Exibe o nome com reticências se for muito longo */
+
+.product-price { 
+    font-weight: bold; 
+    color: #48BB78; 
+    font-size: 1.1em; 
+}
+/* PREÇO DO PRODUTO
+   Preço em destaque verde e negrito */
+
+/* Responsividade */
+@media (max-width: 992px) {
+    .panels { 
+        grid-template-columns: 1fr; 
+        height: auto; 
+    }
+    
+    .roulette-panel { 
+        order: -1; 
+    }
+    
+    .filters { 
+        grid-template-columns: 1fr 1fr; 
+    }
+    
+    .search-bar { 
+        grid-column: 1 / -1; 
+    }
+}
+/* RESPONSIVIDADE TABLET
+   Adapta o layout para telas médias empilhando os painéis */
+
+@media (max-width: 768px) {
+    .nav-center { 
+        display: none; 
+    }
+    
+    .header { 
+        padding: 0 5%; 
+    }
+    
+    .main-content { 
+        width: 95%; 
+    }
+    
+    .filters { 
+        grid-template-columns: 1fr; 
+    }
+}
+/* RESPONSIVIDADE MOBILE
+   Oculta navegação central e simplifica layout para telas pequenas */

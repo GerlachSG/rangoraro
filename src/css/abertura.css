@@ -1,0 +1,384 @@
+
+/* Main Container */
+.main-container {
+    display: flex;
+    margin-top: 9vh;
+    min-height: calc(100vh - 9vh);
+    justify-content: center;
+}
+
+.main-content {
+    width: 70%;
+    padding-top: 1.6rem;
+    padding-right: 2rem;
+    padding-left: 2rem;
+    padding-bottom: 2rem;
+    background: #251D1D;
+}
+
+/* --- ESTILOS PARA ABERTURA DE PACOTE --- */
+
+.top-bar {
+    margin-bottom: 20px;
+}
+
+.back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 15px;
+    height: 40px;
+    font-size: 20px;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    opacity: 0.8;
+    transition: opacity 0.2s;
+}
+
+.back-button:hover {
+    opacity: 1;
+}
+
+.back-button svg {
+    stroke: #a0a0a0;
+}
+
+.package-opener {
+    margin-bottom: 40px;
+}
+
+.roulette-area {
+    position: relative;
+    height: 250px;
+    /* Alterado para -2rem para alinhar com o padding do .main-content */
+    margin-left: -2rem; 
+    margin-right: -2rem;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%);
+}
+
+/* ADICIONADO PARA O EFEITO DE TELA CHEIA */
+.roulette-area::before,
+.roulette-area::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 50vw; /* Largura grande para cobrir as laterais */
+    background-color: #251d1d; /* Mesma cor do fundo da página */
+    z-index: 5; /* Fica por cima da faixa de itens */
+}
+
+.roulette-area::before {
+    left: 0;
+    transform: translateX(-100%);
+}
+
+.roulette-area::after {
+    right: 0;
+    transform: translateX(100%);
+}
+
+
+.prize-marker {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 134px;
+    height: 134px;
+    z-index: 10;
+    flex-shrink: 0;
+}
+
+.items-track {
+    display: flex;
+    gap: 15px;
+    /* Adicionado padding para compensar a margem negativa do pai */
+    padding-left: 2rem; 
+    padding-right: 2rem;
+}
+
+.item-box {
+    width: 195px;
+    height: 195px;
+    background-color: transparent;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.item-box::after {
+    content: '';
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 130px;
+    height: 130px;
+    background: radial-gradient(circle, var(--glow-color) 10%, transparent 70%);
+    filter: blur(20px);
+    opacity: 0.6;
+    z-index: -1;
+}
+
+.item-image {
+    width: 107px;
+    height: 107px;
+    object-fit: contain;
+}
+
+.item-info {
+    text-align: center;
+    font-weight: 600;
+    color: #fff;
+    opacity: 0; /* Fica invisível por padrão */
+    transition: opacity 0.3s ease-in-out;
+}
+
+.item-box.revealed .item-info {
+    opacity: 1;
+}
+
+[data-rarity="lendario"]::after { --glow-color: #ffc700; }
+[data-rarity="epico"]::after { --glow-color: #a335ee; }
+[data-rarity="raro"]::after { --glow-color: #0070dd; }
+[data-rarity="incomum"]::after { --glow-color: #1eff00; }
+[data-rarity="comum"]::after { --glow-color: #a0a0a0; }
+
+.controls {
+    margin-top: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+}
+
+.btn {
+    border: none;
+    border-radius: 8px;
+    font-family: 'Jost', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+}
+
+.btn:active {
+    transform: scale(0.98);
+}
+
+.btn-open {
+    height: 44px;
+    padding: 0 25px;
+    background-color: #587d3f;
+    color: #fff;
+}
+.btn-open:hover {
+    background-color: #6a944b;
+}
+
+.price-tag {
+    font-weight: 500;
+    margin-left: 8px;
+}
+
+.side-buttons {
+    display: flex;
+    gap: 10px;
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.btn-side {
+    height: 44px;
+    padding: 0 15px;
+    background-color: #2B2222;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.btn-side:hover {
+    background-color: #3c3136;
+}
+.btn-side svg {
+    stroke: #fff;
+    width: 13.5px;
+    height: 13.5px;
+}
+
+.btn-icon {
+    width: 44px;
+    height: 44px;
+    background-color: #2B2222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.btn-icon:hover {
+    background-color: #3c3136;
+}
+
+.btn-icon svg {
+    stroke: #fff;
+    transition: stroke 0.2s;
+}
+
+.btn-icon.active svg {
+    stroke: #ffc700;
+}
+
+.btn-open.disabled {
+    background-color: #777; /* Um tom de cinza */
+    cursor: not-allowed;      /* Troca o ponteiro do mouse para "não permitido" */
+    pointer-events: none;     /* Impede qualquer clique ou evento de mouse (mais robusto) */
+}
+
+/* Opcional: Garante que o botão não tenha efeitos de hover quando desabilitado */
+.btn-open.disabled:hover {
+    filter: none;
+    transform: none;
+}
+
+
+/* -- Estilo para o nome do pacote -- */
+
+.box-info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    margin-top: 15px;
+    margin-bottom: 40px; /* Adicionado para espaçar do grid de produtos */
+}
+
+.box-image {
+    height: 56px;
+}
+
+.box-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.box-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #fff;
+    margin: 0;
+}
+
+.box-item-count {
+    font-size: 0.9rem;
+    color: #888;
+    margin: 4px 0 0 0;
+}
+
+/* --- ESTILOS PARA GRADE DE PRODUTOS --- */
+
+.products {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 30px;
+    justify-items: center;
+}
+
+.product-card {
+    width: 200px;
+    height: 220px;
+    background-color: #2B2222;
+    border-radius: 5px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+    transition: ease 0.2s;
+}
+
+.product-card:hover {
+    background-color: #362b2b;
+    transition: ease 0.2s;
+}
+
+.product-content {
+    height: 152px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    text-align: center;
+}
+
+.product-percentage {
+    font-size: 0.9rem;
+    color: #a0a0a0;
+    font-weight: 500;
+}
+
+.product-name {
+    font-size: 1rem;
+    color: #f0f0f0;
+    font-weight: 500;
+    margin: 0;
+}
+
+.product-price {
+    font-size: 1.1rem;
+    color: #ffffff;
+    font-weight: 600;
+    margin: 0;
+}
+
+.image-container {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 90px;
+    height: 90px;
+}
+
+.product-image {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    z-index: 2; 
+}
+
+.rarity-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 50%;
+    width: 180%;
+    height: 180%;
+    border-radius: 50%;
+    z-index: 1;
+    background: radial-gradient(circle, var(--glow-color) 2%, transparent 60%);
+}
+
+/* ADICIONE AO FINAL DO SEU CSS */
+
+.btn-open.special {
+    background: linear-gradient(45deg, #ffc700, #ff8c00);
+    color: #1a1a1a;
+    font-weight: 800;
+    box-shadow: 0 0 15px rgba(255, 199, 0, 0.5);
+}
+
+[data-rarity="lendario"] .rarity-glow { --glow-color: #ffc700; }
+[data-rarity="epico"] .rarity-glow { --glow-color: #a335ee; }
+[data-rarity="raro"] .rarity-glow { --glow-color: #0070dd; }
+[data-rarity="incomum"] .rarity-glow { --glow-color: #1eff00; }
+[data-rarity="comum"] .rarity-glow { --glow-color: #a0a0a0; }
