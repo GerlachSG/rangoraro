@@ -1,29 +1,52 @@
-// --- LÓGICA PARA PESQUISA E FILTRO ---
-
-// Dados dos pacotes (simulando um banco de dados como MySQL)
-const pacotes = [
-    { id: 'palhacada', nome: 'Palhaçada', preco: 29.90, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/palhacada.png' },
-    { id: 'orei', nome: 'O Rei', preco: 35.50, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/orei.png' },
-    { id: 'labaguet', nome: 'La Baguet', preco: 25.00, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/labaguet.png' },
-    { id: 'almossar', nome: 'Al Mossar', preco: 42.00, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/almossar.png' },
-    { id: 'ocoronel', nome: 'O Coronel', preco: 39.90, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/ocoronel.png' },
-    { id: 'sereismo', nome: 'Sereísmo', preco: 45.00, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/sereismo.png' },
-    { id: 'mammamia', nome: 'Mamma Mia', preco: 32.70, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/mammamia.png' },
-    { id: 'arriba', nome: 'Arriba!', preco: 28.50, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/arriba.png' },
-    { id: 'docura', nome: 'Doçura', preco: 19.90, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/docura.png' },
-    { id: 'tubelicious', nome: 'Tubelicious', preco: 55.00, imagemUrl: 'https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/pacotes/tubelicious.png' }
-];
-
+// --- ELEMENTOS DO DOM ---
 const gradePacotes = document.getElementById('grade-pacotes');
 const pesquisaInput = document.getElementById('pesquisaInput');
 const ordenarSelect = document.getElementById('ordenarSelect');
 
-// Função para renderizar (desenhar) os pacotes na tela
-// js/pacotes.js
+// --- VARIÁVEL GLOBAL PARA ARMAZENAR OS PACOTES ---
+// A lista agora começa vazia e será preenchida pelo Firebase.
+let todosOsPacotes = [];
 
-// Função para renderizar (desenhar) os pacotes na tela
+/**
+ * NOVA FUNÇÃO: Busca todos os pacotes da coleção 'pacotes' no Firestore.
+ */
+async function carregarPacotesDoFirebase() {
+    // Mostra uma mensagem de carregamento para o usuário
+    gradePacotes.innerHTML = '<p class="carregando-resultado">Carregando pacotes...</p>';
+
+    try {
+        const snapshot = await db.collection('pacotes').get();
+        
+        // Limpa a lista antes de preencher
+        todosOsPacotes = []; 
+
+        snapshot.forEach(doc => {
+            // Para cada documento, pegamos os dados e o ID
+            const pacoteData = doc.data();
+            todosOsPacotes.push({
+                id: doc.id,
+                nome: pacoteData.nome,
+                preco: pacoteData.preco,
+                imagemUrl: pacoteData.imagemUrl
+            });
+        });
+
+        // Após carregar tudo, chama a função para exibir os pacotes na tela
+        atualizarPacotes();
+
+    } catch (error) {
+        console.error("Erro ao buscar pacotes do Firestore: ", error);
+        gradePacotes.innerHTML = '<p class="nenhum-resultado">Ocorreu um erro ao carregar os pacotes.</p>';
+    }
+}
+
+
+/**
+ * Função para renderizar (desenhar) os pacotes na tela.
+ * (Esta função não precisa de mudanças)
+ */
 function renderizarPacotes(pacotesParaRenderizar) {
-    gradePacotes.innerHTML = ''; // Limpa a grade antes de adicionar novos itens
+    gradePacotes.innerHTML = ''; // Limpa a grade
 
     if (pacotesParaRenderizar.length === 0) {
         gradePacotes.innerHTML = '<p class="nenhum-resultado">Nenhum pacote encontrado.</p>';
@@ -31,13 +54,11 @@ function renderizarPacotes(pacotesParaRenderizar) {
     }
 
     pacotesParaRenderizar.forEach(pacote => {
-        // A linha abaixo estava faltando ou incorreta no seu código
         const pacoteElemento = document.createElement('div');
         pacoteElemento.className = 'pacote-wrapper';
 
-        const precoFormatado = `R$ ${pacote.preco.toFixed(2).replace('.', ',')}`;
+        const precoFormatado = `R$ ${parseFloat(pacote.preco || 0).toFixed(2).replace('.', ',')}`;
 
-        // Transforma o card em um link para a página de abertura
         pacoteElemento.innerHTML = `
             <a href="abertura.html?pacote=${pacote.id}" class="pacote-link">
                 <div class="pack" style="background-image: url('${pacote.imagemUrl}')" data-tilt data-tilt-glare data-tilt-max-glare="0.6"></div>
@@ -47,7 +68,6 @@ function renderizarPacotes(pacotesParaRenderizar) {
         gradePacotes.appendChild(pacoteElemento);
     });
 
-    // Re-inicializa o efeito de "tilt" nos novos elementos
     VanillaTilt.init(document.querySelectorAll(".pack"), {
         max: 15,
         speed: 1000,
@@ -56,9 +76,14 @@ function renderizarPacotes(pacotesParaRenderizar) {
     });
 }
 
-// Função para filtrar e ordenar os pacotes
+
+/**
+ * Função para filtrar e ordenar os pacotes.
+ * (Pequeno ajuste para usar a lista do Firebase)
+ */
 function atualizarPacotes() {
-    let pacotesFiltrados = [...pacotes];
+    // Agora a filtragem parte da lista 'todosOsPacotes', que veio do Firebase
+    let pacotesFiltrados = [...todosOsPacotes];
     const termoPesquisa = pesquisaInput.value.toLowerCase();
 
     // 1. Filtrar por pesquisa
@@ -83,7 +108,7 @@ function atualizarPacotes() {
 pesquisaInput.addEventListener('input', atualizarPacotes);
 ordenarSelect.addEventListener('change', atualizarPacotes);
 
-// Renderização inicial dos pacotes ao carregar a página
+// Renderização inicial agora chama a função que busca os dados no Firebase
 document.addEventListener('DOMContentLoaded', () => {
-    renderizarPacotes(pacotes);
+    carregarPacotesDoFirebase();
 });

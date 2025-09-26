@@ -94,7 +94,6 @@
 }
 
 .pacote-wrapper {
-    gap: 12px; /* Espaço entre a imagem e o preço */
     display: flex;
     flex-direction: column;
     cursor: pointer;
@@ -108,15 +107,22 @@
     transition: transform 0.3s ease;
     will-change: transform;
     backface-visibility: hidden;
+    margin-bottom: 7px;;
 }
 
 .pack:hover {
     transform: scale(1.05) translateZ(0);
 }
 
+a {
+    text-decoration: none;
+}
+
 .price {
     font-weight: bold;
-    font-size: 1rem;
+    text-decoration: none;
+    color: #fff;
+    font-size: 1.1rem;
     text-align: center;
     border-radius: 5px;
 }
