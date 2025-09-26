@@ -85,19 +85,10 @@
     width: 60%;
     padding: 1.6rem 2rem 2rem 2rem;
     background: #251D1D;
+    border-radius: 15px;
 }
 
 /* --- SEÇÕES DA RIFA --- */
-
-.ticket-main{
-    display: flex;
-    flex-direction: column;
-    background: #251D1D;
-    width: 100%;
-    padding: 40px 60px;
-    text-align: center;
-    justify-content: center;
-}
 
 .rifa-information {
     width: 100%;
@@ -106,6 +97,18 @@
     padding: 10px;
     align-items: center;
     justify-content: center;
+    border-radius: 15px;
+}
+
+.ticket-main{
+    display: flex;
+    flex-direction: column;
+    background: #251D1D;
+    width: 100%;
+    padding: 40px 60px;
+    text-align: center;
+    gap: 40px;
+    
 }
 
 .rifa-title {
@@ -128,6 +131,12 @@ hr {
 }
 
 .timer {
+    width: 100%;
+    justify-content: center;
+    display: flex;
+}
+
+.timer-paragraph {
     width: fit-content;
     padding: 15px 15px;
     border: solid 1px #fff;
