@@ -235,36 +235,6 @@ a {
     background: #777;
 }
 
-/* Botões do Header */
-.btn-outline {
-    background: transparent;
-    color: #ccc;
-    border: 1px solid #555;
-    padding: 8px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-outline:hover {
-    border-color: var(--cor-texto-principal);
-    color: var(--cor-texto-principal);
-}
-
-.btn-primary {
-    background: var(--cor-destaque);
-    color: #fff;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.btn-primary:hover {
-    filter: brightness(0.9);
-}
-
 /* Responsividade */
 @media (max-width: 1200px) {
     .grade-pacotes {

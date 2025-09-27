@@ -506,36 +506,6 @@
     }
 }
 
-/* Estilos dos Botões do Header */
-.btn-outline {
-    background: transparent;
-    color: #ccc;
-    border: 1px solid #555;
-    padding: 8px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-outline:hover {
-    border-color: #fff;
-    color: #fff;
-}
-
-.btn-primary {
-    background: #2196F3;
-    color: #fff;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s;
-}
-
-.btn-primary:hover {
-    background: #1976D2;
-}
-
 /* Melhorar performance de animações */
 .pack, .troca-card, .cartao-destaque {
     will-change: transform;

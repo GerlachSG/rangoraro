@@ -85,11 +85,20 @@ body {
     color: var(--cor-texto-principal);
 }
 
-/* --- BOTÕES DE LOGIN/REGISTRO (COM CORES ADAPTADAS) --- */
 .header-buttons {
     display: flex;
     gap: 1rem;
     margin-left: auto;
+}
+
+.btn-outline {
+    background: transparent;
+    color: #ccc;
+    border: 1px solid #555;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
 }
 
 .btn-outline:hover {
@@ -98,6 +107,13 @@ body {
 }
 
 .btn-primary {
+    background: var(--cor-destaque);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
     font-weight: 600;
 }
 
