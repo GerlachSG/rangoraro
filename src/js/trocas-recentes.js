@@ -75,7 +75,7 @@ function updateTrocasUI(trades) {
     }
 
     // Reverte a ordem dos trades para que o mais recente fique à esquerda
-    const tradesLimitados = trades.slice(0, 6).reverse();
+    const tradesLimitados = trades.slice(0, 7).reverse();
 
     tradesLimitados.forEach((trade, index) => {
         const existingCard = trocasContainer.querySelector(`[data-trade-id="${trade.id}"]`);
@@ -85,7 +85,7 @@ function updateTrocasUI(trades) {
             card.style.opacity = '0';
             
             // Remove o card mais à direita quando atingir o limite
-            if (trocasContainer.children.length >= 6) {
+            if (trocasContainer.children.length >= 7) {
                 const lastCard = trocasContainer.lastElementChild;
                 lastCard.style.transition = 'all 0.3s ease-out';
                 lastCard.style.transform = 'scale(0.9)';
