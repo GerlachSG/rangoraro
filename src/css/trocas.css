@@ -301,7 +301,7 @@ input[type=number]:focus {
     display: flex; 
     gap: 10px; 
     width: 100%; 
-    max-width: 300px; 
+    max-width: 315px; 
 }
 /* CONTAINER DOS BOTÕES DA ROLETA
    Layout para os botões de girar e demonstração */

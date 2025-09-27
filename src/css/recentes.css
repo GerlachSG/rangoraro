@@ -1,0 +1,115 @@
+/* recentes */
+.recentes {
+    width: 15%;
+    padding-top: 1.6rem;
+    padding-right: 2rem;
+    padding-left: 0rem;
+    padding-bottom: 2rem;
+
+}
+
+.recentes-card {
+    width: 100%;
+    height: 11rem;
+    margin-bottom: 6%;
+    background: #2B2222;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: transform 0.4s ease-out, opacity 0.3s ease-out;
+    position: relative;
+    overflow: hidden;
+    will-change: transform, opacity;
+}
+
+.recentes-card:hover {
+    transform: translateX(-5px);
+}
+
+.recentes-image {
+    height: 70%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    position: relative;
+    z-index: 2;
+}
+
+.recentes-image img {
+    max-width: 70%;
+    max-height: 80%;
+    object-fit: contain;
+    border-radius: 5px;
+}
+
+.recentes-info {
+    height: 30%;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.recentes-info p{
+    font-size: 0.8rem;
+    margin-bottom: 5px;
+    opacity: 0.5;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.recentes-info span {
+    color: #fff;
+    font-weight: bold;
+    font-size: 1rem;
+    text-align: center;
+    border-radius: 5px;
+}
+
+.recentes-avatar {
+    position: absolute;
+    top: 0.9rem;
+    right: 0.9rem;
+    width: 1.7rem;
+    height: 1.7rem;
+    border-radius: 50%;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.recentes-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Novo estilo para o efeito de raridade */
+.recentes-card::after {
+    content: '';
+    position: absolute;
+    /* Alterando o posicionamento para se alinhar com a área da imagem */
+    top: 37%; /* Ajustado para o centro da área da imagem */
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%; /* Reduzido um pouco para não vazar tanto */
+    height: 90%;
+    border-radius: 50%;
+    z-index: 1;
+    opacity: 0.4;
+    background: radial-gradient(circle, var(--glow-color) 1%, transparent 60%);
+}
+
+[data-rarity="lendario"]::after { --glow-color: #ffc700; }
+[data-rarity="epico"]::after { --glow-color: #a335ee; }
+[data-rarity="raro"]::after { --glow-color: #0070dd; }
+[data-rarity="incomum"]::after { --glow-color: #1eff00; }
+[data-rarity="comum"]::after { --glow-color: #a0a0a0; }
