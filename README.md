@@ -1,2 +1,2 @@
-# rangoraro
+# RangoRaro
 Um cassino de rangos
