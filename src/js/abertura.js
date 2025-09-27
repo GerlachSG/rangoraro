@@ -351,6 +351,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const iniciarAbertura = (isDemo = false) => {
         if (isSpinning) return;
+        
+        // Se não for demo, verifica se está logado
+        if (!isDemo && !auth.currentUser) {
+            showAuthModal();
+            return;
+        }
+
         isSpinning = true;
         openButton.classList.add('disabled');
         nonce++;
@@ -417,4 +424,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- INICIALIZAÇÃO DA PÁGINA ---
     carregarPacoteDaAbertura();
+});
+
+function updateOpenButtonState() {
+    const userLoggedIn = auth.currentUser !== null;
+
+    // O botão demo sempre está disponível
+    if (demoButton) {
+        demoButton.disabled = isSpinning;
+    }
+
+    // O botão principal de abrir precisa de login
+    if (openButton) {
+        if (!userLoggedIn) {
+            openButton.classList.remove('disabled');
+            openButton.onclick = () => showAuthModal();
+            const priceTag = `<span class="price-tag">R$ ${pacoteAtual?.preco.toFixed(2).replace('.',',') || '0,00'}</span>`;
+            openButtonContent.innerHTML = `Login para Abrir ${priceTag}`;
+        } else {
+            openButton.onclick = () => iniciarAbertura(false);
+            if (isSpinning) {
+                openButton.classList.add('disabled');
+            } else {
+                openButton.classList.remove('disabled');
+                const priceTag = `<span class="price-tag">R$ ${pacoteAtual?.preco.toFixed(2).replace('.',',') || '0,00'}</span>`;
+                openButtonContent.innerHTML = currentStage === 2 ? "ABRIR ITEM ESPECIAL" : `Abrir ${priceTag}`;
+            }
+        }
+    }
+}
+
+// Adicione os listeners para atualizar o estado quando o status de autenticação mudar
+document.addEventListener('DOMContentLoaded', () => {
+    // ...existing initialization code...
+
+    // Adiciona listener para mudanças no estado de autenticação
+    auth.onAuthStateChanged(user => {
+        updateOpenButtonState();
+    });
 });

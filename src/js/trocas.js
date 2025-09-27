@@ -270,8 +270,54 @@ document.addEventListener('DOMContentLoaded', function () {
     function handleMaxPriceClick() { if (selectedSnack) { const maxPriceValue = selectedSnack.price * (MAX_PERCENT / 100); priceInput.value = maxPriceValue.toFixed(2); handlePriceInputChange(); } }
     function handleShortcutClick(e) { const percent = parseInt(e.target.dataset.value, 10); sweepAngle = (percent / 100) * 360; sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, sweepAngle)); updateRouletteUI(); updateChanceDisplays(); updatePriceFromChance(); updateSpinButtonState(); }
     function resetSelection() { selectedSnack = null; startAngle = 0; sweepAngle = (MIN_PERCENT / 100) * 360; priceInput.value = '0.00'; previewImage.style.backgroundImage = ''; previewText.textContent = 'Selecione um Rango abaixo para começar'; document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected')); updateRouletteUI(); updateChanceDisplays(); updatePreviewInfo(); updateSpinButtonState(); }
-    function updateSpinButtonState() { const price = parseFloat(priceInput.value) || 0; const enabled = selectedSnack && price > 0 && !isSpinning; selectRangeBtn.disabled = !enabled; demoBtn.disabled = isSpinning; if (enabled) { selectRangeBtn.textContent = `Girar por R$${price.toFixed(2).replace('.',',')}`; } else if (!selectedSnack) { selectRangeBtn.textContent = 'Selecione um item'; } else { selectRangeBtn.textContent = 'Girar'; } }
-    function spinRoulette(isDemo) { if (isSpinning || (!selectedSnack && !isDemo)) return; isSpinning = true; rouletteArrow.classList.add('show'); updateSpinButtonState(); const spins = 5 + Math.random() * 3; const finalAngle = Math.random() * 360; const totalRotation = (spins * 360) + finalAngle; rouletteArrow.style.transition = 'none'; rouletteArrow.style.transform = 'rotate(0deg)'; rouletteArrow.offsetHeight; rouletteArrow.style.transition = 'transform 4s cubic-bezier(0.25, 1, 0.5, 1)'; rouletteArrow.style.transform = `rotate(${totalRotation}deg)`; setTimeout(() => { const computedStyle = window.getComputedStyle(rouletteArrow); const matrix = computedStyle.transform; let actualAngle = finalAngle; if (matrix && matrix !== 'none') { const values = matrix.split('(')[1].split(')')[0].split(','); const a = values[0]; const b = values[1]; actualAngle = Math.atan2(b, a) * (180 / Math.PI); actualAngle = (actualAngle + 360) % 360; } handleSpinResult(actualAngle, isDemo); }, 4100); }
+    function updateSpinButtonState() {
+        const price = parseFloat(priceInput.value) || 0;
+        const userLoggedIn = auth.currentUser !== null;
+        
+        // Sempre mantém o botão demo habilitado
+        demoBtn.disabled = isSpinning;
+        
+        // Remove a classe disabled do botão principal
+        selectRangeBtn.disabled = false;
+
+        // Atualiza o texto do botão baseado no estado
+        if (selectedSnack) {
+            selectRangeBtn.textContent = `Girar por R$${price.toFixed(2).replace('.',',')}`;
+        } else {
+            selectRangeBtn.textContent = 'Selecione um item';
+        }
+
+        // Adiciona o evento de click apropriado
+        if (!userLoggedIn) {
+            selectRangeBtn.onclick = () => showAuthModal();
+        } else {
+            selectRangeBtn.onclick = () => spinRoulette(false);
+        }
+    }
+    function spinRoulette(isDemo) {
+        // Previne o giro se estiver girando ou se não houver item selecionado
+        if (isSpinning || (!selectedSnack && !isDemo)) return;
+        
+        // Se não for demo e o usuário não estiver logado, mostra o modal de login
+        if (!isDemo && !auth.currentUser) {
+            showAuthModal();
+            return;
+        }
+
+        // Continua com o resto da lógica do giro
+        isSpinning = true;
+        rouletteArrow.classList.add('show');
+        updateSpinButtonState();
+        const spins = 5 + Math.random() * 3;
+        const finalAngle = Math.random() * 360;
+        const totalRotation = (spins * 360) + finalAngle;
+        rouletteArrow.style.transition = 'none';
+        rouletteArrow.style.transform = 'rotate(0deg)';
+        rouletteArrow.offsetHeight;
+        rouletteArrow.style.transition = 'transform 4s cubic-bezier(0.25, 1, 0.5, 1)';
+        rouletteArrow.style.transform = `rotate(${totalRotation}deg)`;
+        setTimeout(() => { const computedStyle = window.getComputedStyle(rouletteArrow); const matrix = computedStyle.transform; let actualAngle = finalAngle; if (matrix && matrix !== 'none') { const values = matrix.split('(')[1].split(')')[0].split(','); const a = values[0]; const b = values[1]; actualAngle = Math.atan2(b, a) * (180 / Math.PI); actualAngle = (actualAngle + 360) % 360; } handleSpinResult(actualAngle, isDemo); }, 4100);
+    }
     function fireConfetti() { const canvas = document.createElement('canvas'); canvas.style.position = 'fixed'; canvas.style.top = '0'; canvas.style.left = '0'; canvas.style.width = '100vw'; canvas.style.height = '100vh'; canvas.style.pointerEvents = 'none'; canvas.style.zIndex = '9999'; document.body.appendChild(canvas); const myConfetti = confetti.create(canvas, { resize: true, useWorker: true }); myConfetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } }).then(() => { if (canvas.parentNode) { canvas.parentNode.removeChild(canvas); } }); }
     function handleSpinResult(landedAngle, isDemo) {
         const endAngle = (startAngle + sweepAngle) % 360;
