@@ -210,7 +210,8 @@
 }
 
 .troca-card {
-    height: 300px;
+    height: 230px;
+    min-height: 100px;
     background: #2B2222;
     border-radius: 10px;
     padding: 1rem;

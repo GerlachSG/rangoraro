@@ -127,6 +127,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function selectSnack(snack) {
+        // Não permite seleção se a roleta estiver girando
+        if (isSpinning) return;
+
         selectedSnack = snack;
         previewImage.style.backgroundImage = `url('${snack.image}')`;
         previewText.textContent = snack.name;
@@ -136,9 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
             selectedCard.classList.add('selected');
         }
 
-        // Define o valor mínimo no input quando um novo lanche é selecionado
         const minValue = Math.ceil(snack.price * (MIN_PERCENT / 100));
-        // Sempre formata com duas casas decimais
         priceInput.value = minValue.toFixed(2);
         
         updateChanceFromPrice();
@@ -339,7 +340,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 registrarGanhoTroca({
                     id: selectedSnack.id,
                     name: selectedSnack.name,
-                    price: selectedSnack.price,
+                    price: valorPago, // Alterado de selectedSnack.price para valorPago
                     paidPrice: valorPago,
                     multiplier: multiplicador.toFixed(2),
                     image: selectedSnack.image
