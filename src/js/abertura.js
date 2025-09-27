@@ -275,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.body.appendChild(newScript);
     };
 
-    const animarRoleta = (itemVencedor, itemFinal, onComplete) => {
+    const animarRoleta = (itemVencedor, itemFinal, isDemo, onComplete) => {
         const allItems = Array.from(itemsTrack.querySelectorAll('.item-box'));
         if (!rouletteArea || allItems.length <= WINNER_POSITION) { isSpinning = false; if (onComplete) onComplete(null); return; }
         const targetItem = allItems[WINNER_POSITION];
@@ -307,11 +307,28 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (name) name.textContent = itemFinal.nome;
                 if (price) price.textContent = `R$ ${itemFinal.valor.toFixed(2).replace('.', ',')}`;
                 targetItem.setAttribute('data-rarity', itemFinal.raridade);
+                
+                // Registra o ganho e dispara confete apenas se não for demo e for item final
+                if (!isDemo) {
+                    // Registra o ganho no sistema de recentes
+                    if (typeof registrarGanho === 'function') {
+                        registrarGanho({
+                            id: itemFinal.id,
+                            name: itemFinal.nome,
+                            price: itemFinal.valor,
+                            image: itemFinal.imagemUrl,
+                            rarity: itemFinal.raridade
+                        });
+                    }
+                    
+                    // Dispara confete para qualquer raridade exceto comum
+                    const raridadesComConfete = ['incomum', 'raro', 'epico', 'lendario'];
+                    if (raridadesComConfete.includes(itemFinal.raridade) || itemFinal.valor > pacoteAtual.preco) {
+                        dispararConfetes(targetItem);
+                    }
+                }
             }
             targetItem.classList.add('revealed');
-            if (itemRevelado && itemRevelado.valor > pacoteAtual.preco) {
-                dispararConfetes(targetItem);
-            }
             if (onComplete) onComplete(targetItem);
         }, mainSpinDuration + correctionDuration);
     };
@@ -371,7 +388,8 @@ document.addEventListener('DOMContentLoaded', () => {
             itemsTrack.style.transition = 'opacity 0.2s ease-in';
             itemsTrack.style.opacity = 1;
             setTimeout(() => {
-                animarRoleta(itemVencedorRoleta, itemFinalRevelado, () => {
+                // Passa isDemo como parâmetro para animarRoleta
+                animarRoleta(itemVencedorRoleta, itemFinalRevelado, isDemo, () => {
                     if (lastServerSeedElement) lastServerSeedElement.textContent = oldServerSeed;
                     serverSeed = generateRandomSeed();
                     if (serverSeedHashElement) serverSeedHashElement.textContent = CryptoJS.SHA256(serverSeed).toString();

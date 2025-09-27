@@ -92,7 +92,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function addEventListeners() {
-        priceInput.addEventListener('input', handlePriceInputChange);
+        // Modifica o listener do priceInput para ter dois eventos
+        priceInput.addEventListener('input', handlePriceInputTyping);
+        priceInput.addEventListener('blur', validateAndCorrectPrice);
+        priceInput.addEventListener('keypress', handlePriceInputKeypress);
+        
         maxPriceBtn.addEventListener('click', handleMaxPriceClick);
         resetBtn.addEventListener('click', resetSelection);
         shortcutButtons.forEach(btn => btn.addEventListener('click', handleShortcutClick));
@@ -117,6 +121,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- O RESTANTE DAS FUNÇÕES (startDragRoulette, drag, spinRoulette, etc.) PERMANECE IGUAL ---
     // Colei abaixo apenas as funções que precisavam de um pequeno ajuste ou que são importantes no fluxo.
     
+    function handlePriceInputChange() {
+        if (!selectedSnack) return;
+        validateAndCorrectPrice();
+    }
+
     function selectSnack(snack) {
         selectedSnack = snack;
         previewImage.style.backgroundImage = `url('${snack.image}')`;
@@ -126,7 +135,13 @@ document.addEventListener('DOMContentLoaded', function () {
         if (selectedCard) {
             selectedCard.classList.add('selected');
         }
-        updatePriceFromChance();
+
+        // Define o valor mínimo no input quando um novo lanche é selecionado
+        const minValue = Math.ceil(snack.price * (MIN_PERCENT / 100));
+        // Sempre formata com duas casas decimais
+        priceInput.value = minValue.toFixed(2);
+        
+        updateChanceFromPrice();
         updateSpinButtonState();
     }
 
@@ -181,24 +196,118 @@ document.addEventListener('DOMContentLoaded', function () {
     
     function startDragRoulette(e) { if (isSpinning) return; const target = e.target; if ([handleStart, handleEnd, rouletteProgress].includes(target)) { e.preventDefault(); isDraggingRoulette = true; rouletteContainer.style.cursor = 'grabbing'; if (target === handleStart) dragTarget = 'start'; else if (target === handleEnd) dragTarget = 'end'; else if (target === rouletteProgress) dragTarget = 'progress'; } }
     function startDragSlider(e) { if (isSpinning) return; e.preventDefault(); isDraggingSlider = true; sliderTrack.style.cursor = 'grabbing'; updatePercentageFromSlider(e); }
-    function drag(e) { if (!isDraggingRoulette && !isDraggingSlider) return; e.preventDefault(); if (isDraggingRoulette) { const rect = rouletteContainer.getBoundingClientRect(); const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2; const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; const angle = (Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI + 90 + 360) % 360; if (dragTarget === 'end') { let newSweepAngle = (angle - startAngle + 360) % 360; sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, newSweepAngle)); } else if (dragTarget === 'start') { const endAngle = (startAngle + sweepAngle) % 360; const originalSweep = sweepAngle; startAngle = angle; sweepAngle = (endAngle - startAngle + 360) % 360; if (sweepAngle > MAX_SWEEP_ANGLE || sweepAngle < MIN_SWEEP_ANGLE) { sweepAngle = originalSweep; startAngle = (endAngle - sweepAngle + 360) % 360; } } else if (dragTarget === 'progress') { startAngle = (angle - sweepAngle / 2 + 360) % 360; } updateRouletteUI(); } else if (isDraggingSlider) { updatePercentageFromSlider(e); } updateChanceDisplays(); updatePriceFromChance(); }
+    function drag(e) { if (!isDraggingRoulette && !isDraggingSlider) return; e.preventDefault(); if (isDraggingRoulette) { const rect = rouletteContainer.getBoundingClientRect(); const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2; const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; const angle = (Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI + 90 + 360) % 360; if (dragTarget === 'end') { let newSweepAngle = (angle - startAngle + 360) % 360; sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, newSweepAngle)); } else if (dragTarget === 'start') { const endAngle = (startAngle + sweepAngle) % 360; const originalSweep = sweepAngle; startAngle = angle; sweepAngle = (endAngle - startAngle + 360) % 360; if (sweepAngle > MAX_SWEEP_ANGLE || sweepAngle < MIN_SWEEP_ANGLE) { sweepAngle = originalSweep; startAngle = (endAngle - sweepAngle + 360) % 360; } } else if (dragTarget === 'progress') { startAngle = (angle - sweepAngle / 2 + 360) % 360; } updateRouletteUI(); } else if (isDraggingSlider) { updatePercentageFromSlider(e); updatePriceFromChance(); } updateChanceDisplays(); updatePriceFromChance(); }
     function endDrag() { isDraggingRoulette = false; isDraggingSlider = false; dragTarget = null; rouletteContainer.style.cursor = 'grab'; sliderTrack.style.cursor = 'grab'; }
     function getPointOnCircle(angle) { const angleInRadians = (angle - 90) * (Math.PI / 180); return { x: ROULETTE_CENTER + ROULETTE_RADIUS * Math.cos(angleInRadians), y: ROULETTE_CENTER + ROULETTE_RADIUS * Math.sin(angleInRadians) }; }
     function updateRouletteUI() { const endAngle = (startAngle + sweepAngle) % 360; const largeArcFlag = sweepAngle > 180 ? 1 : 0; const startPoint = getPointOnCircle(startAngle); const endPoint = getPointOnCircle(endAngle); const d = `M ${startPoint.x} ${startPoint.y} A ${ROULETTE_RADIUS} ${ROULETTE_RADIUS} 0 ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`; rouletteProgress.setAttribute('d', d); const startHandleAngle = startAngle + HANDLE_OFFSET_ANGLE; const endHandleAngle = endAngle - HANDLE_OFFSET_ANGLE; handleStart.style.transform = `translate(-50%, -50%) rotate(${startHandleAngle}deg) translateY(-${ROULETTE_RADIUS}px) rotate(-${startHandleAngle}deg)`; handleEnd.style.transform = `translate(-50%, -50%) rotate(${endHandleAngle}deg) translateY(-${ROULETTE_RADIUS}px) rotate(-${endHandleAngle}deg)`; }
     function updateResultSliderUI() { const percent = (sweepAngle / 360) * 100; const handlePosition = ((percent - MIN_PERCENT) / (MAX_PERCENT - MIN_PERCENT)) * 100; resultSliderHandle.style.left = `calc(${handlePosition}% - ${resultSliderHandle.offsetWidth / 2}px)`; }
     function updatePercentageFromSlider(e) { const rect = sliderTrack.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; let sliderTrackMousePercent = ((clientX - rect.left) / rect.width) * 100; sliderTrackMousePercent = Math.max(0, Math.min(100, sliderTrackMousePercent)); let actualChancePercent = MIN_PERCENT + (sliderTrackMousePercent / 100) * (MAX_PERCENT - MIN_PERCENT); actualChancePercent = Math.max(MIN_PERCENT, Math.min(MAX_PERCENT, actualChancePercent)); sweepAngle = (actualChancePercent / 100) * 360; updateRouletteUI(); updateResultSliderUI(); updatePriceFromChance(); }
     function updateChanceDisplays() { const chancePercent = (sweepAngle / 360) * 100; const formattedPercent = `${chancePercent.toFixed(2).replace('.',',')}%`; resultPercent.textContent = formattedPercent; roulettePercent.textContent = formattedPercent; updateResultSliderUI(); }
-    function updatePriceFromChance() { if (!selectedSnack) return; const chancePercent = (sweepAngle / 360) * 100; const price = (selectedSnack.price * chancePercent) / 100; priceInput.value = price.toFixed(2); updatePreviewInfo(); }
+    function updatePriceFromChance() {
+        if (!selectedSnack) return;
+        const chancePercent = (sweepAngle / 360) * 100;
+        const price = (selectedSnack.price * chancePercent) / 100;
+        priceInput.value = price.toFixed(2);
+        updatePreviewInfo();
+        updateSpinButtonState(); // Atualiza o botão também
+    }
     function updateChanceFromPrice() { if (!selectedSnack) return; const price = parseFloat(priceInput.value) || 0; let chancePercent = (price / selectedSnack.price) * 100; chancePercent = Math.max(MIN_PERCENT, Math.min(MAX_PERCENT, chancePercent)); sweepAngle = (chancePercent / 100) * 360; updateRouletteUI(); updateChanceDisplays(); updatePreviewInfo(); }
     function updatePreviewInfo() { if (selectedSnack) { const inputPrice = parseFloat(priceInput.value) || 0; const multiplier = selectedSnack.price > 0 ? selectedSnack.price / Math.max(inputPrice, 0.01) : 0; previewPrice.textContent = `R$${inputPrice.toFixed(2).replace('.',',')}`; previewMultiplier.textContent = `x${multiplier.toFixed(2)}`; } else { previewPrice.textContent = 'R$0,00'; previewMultiplier.textContent = 'x0.00'; } }
-    function handlePriceInputChange() { if (selectedSnack) updateChanceFromPrice(); updateSpinButtonState(); }
+    function handlePriceInputTyping(e) {
+        if (!selectedSnack) return;
+        
+        // Atualiza apenas a interface sem corrigir o valor
+        const inputValue = parseFloat(e.target.value) || 0;
+        const multiplier = selectedSnack.price > 0 ? selectedSnack.price / Math.max(inputValue, 0.01) : 0;
+        
+        previewPrice.textContent = `R$${inputValue.toFixed(2).replace('.',',')}`;
+        previewMultiplier.textContent = `x${multiplier.toFixed(2)}`;
+        updateSpinButtonState();
+    }
+
+    // Nova função para lidar com o Enter
+    function handlePriceInputKeypress(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault(); // Previne o comportamento padrão do Enter
+            validateAndCorrectPrice(true); // true indica que deve forçar o valor mínimo se for 0
+        }
+    }
+
+    // Nova função para validar e corrigir o preço
+    function validateAndCorrectPrice(forceMinimum = false) {
+        if (!selectedSnack) return;
+        
+        let inputValue = parseFloat(priceInput.value);
+
+        // Se não for um número válido, usa 0
+        if (isNaN(inputValue)) {
+            inputValue = 0;
+        }
+
+        const minValue = Math.ceil(selectedSnack.price * (MIN_PERCENT / 100));
+        const maxValue = selectedSnack.price;
+
+        // Corrige o valor se necessário
+        if (inputValue > maxValue) {
+            inputValue = minValue; // Volta para o valor mínimo se exceder o máximo
+        } else if ((inputValue < minValue && inputValue !== 0) || (inputValue === 0 && forceMinimum)) {
+            inputValue = minValue; // Mantém o valor mínimo se for menor que o permitido ou se for 0 e forceMinimum for true
+        }
+
+        // Se o valor for 0 e não estamos forçando o valor mínimo
+        if (inputValue === 0 && !forceMinimum) {
+            priceInput.value = '';
+        } else {
+            // Formata o valor para sempre mostrar duas casas decimais
+            priceInput.value = inputValue.toFixed(2);
+        }
+
+        // Atualiza a chance na roleta e o estado do botão
+        updateChanceFromPrice();
+        updateSpinButtonState();
+    }
+
     function handleMaxPriceClick() { if (selectedSnack) { const maxPriceValue = selectedSnack.price * (MAX_PERCENT / 100); priceInput.value = maxPriceValue.toFixed(2); handlePriceInputChange(); } }
     function handleShortcutClick(e) { const percent = parseInt(e.target.dataset.value, 10); sweepAngle = (percent / 100) * 360; sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, sweepAngle)); updateRouletteUI(); updateChanceDisplays(); updatePriceFromChance(); updateSpinButtonState(); }
     function resetSelection() { selectedSnack = null; startAngle = 0; sweepAngle = (MIN_PERCENT / 100) * 360; priceInput.value = '0.00'; previewImage.style.backgroundImage = ''; previewText.textContent = 'Selecione um Rango abaixo para começar'; document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected')); updateRouletteUI(); updateChanceDisplays(); updatePreviewInfo(); updateSpinButtonState(); }
     function updateSpinButtonState() { const price = parseFloat(priceInput.value) || 0; const enabled = selectedSnack && price > 0 && !isSpinning; selectRangeBtn.disabled = !enabled; demoBtn.disabled = isSpinning; if (enabled) { selectRangeBtn.textContent = `Girar por R$${price.toFixed(2).replace('.',',')}`; } else if (!selectedSnack) { selectRangeBtn.textContent = 'Selecione um item'; } else { selectRangeBtn.textContent = 'Girar'; } }
     function spinRoulette(isDemo) { if (isSpinning || (!selectedSnack && !isDemo)) return; isSpinning = true; rouletteArrow.classList.add('show'); updateSpinButtonState(); const spins = 5 + Math.random() * 3; const finalAngle = Math.random() * 360; const totalRotation = (spins * 360) + finalAngle; rouletteArrow.style.transition = 'none'; rouletteArrow.style.transform = 'rotate(0deg)'; rouletteArrow.offsetHeight; rouletteArrow.style.transition = 'transform 4s cubic-bezier(0.25, 1, 0.5, 1)'; rouletteArrow.style.transform = `rotate(${totalRotation}deg)`; setTimeout(() => { const computedStyle = window.getComputedStyle(rouletteArrow); const matrix = computedStyle.transform; let actualAngle = finalAngle; if (matrix && matrix !== 'none') { const values = matrix.split('(')[1].split(')')[0].split(','); const a = values[0]; const b = values[1]; actualAngle = Math.atan2(b, a) * (180 / Math.PI); actualAngle = (actualAngle + 360) % 360; } handleSpinResult(actualAngle, isDemo); }, 4100); }
     function fireConfetti() { const canvas = document.createElement('canvas'); canvas.style.position = 'fixed'; canvas.style.top = '0'; canvas.style.left = '0'; canvas.style.width = '100vw'; canvas.style.height = '100vh'; canvas.style.pointerEvents = 'none'; canvas.style.zIndex = '9999'; document.body.appendChild(canvas); const myConfetti = confetti.create(canvas, { resize: true, useWorker: true }); myConfetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } }).then(() => { if (canvas.parentNode) { canvas.parentNode.removeChild(canvas); } }); }
-    function handleSpinResult(landedAngle, isDemo) { const endAngle = (startAngle + sweepAngle) % 360; let won = false; if (startAngle + sweepAngle > 360) { won = (landedAngle >= startAngle) || (landedAngle <= endAngle); } else { won = (landedAngle >= startAngle) && (landedAngle <= endAngle); } if (won && !isDemo) { fireConfetti(); } setTimeout(() => { isSpinning = false; rouletteArrow.classList.remove('show'); rouletteArrow.style.transition = 'none'; updateSpinButtonState(); }, 1000); }
+    function handleSpinResult(landedAngle, isDemo) {
+        const endAngle = (startAngle + sweepAngle) % 360;
+        let won = false;
+
+        if (startAngle > endAngle) {
+            won = (landedAngle >= startAngle) || (landedAngle <= endAngle);
+        } else {
+            won = (landedAngle >= startAngle) && (landedAngle <= endAngle);
+        }
+
+        if (won && !isDemo) {
+            fireConfetti();
+            
+            if (selectedSnack) {
+                const valorPago = parseFloat(priceInput.value);
+                const multiplicador = selectedSnack.price / valorPago;
+                
+                registrarGanhoTroca({
+                    id: selectedSnack.id,
+                    name: selectedSnack.name,
+                    price: selectedSnack.price,
+                    paidPrice: valorPago,
+                    multiplier: multiplicador.toFixed(2),
+                    image: selectedSnack.image
+                });
+            }
+        }
+
+        setTimeout(() => {
+            isSpinning = false;
+            rouletteArrow.classList.remove('show');
+            rouletteArrow.style.transition = 'none';
+            updateSpinButtonState();
+        }, 1000);
+    }
 
 
     // --- INICIALIZAÇÃO ---
