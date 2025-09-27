@@ -127,7 +127,7 @@ function listenToRecentWins() {
  */
 function updateRecentesUI(ganhos) {
     if (!recentesContainer) {
-        console.warn('Container de recentes não encontrado');
+        console.warn('Container de recentes não encontrado')    ;
         return;
     }
 
