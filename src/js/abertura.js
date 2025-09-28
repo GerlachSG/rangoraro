@@ -1,15 +1,24 @@
+// DOM elements (declared in outer scope so other functions can access them)
+let speedToggleButton, openButton, openButtonContent, demoButton, itemsTrack, rouletteArea, productsGrid, boxTitleElement, boxItemCountElement, boxImageElement;
+// State variables promoted to outer scope so other functions can access them
+let isSpinning = false;
+let currentStage = 1;
+let pacoteAtual = null;
+// Expose iniciarAbertura so other functions (outside DOMContentLoaded) can call it
+let iniciarAbertura;
+
 document.addEventListener('DOMContentLoaded', () => {
     // --- ELEMENTOS DO DOM ---
-    const speedToggleButton = document.getElementById('speed-toggle');
-    const openButton = document.querySelector('.btn-open');
-    const openButtonContent = openButton.querySelector('.button-content');
-    const demoButton = document.querySelector('.btn-side');
-    const itemsTrack = document.querySelector('.items-track');
-    const rouletteArea = document.querySelector('.roulette-area');
-    const productsGrid = document.querySelector('.products');
-    const boxTitleElement = document.querySelector('.box-title');
-    const boxItemCountElement = document.querySelector('.box-item-count');
-    const boxImageElement = document.querySelector('.box-image');
+    speedToggleButton = document.getElementById('speed-toggle');
+    openButton = document.querySelector('.btn-open');
+    openButtonContent = openButton ? openButton.querySelector('.button-content') : null;
+    demoButton = document.querySelector('.btn-side');
+    itemsTrack = document.querySelector('.items-track');
+    rouletteArea = document.querySelector('.roulette-area');
+    productsGrid = document.querySelector('.products');
+    boxTitleElement = document.querySelector('.box-title');
+    boxItemCountElement = document.querySelector('.box-item-count');
+    boxImageElement = document.querySelector('.box-image');
 
     // --- ELEMENTOS DO SISTEMA PROVABLY FAIR ---
     const serverSeedHashElement = document.getElementById('server-seed-hash');
@@ -20,8 +29,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- VARIÁVEIS DE ESTADO ---
     const TOTAL_ROULETTE_ITEMS = 70;
     const WINNER_POSITION = 62;
-    let isSpinning = false;
-    let currentStage = 1;
 
     // --- LÓGICA PROVABLY FAIR ---
     let serverSeed, clientSeed, nonce;
@@ -49,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function getProvablyFairRandomGenerator(spinNonce) {
         const combinedSeed = `${serverSeed}-${clientSeed}-${spinNonce}`;
-        const hmac = CryptoJS.HmacSHA512(combinedSeed, serverSeed).toString();
+        let hmac = CryptoJS.HmacSHA512(combinedSeed, serverSeed).toString();
         
         let currentIndex = 0;
 
@@ -68,7 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clientSeedInputElement) {
         clientSeedInputElement.addEventListener('change', () => {
             clientSeed = clientSeedInputElement.value;
-            alert("Semente do cliente atualizada. Uma nova semente do servidor será gerada para o próximo giro.");
+            console.log("Semente do cliente atualizada. Uma nova semente do servidor será gerada para o próximo giro.");
             setupProvablyFair(); 
         });
     }
@@ -152,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- DADOS (agora dinâmicos) ---
-    let pacoteAtual = null;
+    // pacoteAtual is declared in outer scope
     const highTiers = ['epico', 'lendario'];
     let itensComunsParaRoleta = [];
     const tiersDeProbabilidade = [];
@@ -308,7 +315,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (price) price.textContent = `R$ ${itemFinal.valor.toFixed(2).replace('.', ',')}`;
                 targetItem.setAttribute('data-rarity', itemFinal.raridade);
                 
-                // Registra o ganho e dispara confete apenas se não for demo e for item final
+                // Registra o ganho, adiciona ao carrinho e dispara confete apenas se não for demo e for item final
                 if (!isDemo) {
                     // Registra o ganho no sistema de recentes
                     if (typeof registrarGanho === 'function') {
@@ -320,7 +327,17 @@ document.addEventListener('DOMContentLoaded', () => {
                             rarity: itemFinal.raridade
                         });
                     }
-                    
+
+                    // Também adiciona ao carrinho do usuário (compatível com a função usada em trocas.js)
+                    if (typeof addToCart === 'function') {
+                        addToCart({
+                            id: itemFinal.id,
+                            name: itemFinal.nome,
+                            price: itemFinal.valor,
+                            image: itemFinal.imagemUrl
+                        });
+                    }
+
                     // Dispara confete para qualquer raridade exceto comum
                     const raridadesComConfete = ['incomum', 'raro', 'epico', 'lendario'];
                     if (raridadesComConfete.includes(itemFinal.raridade) || itemFinal.valor > pacoteAtual.preco) {
@@ -349,7 +366,7 @@ document.addEventListener('DOMContentLoaded', () => {
         openButton.classList.remove('disabled');
     };
 
-    const iniciarAbertura = (isDemo = false) => {
+    iniciarAbertura = (isDemo = false) => {
         if (isSpinning) return;
         
         // Se não for demo, verifica se está logado

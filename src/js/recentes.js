@@ -9,8 +9,14 @@
  */
 
 // --- CONFIGURAÇÕES ---
-const MAX_RECENT_ITEMS = 6; // Número máximo de itens recentes a exibir
-const RECENT_ITEMS_COLLECTION = 'ganhosRecentes'; // Nome da coleção no Firestore
+if (typeof window.__RANGO_MAX_RECENT_ITEMS === 'undefined') {
+    window.__RANGO_MAX_RECENT_ITEMS = 6; // Número máximo de itens recentes a exibir
+}
+if (typeof window.__RANGO_RECENT_ITEMS_COLLECTION === 'undefined') {
+    window.__RANGO_RECENT_ITEMS_COLLECTION = 'ganhosRecentes';
+}
+const MAX_RECENT_ITEMS = window.__RANGO_MAX_RECENT_ITEMS;
+const RECENT_ITEMS_COLLECTION = window.__RANGO_RECENT_ITEMS_COLLECTION;
 
 // --- ELEMENTOS DOM ---
 let recentesContainer = null;

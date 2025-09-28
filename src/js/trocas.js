@@ -337,12 +337,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 const valorPago = parseFloat(priceInput.value);
                 const multiplicador = selectedSnack.price / valorPago;
                 
+                // Registra no sistema de trocas recentes
                 registrarGanhoTroca({
                     id: selectedSnack.id,
                     name: selectedSnack.name,
-                    price: valorPago, // Alterado de selectedSnack.price para valorPago
+                    price: valorPago,
                     paidPrice: valorPago,
                     multiplier: multiplicador.toFixed(2),
+                    image: selectedSnack.image
+                });
+
+                // Adiciona ao carrinho
+                addToCart({
+                    id: selectedSnack.id,
+                    name: selectedSnack.name,
+                    price: selectedSnack.price,
                     image: selectedSnack.image
                 });
             }

@@ -2,8 +2,14 @@
  * Sistema de Ganhos Recentes das Trocas - RangoRaro
  */
 
-const MAX_RECENT_TRADES = 5; // Número de trocas recentes a exibir
-const RECENT_TRADES_COLLECTION = 'ganhosTrocas'; // Nome da coleção no Firestore
+if (typeof window.__RANGO_MAX_RECENT_TRADES === 'undefined') {
+    window.__RANGO_MAX_RECENT_TRADES = 5;
+}
+if (typeof window.__RANGO_RECENT_TRADES_COLLECTION === 'undefined') {
+    window.__RANGO_RECENT_TRADES_COLLECTION = 'ganhosTrocas';
+}
+const MAX_RECENT_TRADES = window.__RANGO_MAX_RECENT_TRADES;
+const RECENT_TRADES_COLLECTION = window.__RANGO_RECENT_TRADES_COLLECTION;
 
 let trocasContainer = null;
 

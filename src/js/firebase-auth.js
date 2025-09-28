@@ -1,23 +1,29 @@
 // js/firebase-auth.js
 
-// Cole aqui o objeto de configuração que você copiou do Firebase
-const firebaseConfig = {
-    apiKey: "AIzaSyA2vtEfyZ9y7JUVbjCHFoK2BpvbFVSE4yM",
-    authDomain: "rangoraro-app.firebaseapp.com",
-    projectId: "rangoraro-app",
-    storageBucket: "rangoraro-app.firebasestorage.app",
-    messagingSenderId: "828393845765",
-    appId: "1:828393845765:web:49323f020de4ffb6e2586c",
-    measurementId: "G-JGE2R3HTQ2"
-};
+// Evita múltiplas inicializações se o script for incluído mais de uma vez
+if (!window.__RANGO_FirebaseInitialized) {
+    window.__RANGO_FirebaseInitialized = true;
 
-// Inicializa o Firebase
-firebase.initializeApp(firebaseConfig);
+    // Cole aqui o objeto de configuração que você copiou do Firebase
+    window.firebaseConfig = {
+        apiKey: "AIzaSyA2vtEfyZ9y7JUVbjCHFoK2BpvbFVSE4yM",
+        authDomain: "rangoraro-app.firebaseapp.com",
+        projectId: "rangoraro-app",
+        storageBucket: "rangoraro-app.firebasestorage.app",
+        messagingSenderId: "828393845765",
+        appId: "1:828393845765:web:49323f020de4ffb6e2586c",
+        measurementId: "G-JGE2R3HTQ2"
+    };
 
-// Referências para os serviços de Autenticação e Firestore
-const auth = firebase.auth();
-const db = firebase.firestore();
-const googleProvider = new firebase.auth.GoogleAuthProvider();
+    // Inicializa o Firebase
+    firebase.initializeApp(window.firebaseConfig);
+
+    // Referências para os serviços de Autenticação e Firestore
+    window.auth = firebase.auth();
+    window.db = firebase.firestore();
+    window.googleProvider = new firebase.auth.GoogleAuthProvider();
+
+}
 
 /**
  * Função para realizar o login com o Google
