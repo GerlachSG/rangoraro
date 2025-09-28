@@ -1,5 +1,26 @@
 // js/firebase-auth.js
 
+// Small immediate-run logic: apply last-known auth state (from localStorage)
+// to the <body> as early as possible so the header doesn't flicker between pages.
+try {
+    const state = localStorage.getItem('rango_auth_state'); // 'logged-in' or 'logged-out'
+    if (state && typeof document !== 'undefined' && document.body) {
+        document.body.classList.add('auth-ready', state);
+    }
+} catch (e) {
+    // ignore
+}
+
+// If this script somehow runs before <body> exists, try again on DOMContentLoaded
+if (typeof document !== 'undefined' && !document.body) {
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            const state = localStorage.getItem('rango_auth_state');
+            if (state) document.body.classList.add('auth-ready', state);
+        } catch (e) {}
+    });
+}
+
 // Evita múltiplas inicializações se o script for incluído mais de uma vez
 if (!window.__RANGO_FirebaseInitialized) {
     window.__RANGO_FirebaseInitialized = true;
@@ -65,8 +86,23 @@ function logout() {
  * Esta é a função mais importante: ela reage a logins e logouts
  * e atualiza a interface do usuário de acordo.
  */
+// To avoid header flicker between pages, we set a body class from the last-known
+// auth state (stored in localStorage) immediately on script load. When the real
+// auth state is available, we'll replace the class with the resolved one.
+try {
+    const last = localStorage.getItem('rango_auth_state'); // 'logged-in' | 'logged-out'
+    if (last) {
+        document.body.classList.add('auth-ready', last);
+    }
+} catch (e) { /* ignore localStorage errors */ }
+
 auth.onAuthStateChanged(user => {
+    // Remove any previous logged-in/out class and set auth-ready with the current state
+    document.body.classList.remove('logged-in', 'logged-out');
     if (user) {
+        document.body.classList.add('auth-ready', 'logged-in');
+        try { localStorage.setItem('rango_auth_state', 'logged-in'); } catch (e) {}
+
         // --- USUÁRIO ESTÁ LOGADO ---
         const userRef = db.collection('users').doc(user.uid);
         // Escuta por atualizações em tempo real no documento do usuário (ex: saldo)
@@ -77,6 +113,8 @@ auth.onAuthStateChanged(user => {
             }
         });
     } else {
+        document.body.classList.add('auth-ready', 'logged-out');
+        try { localStorage.setItem('rango_auth_state', 'logged-out'); } catch (e) {}
         // --- USUÁRIO ESTÁ DESLOGADO ---
         updateUIForLoggedOutUser();
     }
@@ -90,31 +128,31 @@ function updateUIForLoggedInUser(userData) {
     // Encontra os elementos do header
     const loginButtons = document.querySelector('.header-buttons');
     const userInfo = document.querySelector('.header-right');
+    // Do not toggle visibility here; visibility is controlled by body.auth-ready classes
+    // We'll only update inner content (balance/profile) so the UI swaps without flicker
+    if (!loginButtons && !userInfo) return;
 
-    if (loginButtons) loginButtons.style.display = 'none';
-    if (userInfo) {
-        userInfo.style.display = 'flex'; // Garante que a seção do usuário esteja visível
+    const balanceDiv = userInfo.querySelector('.balance');
+    const profilePicDiv = userInfo.querySelector('.profile-pic');
 
-        const balanceDiv = userInfo.querySelector('.balance');
-        const profilePicDiv = userInfo.querySelector('.profile-pic');
-
-        // Atualiza o saldo
-        if (userData.balance > 0) {
-            balanceDiv.innerHTML = `R$ ${userData.balance.toFixed(2).replace('.', ',')}`;
-        } else {
-            // Se o saldo for 0, transforma em um botão "Depositar"
-            balanceDiv.innerHTML = `<button class="btn-deposit">Depositar</button>`;
-        }
-
-        // Atualiza a foto de perfil
-        if (userData.photoURL) {
-            profilePicDiv.style.backgroundImage = `url('${userData.photoURL}')`;
-        }
-
-        // Adiciona funcionalidade de logout ao clicar na foto
-        profilePicDiv.style.cursor = 'pointer';
-        profilePicDiv.onclick = logout;
+    // Atualiza o saldo (só atualiza o conteúdo)
+    if (typeof userData.balance === 'number' && userData.balance > 0) {
+        balanceDiv.innerHTML = `R$ ${userData.balance.toFixed(2).replace('.', ',')}`;
+    } else {
+        // Se o saldo for 0 ou indefinido, transforma em um botão "Depositar"
+        balanceDiv.innerHTML = `<button class="btn-deposit">Depositar</button>`;
     }
+
+    // Atualiza a foto de perfil
+    if (userData.photoURL) {
+        profilePicDiv.style.backgroundImage = `url('${userData.photoURL}')`;
+    } else {
+        profilePicDiv.style.backgroundImage = '';
+    }
+
+    // Adiciona funcionalidade de logout ao clicar na foto
+    profilePicDiv.style.cursor = 'pointer';
+    profilePicDiv.onclick = logout;
 }
 
 /**
@@ -123,16 +161,22 @@ function updateUIForLoggedInUser(userData) {
 function updateUIForLoggedOutUser() {
     const loginButtons = document.querySelector('.header-buttons');
     const userInfo = document.querySelector('.header-right');
+    // Do not toggle visibility here; body classes decide which block is visible.
+    if (!loginButtons && !userInfo) return;
 
-    if (loginButtons) {
-        loginButtons.style.display = 'flex';
-        const loginBtn = loginButtons.querySelector('.btn-outline');
-        const registerBtn = loginButtons.querySelector('.btn-primary');
-        
-        if (loginBtn) loginBtn.onclick = () => showAuthModal(true);
-        if (registerBtn) registerBtn.onclick = () => showAuthModal(false);
+    const loginBtn = loginButtons.querySelector('.btn-outline');
+    const registerBtn = loginButtons.querySelector('.btn-primary');
+
+    if (loginBtn) loginBtn.onclick = () => showAuthModal(true);
+    if (registerBtn) registerBtn.onclick = () => showAuthModal(false);
+
+    // Clear any user-specific visuals when logged out
+    if (userInfo) {
+        const balanceDiv = userInfo.querySelector('.balance');
+        const profilePicDiv = userInfo.querySelector('.profile-pic');
+        if (balanceDiv) balanceDiv.innerHTML = 'R$ 0,00';
+        if (profilePicDiv) profilePicDiv.style.backgroundImage = '';
     }
-    if (userInfo) userInfo.style.display = 'none';
 }
 
 // Adiciona as novas funções para controle do modal

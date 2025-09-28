@@ -86,7 +86,8 @@ body {
 }
 
 .header-buttons {
-    display: flex;
+    /* Hidden by default until auth state is known. Controlled via body.auth-ready classes */
+    display: none;
     gap: 1rem;
     margin-left: auto;
 }
@@ -179,10 +180,25 @@ body {
 
 /* --- INFORMAÇÕES DO USUÁRIO (LOGADO) (COM CORES ADAPTADAS) --- */
 .header-right {
-    display: flex;
+    /* Hidden by default until auth state is known. Controlled via body.auth-ready classes */
+    display: none;
     align-items: center;
     gap: 20px;
     margin-left: auto;
+}
+
+/* When auth state has been resolved, body gets 'auth-ready' plus 'logged-in' or 'logged-out' */
+.auth-ready.logged-out .header-buttons {
+    display: flex;
+}
+.auth-ready.logged-out .header-right {
+    display: none !important;
+}
+.auth-ready.logged-in .header-right {
+    display: flex !important;
+}
+.auth-ready.logged-in .header-buttons {
+    display: none !important;
 }
 
 
