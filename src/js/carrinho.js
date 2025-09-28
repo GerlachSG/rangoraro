@@ -88,16 +88,16 @@ async function addToCart(item) {
     try {
         // Write into the per-user cart stored under users/{uid}/carrinho (subcollection)
         const userCartCol = db.collection('users').doc(user.uid).collection('carrinho');
-        await userCartCol.doc(String(item.id)).set({
+        // Use an auto-generated document id so multiple identical items can be stored separately.
+        // Keep the original item id in `itemId` for reference.
+        await userCartCol.add({
+            itemId: item.id,
             id: item.id,
             // English keys for compatibility
             name: item.name,
             image: item.image,
-            price: item.price,
-            // Portuguese keys requested by the user
-            nome: item.name,
-            imagem: item.image,
-            valor: item.price,
+            price: (typeof item.price === 'number') ? item.price : Number(item.price) || 0,
+            // addedAt timestamp
             addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         // loadCartItems will be triggered by realtime listener; call it once to refresh view
@@ -136,18 +136,53 @@ async function saveItemToInventory(userId, item) {
     try {
         // Legacy helper kept for compatibility; prefer saving into users/{uid}/carrinho
         const userCartCol = db.collection('users').doc(userId).collection('carrinho');
-        await userCartCol.doc(String(item.id)).set({
+        await userCartCol.add({
+            itemId: item.id,
             id: item.id,
             name: item.name,
             image: item.image,
-            price: item.price,
-            nome: item.name,
-            imagem: item.image,
-            valor: item.price,
+            price: (typeof item.price === 'number') ? item.price : Number(item.price) || 0,
             addedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     } catch (err) {
         console.error('Erro ao salvar item no inventário:', err);
+    }
+}
+
+/**
+ * Sell one unit of the given itemId from the user's cart.
+ * This will delete a single document matching itemId (most recently added)
+ * and increment the user's balance by the item price.
+ */
+async function sellOneItem(itemId, itemPrice) {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    try {
+        const cartCol = db.collection('users').doc(user.uid).collection('carrinho');
+    // find one document matching the itemId (any one occurrence)
+    // Avoid ordering to prevent composite index requirement.
+    const snapshot = await cartCol.where('itemId', '==', itemId).limit(1).get();
+        if (snapshot.empty) {
+            // fallback: try without where (in case older entries had different shape)
+            const fallback = await cartCol.orderBy('addedAt', 'desc').limit(1).get();
+            if (fallback.empty) return;
+            await fallback.docs[0].ref.delete();
+        } else {
+            const doc = snapshot.docs[0];
+            await doc.ref.delete();
+        }
+
+        // credit user's balance by itemPrice
+        const priceNum = (typeof itemPrice === 'number') ? itemPrice : Number(itemPrice) || 0;
+        await db.collection('users').doc(user.uid).set({
+            balance: firebase.firestore.FieldValue.increment(priceNum)
+        }, { merge: true });
+
+        // Refresh local view (listener should update automatically, but force a reload to be safe)
+        loadCartItems(user.uid);
+    } catch (err) {
+        console.error('Erro ao vender 1 unidade do item:', err);
     }
 }
 
@@ -211,28 +246,52 @@ function updateCartUI() {
         cartSummary.style.borderBottom = '1px solid var(--cor-borda)';
         cartItemsContainer.classList.remove('is-empty-flex');
 
-        // Preenche com os itens do carrinho
-        cartItemsContainer.innerHTML = cartItems.map(item => {
-            const nome = item.nome || item.name || 'Produto';
-            const imagem = item.imagem || item.image || '';
-            const valor = (typeof item.valor === 'number') ? item.valor : (typeof item.price === 'number' ? item.price : 0);
+        // Agrupa itens iguais por itemId (ou id se itemId não existir)
+        const grouped = {};
+        cartItems.forEach(item => {
+            const key = item.itemId || item.id || JSON.stringify(item);
+            if (!grouped[key]) grouped[key] = { count: 0, sample: item };
+            grouped[key].count++;
+        });
+
+        const groups = Object.keys(grouped).map(k => ({ key: k, count: grouped[k].count, item: grouped[k].sample }));
+
+        // Renderiza cada grupo com quantidade e botão vender
+        cartItemsContainer.innerHTML = groups.map(g => {
+            const item = g.item;
+            const nome = item.name || 'Produto';
+            const imagem = item.image || '';
+            const valor = (typeof item.price === 'number') ? item.price : 0;
+            const quantidade = g.count;
+            const priceText = quantidade > 1 ? `R$ ${valor.toFixed(2).replace('.', ',')} (${quantidade}x)` : `R$ ${valor.toFixed(2).replace('.', ',')}`;
             return `
-            <div class="cart-item">
+            <div class="cart-item" data-item-id="${item.itemId || item.id}">
                 <img src="${imagem}" alt="${nome}" class="cart-item-image">
                 <div class="cart-item-info">
                     <div class="cart-item-name">${nome}</div>
-                    <div class="cart-item-price">R$ ${valor.toFixed(2).replace('.', ',')}</div>
+                    <div class="price-row">
+                        <div class="cart-item-price">${priceText}</div>
+                        <button class="cart-sell-btn btn-sell-all">Vender</button>
+                    </div>
                 </div>
             </div>
         `;
         }).join('');
 
-        // Calcula e exibe o total
-        const total = cartItems.reduce((sum, item) => {
-            const valor = (typeof item.valor === 'number') ? item.valor : (typeof item.price === 'number' ? item.price : 0);
-            return sum + valor;
+        // Calcula e exibe o total (soma por unidade * quantidade)
+        const total = groups.reduce((sum, g) => {
+            const valor = (typeof g.item.price === 'number') ? g.item.price : 0;
+            return sum + (valor * g.count);
         }, 0);
         cartTotal.textContent = `Total: R$ ${total.toFixed(2).replace('.', ',')}`;
+
+        // Adiciona listeners aos botões vender recém-criados
+        setTimeout(() => {
+            document.querySelectorAll('.cart-sell-btn').forEach(btn => {
+                btn.removeEventListener('click', onSellBtnClick);
+                btn.addEventListener('click', onSellBtnClick);
+            });
+        }, 0);
 
         // Habilita os botões de ação
         document.querySelectorAll('.cart-action-btn').forEach(btn => {
@@ -340,6 +399,38 @@ function withdrawFunds() {
 function requestDelivery() {
     // Placeholder for delivery functionality
     // placeholder: UI-only - no alert
+}
+
+// Click handler for per-item sell buttons
+function onSellBtnClick(e) {
+    const btn = e.currentTarget;
+    const itemEl = btn.closest('.cart-item');
+    if (!itemEl) return;
+    const itemId = itemEl.getAttribute('data-item-id');
+    // Find sample price from current cartItems
+    const sample = cartItems.find(it => (it.itemId || it.id) === itemId);
+    const price = sample ? ((typeof sample.price === 'number') ? sample.price : 0) : 0;
+    // Disable button briefly to prevent double click (keep text 'Vender' to avoid flick)
+    btn.disabled = true;
+    // pop animation
+    btn.classList.remove('pop-animate');
+    // force reflow
+    // eslint-disable-next-line no-unused-expressions
+    void btn.offsetWidth;
+    btn.classList.add('pop-animate');
+
+    sellOneItem(itemId, price).then(() => {
+        // small confetti when sold
+        try {
+            if (window.confetti) {
+                confetti({ particleCount: 60, spread: 60, origin: { y: 0.6 } });
+            }
+        } catch (e) { /* ignore */ }
+        // restore button text; the listener will refresh the UI
+        btn.disabled = false;
+    }).catch(() => {
+        btn.disabled = false;
+    });
 }
 
 // Initialize cart when DOM is loaded
