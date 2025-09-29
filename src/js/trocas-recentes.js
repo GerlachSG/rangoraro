@@ -22,31 +22,44 @@ function initTrocasRecentes() {
     }
 }
 
+// js/trocas-recentes.js
+
 async function registrarGanhoTroca(item) {
     try {
-        if (typeof db === 'undefined') {
-            console.error('Firebase não está disponível');
+        // Verifica se o Firebase e as Functions estão disponíveis
+        if (typeof firebase === 'undefined' || typeof firebase.functions === 'undefined') {
+            console.error('Firebase Functions não está disponível.');
             return;
         }
 
-        const currentUser = auth.currentUser;
+        // Prepara uma chamada para a Cloud Function 'registerTradeWin'
+        const registerTradeWin = firebase.functions().httpsCallable('registerTradeWin');
 
+        // Pega o usuário atual para garantir que ele esteja logado
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.error("Usuário não está logado para registrar ganho.");
+            // Opcional: mostrar um modal de login aqui
+            return;
+        }
+
+        // Os dados que enviaremos para a Cloud Function
         const ganhoData = {
             itemId: item.id,
             itemNome: item.name,
             itemPreco: item.price,
             valorPago: item.paidPrice,
             multiplicador: item.multiplier,
-            itemImagem: item.image,
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-            userId: currentUser ? currentUser.uid : null,
-            userNome: currentUser ? currentUser.displayName : 'Usuário Anônimo',
-            userFoto: currentUser ? currentUser.photoURL : 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg'
+            itemImagem: item.image
         };
 
-        await db.collection(RECENT_TRADES_COLLECTION).add(ganhoData);
+        // Chama a função e aguarda a resposta
+        await registerTradeWin(ganhoData);
+        // O console.log de sucesso agora viria da própria Cloud Function (nos logs do Firebase)
+
     } catch (error) {
-        console.error('Erro ao registrar ganho da troca:', error);
+        // Captura erros específicos das Cloud Functions
+        console.error('Erro ao chamar a Cloud Function registerTradeWin:', error);
     }
 }
 

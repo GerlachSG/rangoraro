@@ -48,39 +48,40 @@ function initRecentes() {
  * @param {number} item.price - Preço do item
  * @param {string} item.image - URL da imagem do item
  */
+// js/recentes.js
+
 async function registrarGanho(item) {
     try {
-        // Verifica se o Firebase está disponível
-        if (typeof db === 'undefined') {
-            console.error('Firebase não está disponível');
+        // Verifica se o Firebase e as Functions estão disponíveis
+        if (typeof firebase === 'undefined' || typeof firebase.functions === 'undefined') {
+            console.error('Firebase Functions não está disponível.');
             return;
         }
 
-        // Pega os dados do usuário atual (se estiver logado)
-        const currentUser = auth.currentUser;
+        // Prepara uma chamada para a Cloud Function 'registerPackageWin'
+        const registerPackageWin = firebase.functions().httpsCallable('registerPackageWin');
 
-        // Agora incluímos a raridade nos dados do ganho
+        // Pega o usuário atual para garantir que ele esteja logado
+        const currentUser = auth.currentUser;
+        if (!currentUser) {
+            console.error("Usuário não está logado para registrar ganho de pacote.");
+            return;
+        }
+
+        // Os dados que enviaremos para a Cloud Function
         const ganhoData = {
             itemId: item.id,
             itemNome: item.name,
             itemPreco: item.price,
             itemImagem: item.image,
-            itemRaridade: item.rarity || 'comum', // Usa 'comum' como fallback
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-
-            // Dados do usuário (se logado)
-            userId: currentUser ? currentUser.uid : null,
-            userNome: currentUser ? currentUser.displayName : 'Usuário Anônimo',
-            userFoto: currentUser ? currentUser.photoURL : 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg'
+            itemRaridade: item.rarity || 'comum'
         };
 
-        // Salva no Firestore
-        await db.collection(RECENT_ITEMS_COLLECTION).add(ganhoData);
-
-        console.log('Ganho registrado com sucesso:', ganhoData);
+        // Chama a função e aguarda a resposta
+        await registerPackageWin(ganhoData);
 
     } catch (error) {
-        console.error('Erro ao registrar ganho:', error);
+        console.error('Erro ao chamar a Cloud Function registerPackageWin:', error);
     }
 }
 
