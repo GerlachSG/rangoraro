@@ -20,6 +20,13 @@ const RECENT_ITEMS_COLLECTION = window.__RANGO_RECENT_ITEMS_COLLECTION;
 
 // --- ELEMENTOS DOM ---
 let recentesContainer = null;
+// Unsubscribe functions for Firestore listeners
+let unsubscribeRecentes = null;
+let unsubscribeTrocas = null;
+
+// Caches locais para os snapshots
+let _latestRecentes = [];
+let _latestTrocas = [];
 
 /**
  * Inicializa o sistema de recentes
@@ -90,41 +97,79 @@ async function registrarGanho(item) {
  * Usado no index.html para mostrar os ganhos recentes
  */
 function listenToRecentWins() {
-    if (!db) return;
+    if (typeof db === 'undefined') {
+        console.warn('Firestore `db` não está definido. Impossível escutar ganhos recentes.');
+        return;
+    }
 
-    // Escuta ambas as coleções em tempo real
-    db.collection(RECENT_ITEMS_COLLECTION)
+    // Evita registrar listeners múltiplas vezes
+    if (unsubscribeRecentes || unsubscribeTrocas) {
+        console.log('Listeners de recentes já registrados.');
+        return;
+    }
+
+    console.log('Registrando listeners de ganhos recentes e trocas...');
+
+    // Listener para a coleção principal de recentes
+    unsubscribeRecentes = db.collection(RECENT_ITEMS_COLLECTION)
         .orderBy('timestamp', 'desc')
-        .limit(MAX_RECENT_ITEMS / 2)
+        .limit(Number(MAX_RECENT_ITEMS))
         .onSnapshot(snapshot => {
-            const ganhosRecentes = [];
-            snapshot.forEach(doc => {
-                ganhosRecentes.push({ id: doc.id, ...doc.data() });
+            _latestRecentes = snapshot.docs.map(doc => ({ id: `${RECENT_ITEMS_COLLECTION}_${doc.id}`, _rawId: doc.id, collection: RECENT_ITEMS_COLLECTION, ...doc.data() }));
+            console.log(`Snapshot ${RECENT_ITEMS_COLLECTION}: ${_latestRecentes.length} docs`);
+            snapshot.docs.forEach(d => {
+                const ts = d.get('timestamp');
+                if (!ts) console.warn(`${RECENT_ITEMS_COLLECTION} doc ${d.id} sem timestamp`);
+                else console.log(`${RECENT_ITEMS_COLLECTION} doc ${d.id} ts=${typeof ts.toMillis === 'function' ? ts.toMillis() : ts}`);
             });
-            
-            // Escuta a coleção de trocas também em tempo real
-            db.collection('ganhosTrocas')
-                .orderBy('timestamp', 'desc')
-                .limit(MAX_RECENT_ITEMS / 2)
-                .onSnapshot(trocasSnapshot => {
-                    const ganhosTrocas = [];
-                    trocasSnapshot.forEach(doc => {
-                        ganhosTrocas.push({ id: doc.id, ...doc.data() });
-                    });
-
-                    // Combina e ordena todos os ganhos
-                    const todosGanhos = [...ganhosRecentes, ...ganhosTrocas]
-                        .sort((a, b) => {
-                            // Garante que timestamps sejam comparáveis
-                            const timeA = a.timestamp?.toMillis() || 0;
-                            const timeB = b.timestamp?.toMillis() || 0;
-                            return timeB - timeA;
-                        })
-                        .slice(0, MAX_RECENT_ITEMS);
-
-                    updateRecentesUI(todosGanhos);
-                });
+            mergeAndRenderRecentes();
+        }, error => {
+            console.error('Erro no snapshot de', RECENT_ITEMS_COLLECTION, error);
         });
+
+    // Listener para a coleção de trocas
+    unsubscribeTrocas = db.collection('ganhosTrocas')
+        .orderBy('timestamp', 'desc')
+        .limit(Number(MAX_RECENT_ITEMS))
+        .onSnapshot(snapshot => {
+            _latestTrocas = snapshot.docs.map(doc => ({ id: `ganhosTrocas_${doc.id}`, _rawId: doc.id, collection: 'ganhosTrocas', ...doc.data() }));
+            console.log(`Snapshot ganhosTrocas: ${_latestTrocas.length} docs`);
+            snapshot.docs.forEach(d => {
+                const ts = d.get('timestamp');
+                if (!ts) console.warn(`ganhosTrocas doc ${d.id} sem timestamp`);
+                else console.log(`ganhosTrocas doc ${d.id} ts=${typeof ts.toMillis === 'function' ? ts.toMillis() : ts}`);
+            });
+            mergeAndRenderRecentes();
+        }, error => {
+            console.error('Erro no snapshot de ganhosTrocas', error);
+        });
+
+    // Cleanup quando a aba/page for descarregada
+    window.addEventListener('beforeunload', () => {
+        if (typeof unsubscribeRecentes === 'function') unsubscribeRecentes();
+        if (typeof unsubscribeTrocas === 'function') unsubscribeTrocas();
+    });
+}
+
+/**
+ * Combina os dois caches, ordena por timestamp (mais recentes primeiro) e renderiza
+ */
+function mergeAndRenderRecentes() {
+    const combined = [..._latestRecentes, ..._latestTrocas];
+
+    combined.sort((a, b) => {
+        const toMillis = t => {
+            if (!t) return 0;
+            if (typeof t.toMillis === 'function') return t.toMillis();
+            if (typeof t === 'number') return t;
+            const parsed = Date.parse(t);
+            return isNaN(parsed) ? 0 : parsed;
+        };
+        return toMillis(b.timestamp) - toMillis(a.timestamp);
+    });
+
+    const top = combined.slice(0, MAX_RECENT_ITEMS);
+    updateRecentesUI(top);
 }
 
 /**
@@ -147,43 +192,43 @@ function updateRecentesUI(ganhos) {
         `;
         return;
     }
+    // Re-render completo: mais simples e evita inconsistências quando docs mudam/deletam
+    const fragment = document.createDocumentFragment();
 
-    // Limita a 6 itens e reverte a ordem para o mais recente aparecer primeiro
-    const ganhosLimitados = ganhos.slice(0, 6).reverse();
+    // 'ganhos' vem ordenado do mais recente para o mais antigo
+    // Garantir que mostremos sempre até MAX_RECENT_ITEMS (preenchendo com placeholders)
+    const padded = ganhos.slice(0, MAX_RECENT_ITEMS);
+    while (padded.length < MAX_RECENT_ITEMS) {
+        padded.push(null);
+    }
 
-    // Para cada ganho, verifica se já existe um card para ele
-    ganhosLimitados.forEach((ganho, index) => {
-        const existingCard = recentesContainer.querySelector(`[data-ganho-id="${ganho.id}"]`);
-        if (!existingCard) {
-            // Se não existe, cria um novo card com animação
-            const card = createRecentCard(ganho);
-            card.style.transform = 'translateY(-100%)';
-            card.style.opacity = '0';
-            
-            // Se há mais cards que o limite, remove o último com animação
-            if (recentesContainer.children.length >= 6) {
-                const lastCard = recentesContainer.lastElementChild;
-                lastCard.style.transform = 'translateY(20px)';
-                lastCard.style.opacity = '0';
-                setTimeout(() => lastCard.remove(), 300);
-            }
-
-            // Insere o novo card no início
-            if (recentesContainer.firstChild) {
-                recentesContainer.insertBefore(card, recentesContainer.firstChild);
-            } else {
-                recentesContainer.appendChild(card);
-            }
-            
-            // Força um reflow
-            card.offsetHeight;
-            
-            // Anima o card entrando
-            card.style.transition = 'all 0.5s ease-out';
-            card.style.transform = 'translateY(0)';
-            card.style.opacity = '1';
-        }
+    padded.forEach(ganho => {
+        const card = ganho ? createRecentCard(ganho) : createPlaceholderCard();
+        fragment.appendChild(card);
     });
+
+    // Substitui o conteúdo atual (clean swap para evitar flashes)
+    recentesContainer.innerHTML = '';
+    recentesContainer.appendChild(fragment);
+    console.log(`UI de recentes atualizada: exibindo ${ganhos.length} ganhos (padrão até ${MAX_RECENT_ITEMS}).`);
+}
+
+/**
+ * Cria um card placeholder (quando não há 6 itens)
+ */
+function createPlaceholderCard() {
+    const card = document.createElement('div');
+    card.className = 'recentes-card placeholder';
+    card.setAttribute('data-ganho-id', 'placeholder');
+    card.innerHTML = `
+        <div class="recentes-image placeholder-image"></div>
+        <div class="recentes-info">
+            <p class="placeholder-text">Aguardando...</p>
+            <span class="placeholder-text">--</span>
+        </div>
+        <div class="recentes-avatar placeholder-avatar"></div>
+    `;
+    return card;
 }
 
 /**
