@@ -23,7 +23,24 @@ body {
     overflow-x: hidden;
 }
 
-/* --- ESTRUTURA BASE DO HEADER (SEU LAYOUT) --- */
+*::-webkit-scrollbar {
+    width: 10px; 
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent; 
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: #3b3030; 
+    border-radius: 10px;
+}
+*::-webkit-scrollbar-thumb:hover {
+    background-color: #5c4d4d;
+    border-radius: 10px;
+}
+
+/* --- ESTRUTURA BASE DO HEADER --- */
 .header {
     position: fixed;
     top: 0;
@@ -144,16 +161,11 @@ body {
 .cart-header h2 { margin: 0; font-size: 1.2rem; color: var(--cor-texto-principal); }
 .cart-close { background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--cor-texto-secundario); }
 
-.cart-summary { padding: 14px 20px; background: var(--cor-fundo-secundario); border-bottom: 1px solid var(--cor-borda); }
-.cart-total { font-weight: 700; color: var(--cor-texto-principal); margin-bottom: 10px; }
-.cart-actions { display: flex; gap: 10px; }
-.cart-action-btn { flex: 1; padding: 10px 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; }
-.btn-withdraw { background: #1976d2; color: #fff; }
-.btn-sell-all { background: #2e7d32; color: #fff; }
-.btn-delivery { background: #f57c00; color: #fff; }
+.cart-actions { display: flex; flex-direction: column; gap: 10px; }
+.cart-second-actions {width: 100%; display: flex; flex-direction: line; gap: 10px}
+.cart-action-btn { flex: 1; padding: 10px 12px; border-radius: 8px; border: none; font-weight: 600; }
 
-.cart-items { padding: 16px 20px; overflow-y: auto; flex: 1; }
-.cart-item { display: flex; gap: 12px; align-items: center; padding: 10px; border-radius: 8px; border: 1px solid var(--cor-borda); background: var(--cor-fundo-secundario); margin-bottom: 10px; }
+
 .cart-item-image { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
 .cart-item-info { flex: 1; }
 .cart-item-name { font-weight: 600; color: var(--cor-texto-principal); }
@@ -162,17 +174,7 @@ body {
 .empty-cart-display { text-align: center; padding: 24px; color: var(--cor-texto-secundario); }
 .is-empty-flex { display:flex; align-items:center; justify-content:center; }
 
-.cart-action-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.btn-primary {
-    background: var(--cor-destaque);
-    color: #fff;
-    border: none;
-    padding: 8px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    transition: background 0.3s;
-    font-weight: 600;
-}
+
 
 .btn-primary:hover {
     filter: brightness(1.1);
@@ -263,6 +265,7 @@ body {
     background: #4299E1; /* requested blue */
     padding: 8px 12px;
     border-radius: 8px;
+    height: 44px;
     color: #fff;
     cursor: pointer; /* only front-end clickable */
     display: inline-flex;
@@ -307,7 +310,7 @@ body {
     padding: 30px;
     border-radius: 12px;
     border: 1px solid var(--cor-borda);
-    width: 400px;
+    width: fit-content;
     text-align: center;
     z-index: 101;
 }
@@ -342,6 +345,7 @@ body {
 .auth-modal .age-check-container {
     display: flex;
     align-items: center;
+    text-align: left;
     justify-content: center;
     gap: 10px;
     margin-top: 15px;
@@ -391,7 +395,7 @@ body {
     border-radius: 12px;
     width: 90%;
     max-width: 600px;
-    max-height: 80vh;
+    height: 60vh;
     border: 1px solid var(--cor-borda);
     overflow: hidden;
     display: flex;
@@ -425,14 +429,12 @@ body {
     padding: 20px;
     background-color: var(--cor-fundo-secundario);
     border-bottom: 1px solid var(--cor-borda);
-    /* Modificado para flex para centralizar o conteúdo */
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    /* Garante que o sumário fique no final */
     order: 2;
-    transition: background 0.3s, border 0.3s; /* Transição suave */
+    transition: background 0.3s, border 0.3s; 
 }
 
 .cart-total {
@@ -451,41 +453,40 @@ body {
     width: 100%;
 }
 
-.cart-action-btn {
-    flex: 1;
-    padding: 10px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: filter 0.2s;
-}
-
 .btn-withdraw {
-    background-color: #2196F3;
-    color: white;
+    background-color: #145081;
+    color: #bdbdbd;
 }
 
 .btn-sell-all {
-    background-color: #4CAF50;
-    color: white;
+    background-color: #265728;
+    color: #bdbdbd;
 }
 
 .btn-delivery {
-    background-color: #FF9800;
-    color: white;
+    background-color: #8f5600;
+    color: #bdbdbd;
 }
 
 .cart-items {
-    /* Faz esta área crescer e ocupar o espaço disponível */
     flex: 1; 
     overflow-y: auto;
-    padding: 20px;
-    /* Garante que o conteúdo seja inserido no topo por padrão */
+    padding: 0px 20px;
     display: flex;
     flex-direction: column;
     align-items: stretch; 
-    order: 1; /* Posição antes do sumário */
+    order: 1; 
+}
+
+.cart-select{
+    background: none;
+    border: none;
+    text-align: left;
+    color: #fff;
+    padding: 6px 15px;
+    width: 100%;
+    cursor: pointer;
+    font-size: 16px;
 }
 
 .cart-items.is-empty-flex {
@@ -610,4 +611,77 @@ body {
 .cart-action-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+
+/* --- ESTILOS PARA SELEÇÃO DE ITENS NO CARRINHO --- */
+
+.cart-item {
+    position: relative; /* Necessário para o posicionamento do overlay */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    -webkit-tap-highlight-color: transparent; /* Remove o highlight azul no mobile */
+}
+
+/* Overlay que aparece no hover e na seleção */
+.cart-item .selection-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 8px; /* Mesmo radius do cart-item */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s, background-color 0.2s;
+    pointer-events: none; /* Garante que o item ainda é clicável */
+}
+
+.cart-item .selection-overlay svg {
+    width: 32px;
+    height: 32px;
+    color: #fff;
+}
+
+/* Quando o item está selecionado, o SVG fica verde */
+.cart-item.selected .selection-overlay svg {
+    color: #4CAF50; /* Verde do botão de vender */
+}
+
+/* Efeito no hover: mostra o overlay semi-transparente */
+.cart-item:hover .selection-overlay {
+    opacity: 1;
+}
+
+/* Item selecionado: overlay fica mais escuro e sempre visível */
+.cart-item.selected .selection-overlay {
+    opacity: 1;
+    background-color: rgba(18, 18, 18, 0.6);
+}
+
+.cart-action-btn.btn-sell-all { background-color: #265728; color: #bdbdbd; }
+.cart-action-btn.btn-withdraw { background-color: #145081; color: #bdbdbd; }
+.cart-action-btn.btn-delivery { background-color: #8f5600; color: #bdbdbd; }
+.cart-action-btn.btn-sell-all.enabled { background-color: #4CAF50; color: #fff;}
+.cart-action-btn.btn-withdraw.enabled { background-color: #2196F3; color: #fff;}
+.cart-action-btn.btn-delivery.enabled { background-color: #FF9800;  color: #fff;}
+
+body.modal-open {
+    overflow: hidden;
+}
+
+.cart-items::-webkit-scrollbar {
+    width: 8px;
+}
+
+.cart-items::-webkit-scrollbar-track {
+    background: transparent; 
+}
+
+.cart-items::-webkit-scrollbar-thumb {
+    background-color: #3b3030; 
+    border-radius: 10px;
 }
