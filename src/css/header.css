@@ -174,7 +174,16 @@ body {
 .empty-cart-display { text-align: center; padding: 24px; color: var(--cor-texto-secundario); }
 .is-empty-flex { display:flex; align-items:center; justify-content:center; }
 
-
+.btn-primary {
+    background: var(--cor-destaque);
+    color: #fff;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+    font-weight: 600;
+}
 
 .btn-primary:hover {
     filter: brightness(1.1);
