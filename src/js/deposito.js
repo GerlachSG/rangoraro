@@ -1,7 +1,5 @@
 // js/deposit.js
 
-// --- Debounce para evitar muitas chamadas ao Firebase ---
-// (Espera o usuário parar de digitar para fazer a verificação)
 function debounce(func, delay) {
     let timeout;
     return function(...args) {
@@ -9,7 +7,6 @@ function debounce(func, delay) {
         timeout = setTimeout(() => func.apply(this, args), delay);
     };
 }
-
 
 function openDepositModal() {
     const modal = document.getElementById('deposit-modal-overlay');
@@ -61,8 +58,6 @@ function initDepositSystem() {
                         <p class="group-title">Bancos e Cartões</p>
                         <div class="options">
                             <button class="option-btn active">PIX</button>
-                            <button class="option-btn">Crédito</button>
-                            <button class="option-btn">NuPay</button>
                         </div>
                     </div>
                 </div>
@@ -105,15 +100,15 @@ function initDepositSystem() {
     const depositStatus = document.getElementById('deposit-status');
     const finalAmountDisplay = document.getElementById('final-amount-display');
     const validIcon = document.getElementById('referral-valid-icon');
-    const paymentOptions = document.querySelectorAll('.payment-methods .option-btn');
     const confirmDepositBtn = document.getElementById('confirm-deposit-btn');
     
-    // Guarda o estado do código validado para não ter que buscar no banco de novo
     let validatedCode = { code: null, bonus: 0 };
 
     const updateFinalAmountDisplay = () => {
-        const amountStr = depositAmountInput.value.replace(',', '.');
-        const amount = parseFloat(amountStr) || 0;
+        const amountStr = depositAmountInput.value.replace(/\D/g, '').padStart(3, '0').slice(-8); // Limita para evitar overflow
+        const reais = amountStr.slice(0, -2);
+        const centavos = amountStr.slice(-2);
+        const amount = parseFloat(`${reais}.${centavos}`) || 0;
         
         const bonusAmount = amount * (validatedCode.bonus / 100);
         const finalAmount = amount + bonusAmount;
@@ -123,8 +118,6 @@ function initDepositSystem() {
     
     const validateCode = async () => {
         const code = referralCodeInput.value.trim().toUpperCase();
-        
-        // Limpa o estado se o campo estiver vazio
         if (!code) {
             validatedCode = { code: null, bonus: 0 };
             validIcon.classList.remove('visible');
@@ -132,8 +125,6 @@ function initDepositSystem() {
             updateFinalAmountDisplay();
             return;
         }
-
-        // Não busca de novo se o código já foi validado
         if (code === validatedCode.code) return;
 
         try {
@@ -146,13 +137,11 @@ function initDepositSystem() {
                 validIcon.classList.add('visible');
                 bonusMessage.textContent = `+${bonusPercent}% de Bônus!`;
                 bonusMessage.className = 'bonus-message success';
-                bonusMessage.style.display = 'block';
             } else {
                 validatedCode = { code: null, bonus: 0 };
                 validIcon.classList.remove('visible');
                 bonusMessage.textContent = 'Código inválido!';
                 bonusMessage.className = 'bonus-message error';
-                bonusMessage.style.display = 'block';
             }
         } catch (error) {
             console.error("Erro ao validar código:", error);
@@ -160,37 +149,27 @@ function initDepositSystem() {
             validIcon.classList.remove('visible');
             bonusMessage.textContent = 'Erro ao verificar código.';
             bonusMessage.className = 'bonus-message error';
-            bonusMessage.style.display = 'block';
         }
+        bonusMessage.style.display = 'block';
         updateFinalAmountDisplay();
     };
     
-    // --- Event Listeners ---
     document.getElementById('close-deposit-modal').addEventListener('click', closeDepositModal);
-    document.getElementById('deposit-modal-overlay').addEventListener('mousedown', (e) => {
-        if (e.target.id === 'deposit-modal-overlay') closeDepositModal();
-    });
-
     depositAmountInput.addEventListener('input', () => {
-        let value = depositAmountInput.value.replace(/\D/g, '').padStart(3, '0');
-        const reais = value.slice(0, -2);
-        const centavos = value.slice(-2);
-        depositAmountInput.value = `${parseInt(reais, 10)},${centavos}`;
-        updateFinalAmountDisplay(); // Atualiza o valor final ao digitar
+        let value = depositAmountInput.value.replace(/\D/g, '');
+        if (value) {
+            value = value.padStart(3, '0');
+            const reais = value.slice(0, -2);
+            const centavos = value.slice(-2);
+            depositAmountInput.value = `${parseInt(reais, 10).toLocaleString('pt-BR')},${centavos}`;
+        } else {
+            depositAmountInput.value = '0,00';
+        }
+        updateFinalAmountDisplay();
     });
     
-    // Usa o debounce para validar o código 500ms depois que o usuário para de digitar
     referralCodeInput.addEventListener('input', debounce(validateCode, 500));
 
-    // Lógica para selecionar o método de pagamento
-    paymentOptions.forEach(btn => {
-        btn.addEventListener('click', () => {
-            paymentOptions.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-        });
-    });
-
-    // Lógica de Confirmação do Depósito
     confirmDepositBtn.addEventListener('click', async () => {
         const user = auth.currentUser;
         if (!user) {
@@ -198,7 +177,7 @@ function initDepositSystem() {
             return;
         }
         
-        const amountStr = depositAmountInput.value.replace(',', '.');
+        const amountStr = depositAmountInput.value.replace(/\./g, '').replace(',', '.');
         const amount = parseFloat(amountStr);
 
         if (isNaN(amount) || amount <= 0) {
@@ -212,26 +191,47 @@ function initDepositSystem() {
         const bonusAmount = amount * (validatedCode.bonus / 100);
         const finalAmount = amount + bonusAmount;
 
-        try {
-            const userRef = db.collection('users').doc(user.uid);
-            await userRef.update({
-                balance: firebase.firestore.FieldValue.increment(finalAmount)
-            });
+        const batch = db.batch();
+        const transactionRef = db.collection("transactions").doc();
+        batch.set(transactionRef, {
+            userId: user.uid,
+            userName: user.displayName,
+            userPhoto: user.photoURL,
+            type: "deposit",
+            amount: amount,
+            bonusAmount: bonusAmount,
+            finalAmount: finalAmount,
+            referralCode: validatedCode.code || null,
+            status: "completed",
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        const userRef = db.collection("users").doc(user.uid);
+        batch.update(userRef, {
+            balance: firebase.firestore.FieldValue.increment(finalAmount)
+        });
 
+        try {
+            await batch.commit();
             showProcessingModal('success');
             setTimeout(() => {
                 closeProcessingModal();
                 closeDepositModal();
             }, 2000);
         } catch (error) {
-            console.error("Erro ao atualizar saldo:", error);
-            depositStatus.textContent = 'Ocorreu um erro ao processar o depósito.';
+            // --- PONTO IMPORTANTE ---
+            // Este log vai nos dizer exatamente por que o depósito falhou.
+            console.error("=============================================");
+            console.error("### ERRO AO PROCESSAR DEPÓSITO ###");
+            console.error("Usuário:", user.uid);
+            console.error("O erro foi:", error);
+            console.error("=============================================");
+            depositStatus.textContent = 'Ocorreu um erro ao processar o depósito. Verifique o console.';
             closeProcessingModal();
         }
     });
 
-    // Atualiza a UI inicial
     updateFinalAmountDisplay();
 }
 
 document.addEventListener('DOMContentLoaded', initDepositSystem);
+

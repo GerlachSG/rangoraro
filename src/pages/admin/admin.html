@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RangoRaro Admin</title>
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo-aba.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../css/header.css">
+    <link rel="stylesheet" href="../../css/admin.css">
+    <style>
+        /* Estilos para gerenciar as telas de loading e login */
+        .screen-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: calc(100vh - 9vh); /* Altura total menos o header */
+            text-align: center;
+            flex-direction: column;
+        }
+        .auth-modal {
+            background-color: #2B2222;
+            padding: 2rem 3rem;
+            border-radius: 10px;
+            border: 1px solid #444;
+        }
+        .auth-modal h2 { margin-bottom: 0.5rem; }
+        .auth-modal p { margin-bottom: 1.5rem; opacity: 0.7; }
+        #google-login-btn {
+            background-color: #4285F4;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        #google-login-btn:hover { background-color: #357ae8; }
+    </style>
+</head>
+<body>
+    <!-- Header Fixo -->
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo.svg" alt="Logo RangoRaro">
+            <span>RangoRaro Painel</span>
+        </a>
+    </header>
+
+    <!-- TELA DE CARREGAMENTO (Visível por padrão) -->
+    <div id="loading-screen" class="screen-container">
+        <h2>Verificando permissões...</h2>
+        <p>Por favor, aguarde enquanto validamos seu acesso de administrador.</p>
+    </div>
+
+    <!-- TELA DE LOGIN (Escondida por padrão) -->
+    <div id="login-screen" class="screen-container" style="display: none;">
+        <div class="auth-modal">
+            <h2>Parte Administrativa do Rango Raro</h2>
+            <p>Entre com uma conta de administrador para continuar.</p>
+            <button id="google-login-btn">Entrar com <b>Google</b></button>
+        </div>
+    </div>
+    
+    <!-- CONTEÚDO PRINCIPAL / DASHBOARD (Escondido por padrão) -->
+    <div class="main-container" id="main-content" style="display: none;">
+        <div class="main-content">
+            <section class="secao-destaques">
+                <!-- Lucro e Métricas -->
+                <div class="lucro-container">
+                    <div class="lucro-card">
+                        <h3><i class="fas fa-dollar-sign"></i> Depósitos</h3>
+                        <p id="total-deposits">R$ 0,00</p>
+                    </div>
+                    <div class="lucro-card">
+                        <h3><i class="fas fa-exchange-alt"></i> Total Circulado</h3>
+                        <p id="total-circulated">R$ 0,00</p>
+                    </div>
+                    <div class="lucro-card placeholder">
+                        <h3><i class="fas fa-arrow-down"></i> Saques</h3>
+                        <p>R$ 0,00</p>
+                    </div>
+                    <div class="lucro-card placeholder">
+                        <h3><i class="fas fa-truck"></i> Entregas</h3>
+                        <p>R$ 0,00</p>
+                    </div>
+                </div>
+                <!-- Filtros -->
+                <div class="filtros-container">
+                    <label for="period-selector">Mostrar dados de:</label>
+                    <select id="period-selector">
+                        <option value="today">Hoje</option>
+                        <option value="3days">Últimos 3 dias</option>
+                        <option value="7days">Últimos 7 dias</option>
+                        <option value="1month">Último mês</option>
+                        <option value="6months">Últimos 6 meses</option>
+                    </select>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="../../js/admin.js"></script>
+</body>
+</html>
+

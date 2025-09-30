@@ -890,7 +890,12 @@ body.logged-in .header-right {
     border: 5px solid #4A5568; /* cinza */
     border-top-color: #4299E1; /* azul */
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    /* Duração maior e easing mais suave. Usamos !important para garantir que essa configuração
+       sobreponha eventuais estilos inline aplicados por JS (sem !important). */
+    animation-name: spin !important;
+    animation-duration: 6s !important;
+    animation-timing-function: cubic-bezier(0.2, 0.8, 0.2, 1) !important;
+    animation-iteration-count: infinite !important;
 }
 
 .success-icon svg {
@@ -954,10 +959,9 @@ body.logged-in .header-right {
 .final-amount-display {
     text-align: center;
     font-size: 1rem;
-    color: var(--cor-texto-secundario);
-    background-color: var(--cor-fundo-secundario);
+    color: #48BB78;
     padding: 10px;
     border-radius: 8px;
-    border: 1px solid var(--cor-borda);
-    margin-top: 4px; /* Pequeno espaço acima */
+    margin-top: 4px; 
+    font-weight: 700;
 }
