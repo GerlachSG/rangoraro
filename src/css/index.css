@@ -37,7 +37,7 @@
     background-position: center;
     position: relative;
     overflow: hidden;
-    background-color: #2B2222;
+    background-image: #2B2222;
 }
 
 .cartao-destaque::before {
@@ -84,6 +84,18 @@
 
 .cartao-destaque .titulo p {
     font-size: 1.2rem;
+}
+
+.cartao-destaque.pacote {
+    background-image: url(https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/homepage-image/primeiro-pacote.png);
+}
+
+.cartao-destaque.troca {
+    background-image: url(https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/homepage-image/trocas-img.png);
+}
+
+.cartao-destaque.rifa {
+    background-image: url(https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/homepage-image/rifa-image.png);
 }
 
 .pacote { background-image: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(0,0,0,0.02)); }

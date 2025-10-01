@@ -29,6 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- VARIÁVEIS DE ESTADO ---
     const TOTAL_ROULETTE_ITEMS = 70;
     const WINNER_POSITION = 62;
+    // Guarda o ref da última transação de abrir pacote para poder completar/refund depois
+    let lastOpeningTxRef = null;
+    // Guard para evitar reentrância/execução duplicada
+    let lastOpenCalledAt = 0;
 
     // --- LÓGICA PROVABLY FAIR ---
     let serverSeed, clientSeed, nonce;
@@ -338,10 +342,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }
 
-                    // Dispara confete para qualquer raridade exceto comum
+                    // Dispara confete uma única vez por reveal para evitar múltiplos disparos
                     const raridadesComConfete = ['incomum', 'raro', 'epico', 'lendario'];
-                    if (raridadesComConfete.includes(itemFinal.raridade) || itemFinal.valor > pacoteAtual.preco) {
-                        dispararConfetes(targetItem);
+                    if ( (raridadesComConfete.includes(itemFinal.raridade) || itemFinal.valor > pacoteAtual.preco) && !targetItem.__confettiFired ) {
+                        targetItem.__confettiFired = true;
+                        try { dispararConfetes(targetItem); } catch (e) { console.error('Erro ao disparar confetes:', e); }
                     }
                 }
             }
@@ -366,77 +371,182 @@ document.addEventListener('DOMContentLoaded', () => {
         openButton.classList.remove('disabled');
     };
 
-    iniciarAbertura = (isDemo = false) => {
+    iniciarAbertura = async (isDemo = false) => {
+        const now = Date.now();
+        if (now - lastOpenCalledAt < 2000) {
+            console.warn('iniciarAbertura chamado rapidamente novamente — ignorando para evitar duplicação.');
+            return;
+        }
+        lastOpenCalledAt = now;
         if (isSpinning) return;
-        
+
         // Se não for demo, verifica se está logado
         if (!isDemo && !auth.currentUser) {
             showAuthModal();
             return;
         }
 
+    // Se não for demo E estivermos no estágio 1, verifica saldo e debita o preço do pacote dentro de uma transaction
+    // (não debitar ao abrir item especial no estágio 2)
+    if (!isDemo && currentStage === 1) {
+            try {
+                const user = auth.currentUser;
+                const price = (pacoteAtual && typeof pacoteAtual.preco === 'number') ? pacoteAtual.preco : (pacoteAtual && pacoteAtual.preco ? Number(pacoteAtual.preco) : 0);
+                const userRef = firebase.firestore().collection('users').doc(user.uid);
+
+                // Pre-cria a ref da transação para podermos atualizá-la depois
+                const txRef = firebase.firestore().collection('transactions').doc();
+                lastOpeningTxRef = txRef;
+
+                await firebase.firestore().runTransaction(async tx => {
+                    const userDoc = await tx.get(userRef);
+                    const balance = (userDoc.exists && userDoc.data().balance) ? Number(userDoc.data().balance) : 0;
+                    if (balance < price) {
+                        throw new Error('INSUFFICIENT_BALANCE');
+                    }
+
+                    // Debita o saldo
+                    tx.update(userRef, { balance: firebase.firestore.FieldValue.increment(-price) });
+
+                    // Registra uma entrada de transação para auditoria usando a ref pré-criada
+                    tx.set(txRef, {
+                        userId: user.uid,
+                        type: 'open_package',
+                        packageId: pacoteAtual && pacoteAtual.id ? pacoteAtual.id : null,
+                        amount: price,
+                        status: 'debited',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                });
+
+                console.log(`Saldo debitado: R$ ${price} do usuário ${auth.currentUser.uid}`);
+            } catch (err) {
+                if (err && err.message === 'INSUFFICIENT_BALANCE') {
+                    console.warn('Saldo insuficiente para abrir o pacote');
+                    // Prefer opening the deposit modal so the user can top up and try again
+                    if (typeof openDepositModal === 'function') {
+                        openDepositModal();
+                    } else {
+                        alert('Saldo insuficiente. Faça um depósito para abrir este pacote.');
+                    }
+                    // reset UI state
+                    if (openButtonContent) openButtonContent.innerHTML = `Abrir <span class="price-tag">R$ ${pacoteAtual.preco.toFixed(2).replace('.', ',')}</span>`;
+                    openButton.classList.remove('disabled');
+                    isSpinning = false;
+                    updateOpenButtonState();
+                    return;
+                }
+                console.error('Erro ao debitar saldo do usuário:', err);
+                alert('Ocorreu um erro ao processar o pagamento. Tente novamente.');
+                return;
+            }
+        }
+
+        // Marca que está girando e bloqueia o botão apenas após o débito
         isSpinning = true;
         openButton.classList.add('disabled');
-        nonce++;
-        if (nonceElement) nonceElement.textContent = nonce;
-        const random = getProvablyFairRandomGenerator(nonce);
-        const oldServerSeed = serverSeed;
-        itemsTrack.style.transition = 'opacity 0.2s ease-out';
-        itemsTrack.style.opacity = 0;
-        setTimeout(() => {
-            let itemVencedorRoleta = null;
-            let itemFinalRevelado = null;
-            let needsSecondStage = false;
-            let listaDeFundoParaRoleta;
-            if (currentStage === 1) {
-                const tierVencedor = sortearTier(random);
-                listaDeFundoParaRoleta = itensComunsParaRoleta;
-                if (tierVencedor.raridade === 'especial') {
-                    needsSecondStage = true;
-                    itemVencedorRoleta = tiersDeProbabilidade.find(t => t.raridade === 'especial');
-                    itemFinalRevelado = null;
-                } else {
-                    itemFinalRevelado = sortearItemDoTier(tierVencedor.raridade, random);
-                    itemVencedorRoleta = itemFinalRevelado;
-                }
-            } else {
-                const itensEspeciais = pacoteAtual.itens.filter(item => highTiers.includes(item.raridade));
-                itemFinalRevelado = sortearItemDoTier('especial', random);
-                itemVencedorRoleta = itemFinalRevelado;
-                listaDeFundoParaRoleta = itensEspeciais;
-            }
-            preencherRoleta(itemVencedorRoleta, listaDeFundoParaRoleta);
-            itemsTrack.style.transition = 'none';
-            itemsTrack.style.transform = 'translateX(0)';
-            itemsTrack.offsetHeight;
-            itemsTrack.style.transition = 'opacity 0.2s ease-in';
-            itemsTrack.style.opacity = 1;
+
+        try {
+            nonce++;
+            if (nonceElement) nonceElement.textContent = nonce;
+            const random = getProvablyFairRandomGenerator(nonce);
+            const oldServerSeed = serverSeed;
+            itemsTrack.style.transition = 'opacity 0.2s ease-out';
+            itemsTrack.style.opacity = 0;
             setTimeout(() => {
-                // Passa isDemo como parâmetro para animarRoleta
-                animarRoleta(itemVencedorRoleta, itemFinalRevelado, isDemo, () => {
-                    if (lastServerSeedElement) lastServerSeedElement.textContent = oldServerSeed;
-                    serverSeed = generateRandomSeed();
-                    if (serverSeedHashElement) serverSeedHashElement.textContent = CryptoJS.SHA256(serverSeed).toString();
-                    if (needsSecondStage) {
-                        setTimeout(prepararSegundoEstagio, 1000);
+                let itemVencedorRoleta = null;
+                let itemFinalRevelado = null;
+                let needsSecondStage = false;
+                let listaDeFundoParaRoleta;
+                if (currentStage === 1) {
+                    const tierVencedor = sortearTier(random);
+                    listaDeFundoParaRoleta = itensComunsParaRoleta;
+                    if (tierVencedor.raridade === 'especial') {
+                        needsSecondStage = true;
+                        itemVencedorRoleta = tiersDeProbabilidade.find(t => t.raridade === 'especial');
+                        itemFinalRevelado = null;
                     } else {
-                        if (currentStage === 2) {
-                            setTimeout(() => {
-                                resetarParaPrimeiroEstagio();
-                                isSpinning = false;
-                            }, 1500);
-                        } else {
-                            isSpinning = false;
-                            openButton.classList.remove('disabled');
-                        }
+                        itemFinalRevelado = sortearItemDoTier(tierVencedor.raridade, random);
+                        itemVencedorRoleta = itemFinalRevelado;
                     }
-                });
-            }, 100);
-        }, 200);
+                } else {
+                    const itensEspeciais = pacoteAtual.itens.filter(item => highTiers.includes(item.raridade));
+                    itemFinalRevelado = sortearItemDoTier('especial', random);
+                    itemVencedorRoleta = itemFinalRevelado;
+                    listaDeFundoParaRoleta = itensEspeciais;
+                }
+                preencherRoleta(itemVencedorRoleta, listaDeFundoParaRoleta);
+                itemsTrack.style.transition = 'none';
+                itemsTrack.style.transform = 'translateX(0)';
+                itemsTrack.offsetHeight;
+                itemsTrack.style.transition = 'opacity 0.2s ease-in';
+                itemsTrack.style.opacity = 1;
+                setTimeout(() => {
+                    // Passa isDemo como parâmetro para animarRoleta
+                    animarRoleta(itemVencedorRoleta, itemFinalRevelado, isDemo, async (revealedElement) => {
+                        // Atualiza seed e interface
+                        if (lastServerSeedElement) lastServerSeedElement.textContent = oldServerSeed;
+                        serverSeed = generateRandomSeed();
+                        if (serverSeedHashElement) serverSeedHashElement.textContent = CryptoJS.SHA256(serverSeed).toString();
+
+                        // Se tivermos uma transação de abertura pendente, marque como completed e anexe info do item ganho
+                        if (lastOpeningTxRef) {
+                            try {
+                                const wonItem = itemFinalRevelado || itemVencedorRoleta || null;
+                                await lastOpeningTxRef.update({
+                                    status: 'completed',
+                                    wonItemId: wonItem ? wonItem.id : null,
+                                    wonItemName: wonItem ? (wonItem.nome || wonItem.name) : null,
+                                    wonItemValue: wonItem ? (wonItem.valor || wonItem.price) : null,
+                                    completedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                });
+                            } catch (err) {
+                                console.error('Erro ao marcar transação de abertura como completed:', err);
+                            } finally {
+                                lastOpeningTxRef = null;
+                            }
+                        }
+
+                        if (needsSecondStage) {
+                            setTimeout(prepararSegundoEstagio, 1000);
+                        } else {
+                            if (currentStage === 2) {
+                                setTimeout(() => {
+                                    resetarParaPrimeiroEstagio();
+                                    isSpinning = false;
+                                }, 1500);
+                            } else {
+                                isSpinning = false;
+                                openButton.classList.remove('disabled');
+                            }
+                        }
+                    });
+                }, 100);
+            }, 200);
+        } catch (err) {
+            console.error('Erro durante o processo de abertura:', err);
+            // Tenta reembolsar o usuário caso tenhamos debitado
+            try {
+                if (lastOpeningTxRef) {
+                    // marca transação como refund
+                    await lastOpeningTxRef.update({ status: 'refunded', refundedAt: firebase.firestore.FieldValue.serverTimestamp() });
+                    // reembolsa saldo
+                    const userRef = firebase.firestore().collection('users').doc(auth.currentUser.uid);
+                    await userRef.update({ balance: firebase.firestore.FieldValue.increment(pacoteAtual.preco) });
+                    lastOpeningTxRef = null;
+                }
+            } catch (refundErr) {
+                console.error('Erro ao tentar reembolsar o usuário automaticamente:', refundErr);
+            }
+
+            alert('Ocorreu um erro durante a abertura. Seu saldo foi reembolsado quando possível.');
+            isSpinning = false;
+            openButton.classList.remove('disabled');
+        }
     };
 
     if (speedToggleButton) { speedToggleButton.addEventListener('click', () => speedToggleButton.classList.toggle('active')); }
-    if (openButton) { openButton.addEventListener('click', () => iniciarAbertura(false)); }
+    // openButton.onclick é definido por updateOpenButtonState (evita listeners duplicados)
     if (demoButton) { demoButton.addEventListener('click', () => iniciarAbertura(true)); }
 
     // --- INICIALIZAÇÃO DA PÁGINA ---

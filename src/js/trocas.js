@@ -1,14 +1,14 @@
 document.addEventListener('DOMContentLoaded', function () {
     // --- ESTADO DA APLICAÇÃO ---
-    let allSnacks = []; // Armazenará TODOS os itens do Firebase
-    let filteredSnacks = []; // Armazenará os itens filtrados para exibição
+    let allSnacks = [];
+    let filteredSnacks = [];
     let selectedSnack = null;
     let isSpinning = false;
     let isDraggingRoulette = false;
     let isDraggingSlider = false;
     let dragTarget = null;
 
-    // --- CONSTANTES --- 
+    // --- CONSTANTES ---
     const MIN_PERCENT = 5;
     const MAX_PERCENT = 80;
     const MIN_SWEEP_ANGLE = (MIN_PERCENT / 100) * 360;
@@ -16,8 +16,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const ROULETTE_RADIUS = 90;
     const ROULETTE_CENTER = 100;
     const HANDLE_OFFSET_ANGLE = 5;
-
-    // Configurações da Roleta e Slider
     let startAngle = 0;
     let sweepAngle = (MIN_PERCENT / 100) * 360;
 
@@ -47,36 +45,18 @@ document.addEventListener('DOMContentLoaded', function () {
     const resultSliderHandle = document.getElementById('result-slider-handle');
     const sliderTrack = document.querySelector('.slider-track');
 
-    /**
-     * NOVA FUNÇÃO: Busca todos os itens da coleção 'itens' no Firestore.
-     */
     async function fetchItemsFromFirestore() {
         try {
-            // A variável 'db' já está disponível globalmente graças ao firebase-auth.js
             const itemsCollection = await db.collection('itens').get();
-            
-            // Verifica se a coleção está vazia
             if (itemsCollection.empty) {
-                console.log('Nenhum item encontrado na coleção "itens".');
                 productsContainer.innerHTML = '<p>Nenhum item disponível no momento.</p>';
                 return;
             }
-
-            // Mapeia os documentos para o formato que o script já usa
             allSnacks = itemsCollection.docs.map(doc => {
                 const data = doc.data();
-                return {
-                    id: doc.id,
-                    name: data.nome,
-                    price: parseFloat(data.valor || 0),
-                    image: data.imagemUrl
-                    // Note que o campo 'chance' de 'data.chance' não é lido nem utilizado aqui.
-                };
+                return { id: doc.id, name: data.nome, price: parseFloat(data.valor || 0), image: data.imagemUrl };
             });
-            
-            // Inicia a aplicação com os dados carregados
             init();
-
         } catch (error) {
             console.error("Erro ao buscar itens do Firestore: ", error);
             productsContainer.innerHTML = '<p>Ocorreu um erro ao carregar os itens.</p>';
@@ -84,7 +64,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function init() {
-        applyFilters(); // Aplica filtros iniciais (que também ordena e renderiza)
+        applyFilters();
         addEventListeners();
         updateRouletteUI();
         updateChanceDisplays();
@@ -92,11 +72,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function addEventListeners() {
-        // Modifica o listener do priceInput para ter dois eventos
-        priceInput.addEventListener('input', handlePriceInputTyping);
-        priceInput.addEventListener('blur', validateAndCorrectPrice);
-        priceInput.addEventListener('keypress', handlePriceInputKeypress);
-        
+        priceInput.addEventListener('input', handlePriceInputChange);
         maxPriceBtn.addEventListener('click', handleMaxPriceClick);
         resetBtn.addEventListener('click', resetSelection);
         shortcutButtons.forEach(btn => btn.addEventListener('click', handleShortcutClick));
@@ -117,32 +93,15 @@ document.addEventListener('DOMContentLoaded', function () {
         searchInput.addEventListener('input', applyFilters);
         sortPriceDiv.addEventListener('click', toggleSortOrder);
     }
-    
-    // --- O RESTANTE DAS FUNÇÕES (startDragRoulette, drag, spinRoulette, etc.) PERMANECE IGUAL ---
-    // Colei abaixo apenas as funções que precisavam de um pequeno ajuste ou que são importantes no fluxo.
-    
-    function handlePriceInputChange() {
-        if (!selectedSnack) return;
-        validateAndCorrectPrice();
-    }
 
     function selectSnack(snack) {
-        // Não permite seleção se a roleta estiver girando
-        if (isSpinning) return;
-
         selectedSnack = snack;
         previewImage.style.backgroundImage = `url('${snack.image}')`;
         previewText.textContent = snack.name;
         document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected'));
         const selectedCard = document.querySelector(`[data-snack-id='${snack.id}']`);
-        if (selectedCard) {
-            selectedCard.classList.add('selected');
-        }
-
-        const minValue = Math.ceil(snack.price * (MIN_PERCENT / 100));
-        priceInput.value = minValue.toFixed(2);
-        
-        updateChanceFromPrice();
+        if (selectedCard) selectedCard.classList.add('selected');
+        updatePriceFromChance();
         updateSpinButtonState();
     }
 
@@ -150,7 +109,6 @@ document.addEventListener('DOMContentLoaded', function () {
         const minPrice = parseFloat(minPriceFilter.value) || 0;
         const maxPrice = parseFloat(maxPriceFilter.value) || Infinity;
         const searchTerm = searchInput.value.toLowerCase();
-        
         filteredSnacks = allSnacks.filter(snack =>
             snack.price >= minPrice &&
             snack.price <= maxPrice &&
@@ -174,7 +132,7 @@ document.addEventListener('DOMContentLoaded', function () {
     function renderProducts() {
         productsContainer.innerHTML = '';
         if (filteredSnacks.length === 0) {
-             productsContainer.innerHTML = '<p style="color: #a0a0a0; grid-column: 1 / -1; text-align: center;">Nenhum item encontrado com esses filtros.</p>';
+             productsContainer.innerHTML = '<p style="color: #a0a0a0; grid-column: 1 / -1; text-align: center;">Nenhum item encontrado.</p>';
              return;
         }
         filteredSnacks.forEach(snack => {
@@ -191,124 +149,144 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // --- (COLE AQUI O RESTANTE DAS SUAS FUNÇÕES QUE NÃO FORAM MODIFICADAS) ---
-    // Por exemplo: startDragRoulette, drag, endDrag, getPointOnCircle, updateRouletteUI, etc...
-    // Para facilitar, estou incluindo todas elas abaixo.
-    
     function startDragRoulette(e) { if (isSpinning) return; const target = e.target; if ([handleStart, handleEnd, rouletteProgress].includes(target)) { e.preventDefault(); isDraggingRoulette = true; rouletteContainer.style.cursor = 'grabbing'; if (target === handleStart) dragTarget = 'start'; else if (target === handleEnd) dragTarget = 'end'; else if (target === rouletteProgress) dragTarget = 'progress'; } }
+    
     function startDragSlider(e) { if (isSpinning) return; e.preventDefault(); isDraggingSlider = true; sliderTrack.style.cursor = 'grabbing'; updatePercentageFromSlider(e); }
-    function drag(e) { if (!isDraggingRoulette && !isDraggingSlider) return; e.preventDefault(); if (isDraggingRoulette) { const rect = rouletteContainer.getBoundingClientRect(); const centerX = rect.left + rect.width / 2; const centerY = rect.top + rect.height / 2; const clientX = e.touches ? e.touches[0].clientX : e.clientX; const clientY = e.touches ? e.touches[0].clientY : e.clientY; const angle = (Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI + 90 + 360) % 360; if (dragTarget === 'end') { let newSweepAngle = (angle - startAngle + 360) % 360; sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, newSweepAngle)); } else if (dragTarget === 'start') { const endAngle = (startAngle + sweepAngle) % 360; const originalSweep = sweepAngle; startAngle = angle; sweepAngle = (endAngle - startAngle + 360) % 360; if (sweepAngle > MAX_SWEEP_ANGLE || sweepAngle < MIN_SWEEP_ANGLE) { sweepAngle = originalSweep; startAngle = (endAngle - sweepAngle + 360) % 360; } } else if (dragTarget === 'progress') { startAngle = (angle - sweepAngle / 2 + 360) % 360; } updateRouletteUI(); } else if (isDraggingSlider) { updatePercentageFromSlider(e); updatePriceFromChance(); } updateChanceDisplays(); updatePriceFromChance(); }
+    
+    /**
+     * ATUALIZADO: Chama updateSpinButtonState() para atualizar o texto do botão ao arrastar.
+     */
+    function drag(e) { 
+        if (!isDraggingRoulette && !isDraggingSlider) return; 
+        e.preventDefault(); 
+        if (isDraggingRoulette) { 
+            const rect = rouletteContainer.getBoundingClientRect(); 
+            const centerX = rect.left + rect.width / 2; 
+            const centerY = rect.top + rect.height / 2; 
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX; 
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY; 
+            const angle = (Math.atan2(clientY - centerY, clientX - centerX) * 180 / Math.PI + 90 + 360) % 360; 
+            if (dragTarget === 'end') { 
+                let newSweepAngle = (angle - startAngle + 360) % 360; 
+                sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, newSweepAngle)); 
+            } else if (dragTarget === 'start') { 
+                const endAngle = (startAngle + sweepAngle) % 360; 
+                const originalSweep = sweepAngle; 
+                startAngle = angle; 
+                sweepAngle = (endAngle - startAngle + 360) % 360; 
+                if (sweepAngle > MAX_SWEEP_ANGLE || sweepAngle < MIN_SWEEP_ANGLE) { 
+                    sweepAngle = originalSweep; 
+                    startAngle = (endAngle - sweepAngle + 360) % 360; 
+                } 
+            } else if (dragTarget === 'progress') { 
+                startAngle = (angle - sweepAngle / 2 + 360) % 360; 
+            } 
+            updateRouletteUI(); 
+        } else if (isDraggingSlider) { 
+            updatePercentageFromSlider(e); 
+        } 
+        updateChanceDisplays(); 
+        updatePriceFromChance(); 
+        updateSpinButtonState(); // <-- CORRIGIDO
+    }
+    
     function endDrag() { isDraggingRoulette = false; isDraggingSlider = false; dragTarget = null; rouletteContainer.style.cursor = 'grab'; sliderTrack.style.cursor = 'grab'; }
+    
     function getPointOnCircle(angle) { const angleInRadians = (angle - 90) * (Math.PI / 180); return { x: ROULETTE_CENTER + ROULETTE_RADIUS * Math.cos(angleInRadians), y: ROULETTE_CENTER + ROULETTE_RADIUS * Math.sin(angleInRadians) }; }
+    
     function updateRouletteUI() { const endAngle = (startAngle + sweepAngle) % 360; const largeArcFlag = sweepAngle > 180 ? 1 : 0; const startPoint = getPointOnCircle(startAngle); const endPoint = getPointOnCircle(endAngle); const d = `M ${startPoint.x} ${startPoint.y} A ${ROULETTE_RADIUS} ${ROULETTE_RADIUS} 0 ${largeArcFlag} 1 ${endPoint.x} ${endPoint.y}`; rouletteProgress.setAttribute('d', d); const startHandleAngle = startAngle + HANDLE_OFFSET_ANGLE; const endHandleAngle = endAngle - HANDLE_OFFSET_ANGLE; handleStart.style.transform = `translate(-50%, -50%) rotate(${startHandleAngle}deg) translateY(-${ROULETTE_RADIUS}px) rotate(-${startHandleAngle}deg)`; handleEnd.style.transform = `translate(-50%, -50%) rotate(${endHandleAngle}deg) translateY(-${ROULETTE_RADIUS}px) rotate(-${endHandleAngle}deg)`; }
+    
     function updateResultSliderUI() { const percent = (sweepAngle / 360) * 100; const handlePosition = ((percent - MIN_PERCENT) / (MAX_PERCENT - MIN_PERCENT)) * 100; resultSliderHandle.style.left = `calc(${handlePosition}% - ${resultSliderHandle.offsetWidth / 2}px)`; }
-    function updatePercentageFromSlider(e) { const rect = sliderTrack.getBoundingClientRect(); const clientX = e.touches ? e.touches[0].clientX : e.clientX; let sliderTrackMousePercent = ((clientX - rect.left) / rect.width) * 100; sliderTrackMousePercent = Math.max(0, Math.min(100, sliderTrackMousePercent)); let actualChancePercent = MIN_PERCENT + (sliderTrackMousePercent / 100) * (MAX_PERCENT - MIN_PERCENT); actualChancePercent = Math.max(MIN_PERCENT, Math.min(MAX_PERCENT, actualChancePercent)); sweepAngle = (actualChancePercent / 100) * 360; updateRouletteUI(); updateResultSliderUI(); updatePriceFromChance(); }
+    
+    /**
+     * ATUALIZADO: Chama updateSpinButtonState() para atualizar o texto do botão ao usar o slider.
+     */
+    function updatePercentageFromSlider(e) { 
+        const rect = sliderTrack.getBoundingClientRect(); 
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX; 
+        let p = ((clientX - rect.left) / rect.width) * 100; p = Math.max(0, Math.min(100, p)); 
+        let c = MIN_PERCENT + (p / 100) * (MAX_PERCENT - MIN_PERCENT); c = Math.max(MIN_PERCENT, Math.min(MAX_PERCENT, c)); 
+        sweepAngle = (c / 100) * 360; 
+        updateRouletteUI(); 
+        updateResultSliderUI(); 
+        updatePriceFromChance(); 
+        updateSpinButtonState(); // <-- CORRIGIDO
+    }
+    
     function updateChanceDisplays() { const chancePercent = (sweepAngle / 360) * 100; const formattedPercent = `${chancePercent.toFixed(2).replace('.',',')}%`; resultPercent.textContent = formattedPercent; roulettePercent.textContent = formattedPercent; updateResultSliderUI(); }
-    function updatePriceFromChance() {
-        if (!selectedSnack) return;
-        const chancePercent = (sweepAngle / 360) * 100;
-        const price = (selectedSnack.price * chancePercent) / 100;
-        priceInput.value = price.toFixed(2);
-        updatePreviewInfo();
-        updateSpinButtonState(); // Atualiza o botão também
-    }
+    
+    function updatePriceFromChance() { if (!selectedSnack) return; const chancePercent = (sweepAngle / 360) * 100; const price = (selectedSnack.price * chancePercent) / 100; priceInput.value = price.toFixed(2); updatePreviewInfo(); }
+    
     function updateChanceFromPrice() { if (!selectedSnack) return; const price = parseFloat(priceInput.value) || 0; let chancePercent = (price / selectedSnack.price) * 100; chancePercent = Math.max(MIN_PERCENT, Math.min(MAX_PERCENT, chancePercent)); sweepAngle = (chancePercent / 100) * 360; updateRouletteUI(); updateChanceDisplays(); updatePreviewInfo(); }
-    function updatePreviewInfo() { if (selectedSnack) { const inputPrice = parseFloat(priceInput.value) || 0; const multiplier = selectedSnack.price > 0 ? selectedSnack.price / Math.max(inputPrice, 0.01) : 0; previewPrice.textContent = `R$${inputPrice.toFixed(2).replace('.',',')}`; previewMultiplier.textContent = `x${multiplier.toFixed(2)}`; } else { previewPrice.textContent = 'R$0,00'; previewMultiplier.textContent = 'x0.00'; } }
-    function handlePriceInputTyping(e) {
-        if (!selectedSnack) return;
-        
-        // Atualiza apenas a interface sem corrigir o valor
-        const inputValue = parseFloat(e.target.value) || 0;
-        const multiplier = selectedSnack.price > 0 ? selectedSnack.price / Math.max(inputValue, 0.01) : 0;
-        
-        previewPrice.textContent = `R$${inputValue.toFixed(2).replace('.',',')}`;
-        previewMultiplier.textContent = `x${multiplier.toFixed(2)}`;
-        updateSpinButtonState();
+    
+    /**
+     * ATUALIZADO: Corrigido erro de digitação de 'inputInput' para 'inputPrice'.
+     */
+    function updatePreviewInfo() { 
+        if (selectedSnack) { 
+            const inputPrice = parseFloat(priceInput.value) || 0;
+            const multiplier = selectedSnack.price > 0 ? selectedSnack.price / Math.max(inputPrice, 0.01) : 0; 
+            previewPrice.textContent = `R$${inputPrice.toFixed(2).replace('.',',')}`; 
+            previewMultiplier.textContent = `x${multiplier.toFixed(2)}`; 
+        } else { 
+            previewPrice.textContent = 'R$0,00'; 
+            previewMultiplier.textContent = 'x0.00'; 
+        } 
     }
-
-    // Nova função para lidar com o Enter
-    function handlePriceInputKeypress(e) {
-        if (e.key === 'Enter') {
-            e.preventDefault(); // Previne o comportamento padrão do Enter
-            validateAndCorrectPrice(true); // true indica que deve forçar o valor mínimo se for 0
-        }
-    }
-
-    // Nova função para validar e corrigir o preço
-    function validateAndCorrectPrice(forceMinimum = false) {
-        if (!selectedSnack) return;
-        
-        let inputValue = parseFloat(priceInput.value);
-
-        // Se não for um número válido, usa 0
-        if (isNaN(inputValue)) {
-            inputValue = 0;
-        }
-
-        const minValue = Math.ceil(selectedSnack.price * (MIN_PERCENT / 100));
-        const maxValue = selectedSnack.price;
-
-        // Corrige o valor se necessário
-        if (inputValue > maxValue) {
-            inputValue = minValue; // Volta para o valor mínimo se exceder o máximo
-        } else if ((inputValue < minValue && inputValue !== 0) || (inputValue === 0 && forceMinimum)) {
-            inputValue = minValue; // Mantém o valor mínimo se for menor que o permitido ou se for 0 e forceMinimum for true
-        }
-
-        // Se o valor for 0 e não estamos forçando o valor mínimo
-        if (inputValue === 0 && !forceMinimum) {
-            priceInput.value = '';
-        } else {
-            // Formata o valor para sempre mostrar duas casas decimais
-            priceInput.value = inputValue.toFixed(2);
-        }
-
-        // Atualiza a chance na roleta e o estado do botão
-        updateChanceFromPrice();
-        updateSpinButtonState();
-    }
-
+    
+    function handlePriceInputChange() { if (selectedSnack) updateChanceFromPrice(); updateSpinButtonState(); }
+    
     function handleMaxPriceClick() { if (selectedSnack) { const maxPriceValue = selectedSnack.price * (MAX_PERCENT / 100); priceInput.value = maxPriceValue.toFixed(2); handlePriceInputChange(); } }
+    
     function handleShortcutClick(e) { const percent = parseInt(e.target.dataset.value, 10); sweepAngle = (percent / 100) * 360; sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, sweepAngle)); updateRouletteUI(); updateChanceDisplays(); updatePriceFromChance(); updateSpinButtonState(); }
+    
     function resetSelection() { selectedSnack = null; startAngle = 0; sweepAngle = (MIN_PERCENT / 100) * 360; priceInput.value = '0.00'; previewImage.style.backgroundImage = ''; previewText.textContent = 'Selecione um Rango abaixo para começar'; document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected')); updateRouletteUI(); updateChanceDisplays(); updatePreviewInfo(); updateSpinButtonState(); }
-    function updateSpinButtonState() {
-        const price = parseFloat(priceInput.value) || 0;
-        const userLoggedIn = auth.currentUser !== null;
-        
-        // Sempre mantém o botão demo habilitado
-        demoBtn.disabled = isSpinning;
-        
-        // Remove a classe disabled do botão principal
-        selectRangeBtn.disabled = false;
-
-        // Atualiza o texto do botão baseado no estado
-        if (selectedSnack) {
-            selectRangeBtn.textContent = `Girar por R$${price.toFixed(2).replace('.',',')}`;
-        } else {
-            selectRangeBtn.textContent = 'Selecione um item';
-        }
-
-        // Adiciona o evento de click apropriado
-        if (!userLoggedIn) {
-            selectRangeBtn.onclick = () => showAuthModal();
-        } else {
-            selectRangeBtn.onclick = () => spinRoulette(false);
-        }
-    }
-    function spinRoulette(isDemo) {
-        // Previne o giro se estiver girando ou se não houver item selecionado
+    
+    function updateSpinButtonState() { const price = parseFloat(priceInput.value) || 0; const enabled = selectedSnack && price > 0 && !isSpinning; selectRangeBtn.disabled = !enabled; demoBtn.disabled = isSpinning; if (enabled) { selectRangeBtn.textContent = `Girar por R$${price.toFixed(2).replace('.',',')}`; } else if (!selectedSnack) { selectRangeBtn.textContent = 'Selecione um item'; } else { selectRangeBtn.textContent = 'Girar'; } }
+    
+    async function spinRoulette(isDemo) {
         if (isSpinning || (!selectedSnack && !isDemo)) return;
         
-        // Se não for demo e o usuário não estiver logado, mostra o modal de login
-        if (!isDemo && !auth.currentUser) {
-            showAuthModal();
-            return;
-        }
-
-        // Continua com o resto da lógica do giro
         isSpinning = true;
-        rouletteArrow.classList.add('show');
         updateSpinButtonState();
+
+        const spinCost = parseFloat(priceInput.value) || 0;
+        if (!isDemo) {
+            const user = auth.currentUser;
+            if (!user) {
+                if(typeof showAuthModal === 'function') showAuthModal();
+                isSpinning = false;
+                updateSpinButtonState();
+                return;
+            }
+
+            try {
+                const userRef = db.collection('users').doc(user.uid);
+                await db.runTransaction(async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    if (!userDoc.exists) throw new Error("Usuário não encontrado.");
+                    const userBalance = userDoc.data().balance || 0;
+                    if (userBalance < spinCost) throw new Error('INSUFFICIENT_BALANCE');
+                    transaction.update(userRef, { balance: firebase.firestore.FieldValue.increment(-spinCost) });
+                });
+            } catch (error) {
+                if (error && error.message === 'INSUFFICIENT_BALANCE') {
+                    if (typeof openDepositModal === 'function') {
+                        openDepositModal();
+                    } else {
+                         alert("Saldo insuficiente para realizar este giro.");
+                    }
+                } else {
+                    console.error("Erro ao debitar saldo:", error);
+                    alert("Ocorreu um erro ao processar seu saldo.");
+                }
+                isSpinning = false; // <-- CORRIGIDO
+                updateSpinButtonState(); // <-- CORRIGIDO
+                return; 
+            }
+        }
+        
+        rouletteArrow.classList.add('show');
         const spins = 5 + Math.random() * 3;
         const finalAngle = Math.random() * 360;
         const totalRotation = (spins * 360) + finalAngle;
@@ -317,46 +295,39 @@ document.addEventListener('DOMContentLoaded', function () {
         rouletteArrow.offsetHeight;
         rouletteArrow.style.transition = 'transform 4s cubic-bezier(0.25, 1, 0.5, 1)';
         rouletteArrow.style.transform = `rotate(${totalRotation}deg)`;
-        setTimeout(() => { const computedStyle = window.getComputedStyle(rouletteArrow); const matrix = computedStyle.transform; let actualAngle = finalAngle; if (matrix && matrix !== 'none') { const values = matrix.split('(')[1].split(')')[0].split(','); const a = values[0]; const b = values[1]; actualAngle = Math.atan2(b, a) * (180 / Math.PI); actualAngle = (actualAngle + 360) % 360; } handleSpinResult(actualAngle, isDemo); }, 4100);
+        setTimeout(() => {
+            const computedStyle = window.getComputedStyle(rouletteArrow);
+            const matrix = computedStyle.transform;
+            let actualAngle = finalAngle;
+            if (matrix !== 'none') {
+                const values = matrix.split('(')[1].split(')')[0].split(',');
+                actualAngle = (Math.atan2(values[1], values[0]) * (180 / Math.PI) + 360) % 360;
+            }
+            handleSpinResult(actualAngle, isDemo);
+        }, 4100);
     }
-    function fireConfetti() { const canvas = document.createElement('canvas'); canvas.style.position = 'fixed'; canvas.style.top = '0'; canvas.style.left = '0'; canvas.style.width = '100vw'; canvas.style.height = '100vh'; canvas.style.pointerEvents = 'none'; canvas.style.zIndex = '9999'; document.body.appendChild(canvas); const myConfetti = confetti.create(canvas, { resize: true, useWorker: true }); myConfetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } }).then(() => { if (canvas.parentNode) { canvas.parentNode.removeChild(canvas); } }); }
+
+    function fireConfetti() { const canvas = document.createElement('canvas'); canvas.style.position = 'fixed'; canvas.style.top = '0'; canvas.style.left = '0'; canvas.style.width = '100vw'; canvas.style.height = '100vh'; canvas.style.pointerEvents = 'none'; canvas.style.zIndex = '9999'; document.body.appendChild(canvas); const myConfetti = confetti.create(canvas, { resize: true, useWorker: true }); myConfetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } }).then(() => { if (canvas.parentNode) canvas.parentNode.removeChild(canvas); }); }
+    
     function handleSpinResult(landedAngle, isDemo) {
         const endAngle = (startAngle + sweepAngle) % 360;
         let won = false;
-
-        if (startAngle > endAngle) {
+        if (startAngle + sweepAngle > 360) {
             won = (landedAngle >= startAngle) || (landedAngle <= endAngle);
         } else {
             won = (landedAngle >= startAngle) && (landedAngle <= endAngle);
         }
-
         if (won && !isDemo) {
             fireConfetti();
-            
-            if (selectedSnack) {
-                const valorPago = parseFloat(priceInput.value);
-                const multiplicador = selectedSnack.price / valorPago;
-                
-                // Registra no sistema de trocas recentes
-                registrarGanhoTroca({
-                    id: selectedSnack.id,
-                    name: selectedSnack.name,
-                    price: valorPago,
-                    paidPrice: valorPago,
-                    multiplier: multiplicador.toFixed(2),
-                    image: selectedSnack.image
-                });
-
-                // Adiciona ao carrinho
-                addToCart({
-                    id: selectedSnack.id,
-                    name: selectedSnack.name,
-                    price: selectedSnack.price,
-                    image: selectedSnack.image
-                });
+            const user = auth.currentUser;
+            if (selectedSnack && user) {
+                const inputPrice = parseFloat(priceInput.value) || 0;
+                const multiplier = selectedSnack.price > 0 ? (selectedSnack.price / Math.max(inputPrice, 0.01)).toFixed(2) : 0;
+                const itemWon = { ...selectedSnack, paidPrice: inputPrice, multiplier: multiplier };
+                if (typeof saveItemToInventory === 'function') saveItemToInventory(user.uid, itemWon);
+                if (typeof registrarGanhoTroca === 'function') registrarGanhoTroca(itemWon);
             }
         }
-
         setTimeout(() => {
             isSpinning = false;
             rouletteArrow.classList.remove('show');
@@ -365,7 +336,5 @@ document.addEventListener('DOMContentLoaded', function () {
         }, 1000);
     }
 
-
-    // --- INICIALIZAÇÃO ---
-    fetchItemsFromFirestore(); // Inicia o processo buscando os dados do Firebase
+    fetchItemsFromFirestore();
 });

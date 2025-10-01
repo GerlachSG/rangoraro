@@ -16,12 +16,12 @@ function openDepositModal() {
 function closeDepositModal() {
     const modal = document.getElementById('deposit-modal-overlay');
     if (modal) modal.style.display = 'none';
+    document.dispatchEvent(new CustomEvent('depositModalClosed'));
 }
 
 function showProcessingModal(state) {
     const modal = document.getElementById('processing-modal-overlay');
     if (!modal) return;
-    
     const spinner = modal.querySelector('.spinner');
     const successIcon = modal.querySelector('.success-icon');
     const text = modal.querySelector('p');
@@ -94,6 +94,7 @@ function initDepositSystem() {
     `;
     document.body.insertAdjacentHTML('beforeend', modalsHTML);
 
+    const depositOverlay = document.getElementById('deposit-modal-overlay');
     const depositAmountInput = document.getElementById('deposit-amount-input');
     const referralCodeInput = document.getElementById('referral-code-input');
     const bonusMessage = document.getElementById('bonus-message');
@@ -105,14 +106,12 @@ function initDepositSystem() {
     let validatedCode = { code: null, bonus: 0 };
 
     const updateFinalAmountDisplay = () => {
-        const amountStr = depositAmountInput.value.replace(/\D/g, '').padStart(3, '0').slice(-8); // Limita para evitar overflow
+        const amountStr = depositAmountInput.value.replace(/\D/g, '').padStart(3, '0').slice(-8);
         const reais = amountStr.slice(0, -2);
         const centavos = amountStr.slice(-2);
         const amount = parseFloat(`${reais}.${centavos}`) || 0;
-        
         const bonusAmount = amount * (validatedCode.bonus / 100);
         const finalAmount = amount + bonusAmount;
-
         finalAmountDisplay.textContent = `Você vai receber R$ ${finalAmount.toFixed(2).replace('.', ',')}`;
     };
     
@@ -126,11 +125,9 @@ function initDepositSystem() {
             return;
         }
         if (code === validatedCode.code) return;
-
         try {
             const codeRef = db.collection('referral_codes').doc(code);
             const doc = await codeRef.get();
-
             if (doc.exists && doc.data().is_active) {
                 const bonusPercent = doc.data().bonus_percent || 0;
                 validatedCode = { code: code, bonus: bonusPercent };
@@ -155,6 +152,18 @@ function initDepositSystem() {
     };
     
     document.getElementById('close-deposit-modal').addEventListener('click', closeDepositModal);
+
+    // --- CÓDIGO ADICIONADO ---
+    // Adiciona o listener para fechar o modal ao clicar no fundo (overlay)
+    depositOverlay.addEventListener('click', (event) => {
+        // Se o elemento clicado for o próprio overlay (o fundo), fecha o modal.
+        // Isso evita que o modal feche se o clique for em algum conteúdo interno.
+        if (event.target === depositOverlay) {
+            closeDepositModal();
+        }
+    });
+    // --- FIM DO CÓDIGO ADICIONADO ---
+
     depositAmountInput.addEventListener('input', () => {
         let value = depositAmountInput.value.replace(/\D/g, '');
         if (value) {
@@ -176,21 +185,16 @@ function initDepositSystem() {
             depositStatus.textContent = 'Você precisa estar logado para depositar.';
             return;
         }
-        
         const amountStr = depositAmountInput.value.replace(/\./g, '').replace(',', '.');
         const amount = parseFloat(amountStr);
-
         if (isNaN(amount) || amount <= 0) {
             depositStatus.textContent = 'Por favor, insira um valor válido.';
             return;
         }
-
         depositStatus.textContent = '';
         showProcessingModal('processing');
-
         const bonusAmount = amount * (validatedCode.bonus / 100);
         const finalAmount = amount + bonusAmount;
-
         const batch = db.batch();
         const transactionRef = db.collection("transactions").doc();
         batch.set(transactionRef, {
@@ -209,7 +213,6 @@ function initDepositSystem() {
         batch.update(userRef, {
             balance: firebase.firestore.FieldValue.increment(finalAmount)
         });
-
         try {
             await batch.commit();
             showProcessingModal('success');
@@ -218,14 +221,8 @@ function initDepositSystem() {
                 closeDepositModal();
             }, 2000);
         } catch (error) {
-            // --- PONTO IMPORTANTE ---
-            // Este log vai nos dizer exatamente por que o depósito falhou.
-            console.error("=============================================");
-            console.error("### ERRO AO PROCESSAR DEPÓSITO ###");
-            console.error("Usuário:", user.uid);
-            console.error("O erro foi:", error);
-            console.error("=============================================");
-            depositStatus.textContent = 'Ocorreu um erro ao processar o depósito. Verifique o console.';
+            console.error("### ERRO AO PROCESSAR DEPÓSITO ###:", error);
+            depositStatus.textContent = 'Ocorreu um erro. Verifique o console.';
             closeProcessingModal();
         }
     });
