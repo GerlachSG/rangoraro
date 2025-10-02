@@ -82,6 +82,11 @@
     font-size: 1rem;
 }
 
+.secao-destaques a {
+    text-decoration: none;
+    color: #fff;
+}
+
 .cartao-destaque .titulo p {
     font-size: 1.2rem;
 }
