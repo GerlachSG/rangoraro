@@ -323,6 +323,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function fireConfetti() { const canvas = document.createElement('canvas'); canvas.style.position = 'fixed'; canvas.style.top = '0'; canvas.style.left = '0'; canvas.style.width = '100vw'; canvas.style.height = '100vh'; canvas.style.pointerEvents = 'none'; canvas.style.zIndex = '9999'; document.body.appendChild(canvas); const myConfetti = confetti.create(canvas, { resize: true, useWorker: true }); myConfetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } }).then(() => { if (canvas.parentNode) canvas.parentNode.removeChild(canvas); }); }
     
+    // Em trocas.js, substitua a função inteira
+
     function handleSpinResult(landedAngle, isDemo) {
         const endAngle = (startAngle + sweepAngle) % 360;
         let won = false;
@@ -331,17 +333,26 @@ document.addEventListener('DOMContentLoaded', function () {
         } else {
             won = (landedAngle >= startAngle) && (landedAngle <= endAngle);
         }
+
         if (won && !isDemo) {
             fireConfetti();
             const user = auth.currentUser;
             if (selectedSnack && user) {
                 const inputPrice = parseFloat(priceInput.value) || 0;
                 const multiplier = selectedSnack.price > 0 ? (selectedSnack.price / Math.max(inputPrice, 0.01)).toFixed(2) : 0;
+                
+                // A variável correta com os dados do ganho
                 const itemWon = { ...selectedSnack, paidPrice: inputPrice, multiplier: multiplier };
+                
                 if (typeof saveItemToInventory === 'function') saveItemToInventory(user.uid, itemWon);
-                if (typeof registrarGanhoTroca === 'function') registrarGanhoTroca(itemWon);
+                
+                // CORRIGIDO: Agora usa a variável correta 'itemWon'
+                if (typeof registrarGanhoTroca === 'function') {
+                    registrarGanhoTroca(itemWon);
+                }
             }
         }
+
         setTimeout(() => {
             isSpinning = false;
             rouletteArrow.classList.remove('show');

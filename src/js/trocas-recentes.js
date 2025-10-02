@@ -25,25 +25,20 @@ function initTrocasRecentes() {
 // js/trocas-recentes.js
 
 async function registrarGanhoTroca(item) {
+    // RASTREADOR: Esta mensagem azul é a que DEVERIA aparecer no console após uma TROCA.
+    console.log('%c FUNÇÃO DE TROCA CHAMADA!', 'color: cyan; font-size: 14px; font-weight: bold;', item);
+
     try {
-        // Verifica se o Firebase e as Functions estão disponíveis
         if (typeof firebase === 'undefined' || typeof firebase.functions === 'undefined') {
             console.error('Firebase Functions não está disponível.');
             return;
         }
-
-        // Prepara uma chamada para a Cloud Function 'registerTradeWin'
         const registerTradeWin = firebase.functions().httpsCallable('registerTradeWin');
-
-        // Pega o usuário atual para garantir que ele esteja logado
         const currentUser = auth.currentUser;
         if (!currentUser) {
             console.error("Usuário não está logado para registrar ganho.");
-            // Opcional: mostrar um modal de login aqui
             return;
         }
-
-        // Os dados que enviaremos para a Cloud Function
         const ganhoData = {
             itemId: item.id,
             itemNome: item.name,
@@ -52,13 +47,8 @@ async function registrarGanhoTroca(item) {
             multiplicador: item.multiplier,
             itemImagem: item.image
         };
-
-        // Chama a função e aguarda a resposta
         await registerTradeWin(ganhoData);
-        // O console.log de sucesso agora viria da própria Cloud Function (nos logs do Firebase)
-
     } catch (error) {
-        // Captura erros específicos das Cloud Functions
         console.error('Erro ao chamar a Cloud Function registerTradeWin:', error);
     }
 }
