@@ -1,0 +1,226 @@
+/* Estilo inspirado em pacotes.css para manter a consistência visual */
+
+/* Container Principal, seguindo o padrão de 'pacotes.css' */
+.main-container {
+    display: flex;
+    margin-top: 9vh; /* Compensa o header fixo */
+    min-height: calc(100vh - 9vh);
+    justify-content: center;
+}   
+
+.main-content {
+    width: 60%; /* Mesma largura da página de pacotes */
+    padding: 1.6rem 2rem;
+    background: var(--cor-fundo); /* Variável de cor global */
+    display: flex;
+    flex-direction: column;
+    gap: 30px; /* Espaçamento entre as seções */
+}
+
+/* Seção de Recompensas */
+.rewards-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.reward-card {
+    background-color: var(--cor-fundo-secundario); /* Cor consistente */
+    border-radius: 8px;
+    padding: 25px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    border: 1px solid var(--cor-borda);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.reward-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.reward-card i {
+    font-size: 28px;
+    color: var(--cor-destaque); /* Cor de destaque global */
+    margin-bottom: 15px;
+}
+
+.reward-card h3 {
+    margin: 0 0 10px 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--cor-texto-principal);
+}
+
+.reward-card p {
+    font-size: 14px;
+    color: var(--cor-texto-secundario);
+    line-height: 1.5;
+    flex-grow: 1;
+    margin-bottom: 20px;
+}
+
+.btn-recompensa {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 5px; /* Mesmo raio dos outros botões */
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: filter 0.3s ease;
+    background-color: var(--cor-destaque);
+    color: #fff;
+}
+
+.btn-recompensa:hover {
+    filter: brightness(1.1);
+}
+
+.btn-recompensa:disabled {
+    background-color: #3a3a3a;
+    color: #7a7a7a;
+    cursor: not-allowed;
+    filter: none;
+}
+
+/* Seção do Perfil */
+.profile-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background-color: var(--cor-fundo-secundario);
+    border-radius: 8px;
+    padding: 20px 30px;
+    border: 1px solid var(--cor-borda);
+}
+
+.profile-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.profile-avatar img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    border: 2px solid var(--cor-destaque);
+}
+
+#username {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}
+
+.progress-bar-container {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    width: 60%;
+    max-width: 500px;
+}
+
+#user-level, #progress-percentage {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--cor-texto-secundario);
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background-color: #1a1a1a;
+    border-radius: 5px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--cor-destaque);
+    border-radius: 5px;
+    transition: width 0.5s ease-in-out;
+}
+
+/* Seção de Pacotes Gratuitos (ATUALIZADA) */
+.free-packs-section {
+    background-color: var(--cor-fundo-secundario);
+    border-radius: 8px;
+    padding: 25px 30px;
+    border: 1px solid var(--cor-borda);
+}
+
+.free-packs-section h2 {
+    margin: 0 0 20px 0;
+    font-size: 20px;
+    border-bottom: 1px solid var(--cor-borda);
+    padding-bottom: 15px;
+    color: var(--cor-texto-principal);
+    font-weight: 700;
+}
+
+.free-packs-section h2 i {
+    margin-right: 10px;
+    color: var(--cor-destaque);
+}
+
+.free-packs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 2%; /* Inspirado em .grade-pacotes */
+}
+
+/* O card agora se comporta como o .pacote-wrapper */
+.free-pack-card {
+    display: flex;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.free-pack-card.locked {
+    cursor: not-allowed;
+}
+
+/* A imagem dentro do card se comporta como o .pack */
+.free-pack-card img {
+    width: 100%;
+    display: block;
+    aspect-ratio: 0.64/1; /* Proporção do .pack */
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 7px;
+    transition: transform 0.3s ease;
+    will-change: transform;
+    backface-visibility: hidden;
+}
+
+/* Efeito de hover aplicado apenas à imagem e se não estiver bloqueado */
+.free-pack-card:not(.locked):hover img {
+    transform: scale(1.05) translateZ(0);
+}
+
+/* O texto se comporta como o .price */
+.pack-info {
+    font-weight: bold;
+    color: #fff;
+    font-size: 1.1rem;
+    text-align: center;
+    border-radius: 5px;
+    padding: 5px 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.pack-info .lock-icon {
+    font-size: 1rem; /* Ajustado para alinhar com o texto */
+    margin-right: 8px;
+}
+
+.free-pack-card.locked .pack-info {
+    color: #7a7a7a;
+}
+

@@ -290,6 +290,53 @@ hr {
     background: #777;
 }
 
+.user-tickets-section {
+    width: 100%;
+    background: #2B2222;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 25px;
+    border-radius: 15px;
+    border: 1px solid #3a3a3a;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.user-info img {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid var(--cor-destaque, #2196F3);
+}
+
+.user-info span {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--cor-texto-principal);
+}
+
+.tickets-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tickets-info span {
+    font-size: 14px;
+    color: var(--cor-texto-secundario);
+}
+
+.tickets-info strong {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--cor-texto-principal);
+}
+
 @media (max-width: 768px) {
     .main-container {
         flex-direction: column;

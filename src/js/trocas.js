@@ -251,6 +251,8 @@ document.addEventListener('DOMContentLoaded', function () {
         updateSpinButtonState();
 
         const spinCost = parseFloat(priceInput.value) || 0;
+
+        const ticketsToAdd = Math.floor(spinCost);
         if (!isDemo) {
             const user = auth.currentUser;
             if (!user) {
@@ -265,9 +267,21 @@ document.addEventListener('DOMContentLoaded', function () {
                 await db.runTransaction(async (transaction) => {
                     const userDoc = await transaction.get(userRef);
                     if (!userDoc.exists) throw new Error("Usuário não encontrado.");
+                    
                     const userBalance = userDoc.data().balance || 0;
                     if (userBalance < spinCost) throw new Error('INSUFFICIENT_BALANCE');
-                    transaction.update(userRef, { balance: firebase.firestore.FieldValue.increment(-spinCost) });
+                    
+                    // MODIFICADO: Objeto de atualização para incluir débito do saldo e adição de bilhetes
+                    const updates = {
+                        balance: firebase.firestore.FieldValue.increment(-spinCost)
+                    };
+
+                    // Adiciona os bilhetes apenas se o valor for maior que 0
+                    if (ticketsToAdd > 0) {
+                        updates.raffleTickets = firebase.firestore.FieldValue.increment(ticketsToAdd);
+                    }
+                    
+                    transaction.update(userRef, updates);
                 });
             } catch (error) {
                 if (error && error.message === 'INSUFFICIENT_BALANCE') {

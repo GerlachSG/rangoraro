@@ -408,6 +408,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     // Debita o saldo
                     tx.update(userRef, { balance: firebase.firestore.FieldValue.increment(-price) });
 
+                    const ticketsToAdd = Math.floor(price);
+                        if (ticketsToAdd > 0) {
+                            tx.update(userRef, { raffleTickets: firebase.firestore.FieldValue.increment(ticketsToAdd) });
+                        }
+
                     // Registra uma entrada de transação para auditoria usando a ref pré-criada
                     tx.set(txRef, {
                         userId: user.uid,
@@ -415,6 +420,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         packageId: pacoteAtual && pacoteAtual.id ? pacoteAtual.id : null,
                         amount: price,
                         status: 'debited',
+                        ticketsGenerated: ticketsToAdd,
                         timestamp: firebase.firestore.FieldValue.serverTimestamp()
                     });
                 });
