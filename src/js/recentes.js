@@ -173,44 +173,70 @@ function mergeAndRenderRecentes() {
 }
 
 /**
- * Atualiza a interface dos recentes com os novos ganhos
- * 
- * @param {Array} ganhos - Lista dos ganhos recentes
+ * Atualiza a interface dos recentes com os novos ganhos, AGORA COM ANIMAÇÕES.
+ * Adiciona novos itens no topo com animação e remove os antigos do final.
+ * @param {Array} ganhos - Lista dos ganhos recentes vinda do Firestore.
  */
 function updateRecentesUI(ganhos) {
     if (!recentesContainer) {
-        console.warn('Container de recentes não encontrado')    ;
+        console.warn('Container de recentes não encontrado');
         return;
     }
 
-    // Se não há ganhos, mostra mensagem padrão
     if (ganhos.length === 0) {
-        recentesContainer.innerHTML = `
-            <div class="recentes-empty">
-                <p>Nenhum ganho recente ainda. Seja o primeiro a ganhar!</p>
-            </div>
-        `;
+        recentesContainer.innerHTML = `<div class="recentes-empty"><p>Nenhum ganho recente ainda.</p></div>`;
         return;
     }
-    // Re-render completo: mais simples e evita inconsistências quando docs mudam/deletam
-    const fragment = document.createDocumentFragment();
 
-    // 'ganhos' vem ordenado do mais recente para o mais antigo
-    // Garantir que mostremos sempre até MAX_RECENT_ITEMS (preenchendo com placeholders)
-    const padded = ganhos.slice(0, MAX_RECENT_ITEMS);
-    while (padded.length < MAX_RECENT_ITEMS) {
-        padded.push(null);
-    }
+    // 1. Invertemos a lista para processar do mais antigo para o mais novo.
+    // Isso garante que a animação de entrada aconteça na ordem correta.
+    const ganhosReversos = [...ganhos].reverse();
 
-    padded.forEach(ganho => {
-        const card = ganho ? createRecentCard(ganho) : createPlaceholderCard();
-        fragment.appendChild(card);
+    ganhosReversos.forEach(ganho => {
+        // 2. Verifica se o card já existe na tela para não animar de novo.
+        const existingCard = recentesContainer.querySelector(`[data-ganho-id="${ganho.id}"]`);
+        
+        if (!existingCard) {
+            const card = createRecentCard(ganho);
+
+            // 3. Define o estado inicial do card (invisível e um pouco acima).
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(-20px)';
+            
+            // 4. Adiciona o novo card no topo da lista.
+            recentesContainer.insertBefore(card, recentesContainer.firstChild);
+
+            // 5. Se a lista estiver cheia, remove o último item com uma animação de saída.
+            if (recentesContainer.children.length > MAX_RECENT_ITEMS) {
+                const oldestCard = recentesContainer.lastElementChild;
+                
+                oldestCard.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+                oldestCard.style.opacity = '0';
+                oldestCard.style.transform = 'scale(0.9)'; // Efeito de encolher
+                
+                setTimeout(() => {
+                    oldestCard.remove();
+                }, 300); // Remove do DOM após a animação
+            }
+
+            // 6. Força o navegador a aplicar o estado inicial (passo técnico essencial).
+            card.offsetHeight; 
+
+            // 7. Aplica o estado final, ativando a animação de entrada.
+            card.style.transition = 'opacity 0.5s ease, transform 0.5s cubic-bezier(0.25, 1, 0.5, 1)';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }
     });
 
-    // Substitui o conteúdo atual (clean swap para evitar flashes)
-    recentesContainer.innerHTML = '';
-    recentesContainer.appendChild(fragment);
-    console.log(`UI de recentes atualizada: exibindo ${ganhos.length} ganhos (padrão até ${MAX_RECENT_ITEMS}).`);
+    // Etapa de limpeza: remove cards que não estão mais na lista de ganhos recentes
+    const currentIds = ganhos.map(g => g.id);
+    Array.from(recentesContainer.children).forEach(card => {
+        const cardId = card.getAttribute('data-ganho-id');
+        if (cardId && !currentIds.includes(cardId)) {
+            card.remove();
+        }
+    });
 }
 
 /**
@@ -234,7 +260,12 @@ function createPlaceholderCard() {
 /**
  * Cria um card individual para um ganho recente
  * 
- * @param {Object} ganho - Dados do ganho
+// Em recentes.js, substitua a função createRecentCard inteira por esta:
+
+/**
+ * Cria um card individual para um ganho recente.
+ * AGORA INTELIGENTE: Sabe diferenciar entre ganhos de Pacotes e Trocas.
+ * * @param {Object} ganho - Dados do ganho
  * @returns {HTMLElement} - Elemento do card
  */
 function createRecentCard(ganho) {
@@ -242,20 +273,33 @@ function createRecentCard(ganho) {
     card.className = 'recentes-card';
     card.setAttribute('data-ganho-id', ganho.id);
     card.setAttribute('data-rarity', ganho.itemRaridade || 'comum');
-    
-    // Formata o preço
-    const precoFormatado = `R$ ${ganho.itemPreco.toFixed(2).replace('.', ',')}`;
 
-    // Define a imagem do usuário (usa padrão se não tiver)
+    // --- LÓGICA DA CORREÇÃO ---
+    // Cria a parte principal do card (com preço ou multiplicador) de forma dinâmica.
+    let infoPrincipalHtml = '';
+
+    // Se o 'ganho' tiver a propriedade 'multiplicador', sabemos que é uma TROCA.
+    if (ganho.multiplicador !== undefined) {
+        const valorPagoFormatado = `R$ ${(ganho.valorPago || 0).toFixed(2).replace('.', ',')}`;
+        infoPrincipalHtml = `<span>${ganho.multiplicador}x <small>(${valorPagoFormatado})</small></span>`;
+    } 
+    // Senão, tratamos como um ganho de PACOTE.
+    else {
+        const precoFormatado = `R$ ${(ganho.itemPreco || 0).toFixed(2).replace('.', ',')}`;
+        infoPrincipalHtml = `<span>${precoFormatado}</span>`;
+    }
+    // --- FIM DA LÓGICA DA CORREÇÃO ---
+
     const userPhoto = ganho.userFoto || 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
 
+    // Monta o HTML final do card usando a 'infoPrincipalHtml' que criamos
     card.innerHTML = `
         <div class="recentes-image">
             <img src="${ganho.itemImagem}" alt="${ganho.itemNome}" />
         </div>
         <div class="recentes-info">
             <p>${ganho.itemNome}</p>
-            <span>${precoFormatado}</span>
+            ${infoPrincipalHtml} 
         </div>
         <div class="recentes-avatar">
             <img src="${userPhoto}" alt="Avatar de ${ganho.userNome}" />
