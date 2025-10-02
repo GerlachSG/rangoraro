@@ -90,7 +90,7 @@
                         </div>
 
                         <div class="timer">
-                            <p class="timer-paragraph">Rifa termina em <span> 0H 51M 10S</span></p>
+                            <p class="timer-paragraph">Rifa termina em <span> 00H 51M 10S</span></p>
                         </div>
                     </div>
                 </div>
@@ -123,7 +123,66 @@
             </div>
 
             <div class="rifa-history">
-
+                <table class="tb-rifa">
+                    <thead>
+                        <tr>
+                        <th class="tb hash">#</th>
+                        <th class="tb ganhadores">Rifa #0 Ganhadores</th>
+                        <th class="tb tickets">Tickets</th>
+                        <th class="tb premio">Prêmio</th> 
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                <td class="tb hash">1</td>
+                <td class="tb ganhadores">ana******sil</td>
+                <td class="tb tickets">18234</td>
+                <td class="tb premio">R$3.000,00</td>
+            </tr>
+            <tr>
+                <td class="tb hash">2</td>
+                <td class="tb ganhadores">luc******sou</td>
+                <td class="tb tickets">11</td>
+                <td class="tb premio">R$1.000,00</td>
+            </tr>
+            <tr>
+                <td class="tb hash">3</td>
+                <td class="tb ganhadores">mar******cos</td>
+                <td class="tb tickets">3290</td>
+                <td class="tb premio">R$500,00</td>
+            </tr>
+            <tr>
+                <td class="tb hash">4</td>
+                <td class="tb ganhadores">ped******oli</td>
+                <td class="tb tickets">7652</td>
+                <td class="tb premio">R$250,00</td>
+            </tr>
+            <tr>
+                <td class="tb hash">5</td>
+                <td class="tb ganhadores">gab******san</td>
+                <td class="tb tickets">12345</td>
+                <td class="tb premio">R$150,00</td>
+            </tr>
+            <tr>
+                <td class="tb hash">6</td>
+                <td class="tb ganhadores">fer******lim</td>
+                <td class="tb tickets">123</td>
+                <td class="tb premio">R$50,00</td>
+            </tr>
+            <tr>
+                <td class="tb hash">7</td>
+                <td class="tb ganhadores">bru******alv</td>
+                <td class="tb tickets">140</td>
+                <td class="tb premio">R$30,00</td>
+            </tr>
+            <tr>
+                <td class="tb hash">8</td>
+                <td class="tb ganhadores">raf******eir</td>
+                <td class="tb tickets">4</td>
+                <td class="tb premio">R$20,00</td>
+            </tr>
+                    </tbody>
+                </table>
             </div>
         </main>
     </section>
@@ -134,4 +193,56 @@
         </aside>
     
 </body>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+        // Seleciona o elemento <span> onde o tempo será exibido
+        const timerElement = document.querySelector('.timer-paragraph span');
+
+        // Se o elemento não for encontrado, interrompe o script para evitar erros
+        if (!timerElement) {
+            console.error("Elemento do timer não encontrado!");
+            return;
+        }
+
+        function updateCountdown() {
+            // Pega a data e hora atuais
+            const now = new Date();
+
+            // Define a data e hora do final da rifa (meia-noite do dia seguinte)
+            const tomorrow = new Date();
+            tomorrow.setDate(now.getDate() + 1);
+            tomorrow.setHours(0, 0, 0, 0); // Define para 00:00:00 do próximo dia
+
+            // Calcula a diferença em milissegundos
+            const timeLeft = tomorrow.getTime() - now.getTime();
+
+            // Se o tempo já acabou (pouco provável com essa lógica, mas é uma boa prática)
+            if (timeLeft < 0) {
+                timerElement.textContent = " 00H 00M 00S";
+                return;
+            }
+
+            // Converte a diferença para horas, minutos e segundos
+            const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
+            const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
+            const seconds = Math.floor((timeLeft / 1000) % 60);
+
+            // Formata os números para sempre terem dois dígitos (ex: 09, 08, 07)
+            const formattedHours = String(hours).padStart(2, '0');
+            const formattedMinutes = String(minutes).padStart(2, '0');
+            const formattedSeconds = String(seconds).padStart(2, '0');
+
+            // Atualiza o texto no HTML
+            timerElement.textContent = ` ${formattedHours}H ${formattedMinutes}M ${formattedSeconds}S`;
+        }
+
+        // Chama a função uma vez imediatamente para não haver atraso na exibição
+        updateCountdown();
+
+        // Configura um intervalo para atualizar o contador a cada segundo (1000 milissegundos)
+        setInterval(updateCountdown, 1000);
+    });
+
+    </script>
 </html>

@@ -177,6 +177,7 @@ hr {
     align-items: center;
     justify-content: center;
     border-radius: 15px;
+    gap: 40px;
 }
 
 .about-text{
@@ -184,6 +185,91 @@ hr {
     flex-direction: row;
     display: flex;
     width: 100%;
+}
+
+.about-sub-title {
+    font-size: 15px;
+    color: #adadad;
+}
+
+.card-container {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.about-card {
+    height: 110px;
+    display: flex;
+    width: 440px;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 30px;
+    border-radius: 10px;
+}
+
+.about-card.diariamente {
+    background-image: url(https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/rifa/tempo.png);
+}
+
+.about-card.tempo {
+    background-image: url(https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/rifa/tempo-certo.png);
+}
+
+.tb-rifa {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 8px;
+    overflow: hidden;
+    text-align: left;
+}
+
+.tb-rifa  th,
+.tb-rifa  td {
+    padding: 18px 20px;
+    
+}
+
+.tb-rifa  thead th {
+    color: #8f8f8f;
+    font-size: 14px;
+    font-weight: 500;
+    border-bottom: 1.5px solid #3a3a3a;
+}
+
+.tb-rifa  tbody td {
+    font-size: 16px;
+    font-weight: 500;
+    border-bottom: 1.5px solid #3a3a3a; 
+}
+
+.tb-rifa tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* --- Alinhamento das Colunas (COM AS NOVAS CLASSES) --- */
+.hash {
+    width: 8%;
+}
+
+.ganhadores {
+    width: 47%;
+}
+
+.tickets {
+    width: 25%;
+    text-align: center;
+}
+
+.premio {
+    width: 20%;
+    text-align: center;
+}
+
+/* Destaque para o prêmio na linha de dados */
+.tb-rifa tbody .premio {
+    color: #00dd74;
+    font-weight: 700;
 }
 
 /* --- SCROLLBAR E RESPONSIVIDADE --- */

@@ -41,6 +41,7 @@ async function carregarPacotesDoFirebase() {
 }
 
 
+a
 /**
  * Função para renderizar (desenhar) os pacotes na tela.
  * (Esta função não precisa de mudanças)
