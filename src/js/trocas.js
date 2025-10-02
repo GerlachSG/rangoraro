@@ -45,6 +45,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const resultSliderHandle = document.getElementById('result-slider-handle');
     const sliderTrack = document.querySelector('.slider-track');
 
+    // --- ESTADO DE CONFIRMAÇÃO DO PREÇO ---
+    let priceConfirmed = false; // só true após ENTER ou blur (ou ações explícitas)
+
     async function fetchItemsFromFirestore() {
         try {
             const itemsCollection = await db.collection('itens').get();
@@ -73,6 +76,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function addEventListeners() {
         priceInput.addEventListener('input', handlePriceInputChange);
+        // Ao apertar ENTER no campo de preço, valida e força o valor para o intervalo [5%, 80%]
+        priceInput.addEventListener('keydown', handlePriceInputKeydown);
+        // Ao sair do campo de preço, considera o valor confirmado
+        priceInput.addEventListener('blur', handlePriceInputBlur);
         maxPriceBtn.addEventListener('click', handleMaxPriceClick);
         resetBtn.addEventListener('click', resetSelection);
         shortcutButtons.forEach(btn => btn.addEventListener('click', handleShortcutClick));
@@ -94,6 +101,45 @@ document.addEventListener('DOMContentLoaded', function () {
         sortPriceDiv.addEventListener('click', toggleSortOrder);
     }
 
+    /**
+     * Quando o usuário apertar ENTER no campo de preço, garante que o valor
+     * esteja entre 5% e 80% do preço do produto selecionado. Se estiver fora,
+     * ajusta o valor mostrado para o limite e atualiza a UI.
+     */
+    function handlePriceInputKeydown(e) {
+        if (e.key === 'Enter' || e.keyCode === 13) {
+            if (!selectedSnack) return;
+            const entered = parseFloat(priceInput.value) || 0;
+            const minAllowed = selectedSnack.price * (MIN_PERCENT / 100);
+            const maxAllowed = selectedSnack.price * (MAX_PERCENT / 100);
+            let newPrice = entered;
+            if (entered < minAllowed) newPrice = minAllowed;
+            if (entered > maxAllowed) newPrice = maxAllowed;
+            // Ajusta o campo para sempre mostrar duas casas decimais
+            priceInput.value = newPrice.toFixed(2);
+            // Atualiza o estado derivado (chance/roleta/preview)
+            updateChanceFromPrice();
+            // Marca que o usuário confirmou o valor por ENTER
+            priceConfirmed = true;
+            updateSpinButtonState();
+        }
+    }
+
+    function handlePriceInputBlur() {
+        // Quando o usuário sair do campo consideramos o valor confirmado
+        if (!selectedSnack) return;
+        const entered = parseFloat(priceInput.value) || 0;
+        const minAllowed = selectedSnack.price * (MIN_PERCENT / 100);
+        const maxAllowed = selectedSnack.price * (MAX_PERCENT / 100);
+        let newPrice = entered;
+        if (entered < minAllowed) newPrice = minAllowed;
+        if (entered > maxAllowed) newPrice = maxAllowed;
+        priceInput.value = newPrice.toFixed(2);
+        updateChanceFromPrice();
+        priceConfirmed = true;
+        updateSpinButtonState();
+    }
+
     function selectSnack(snack) {
         selectedSnack = snack;
         previewImage.style.backgroundImage = `url('${snack.image}')`;
@@ -102,6 +148,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedCard = document.querySelector(`[data-snack-id='${snack.id}']`);
         if (selectedCard) selectedCard.classList.add('selected');
         updatePriceFromChance();
+        // Ao selecionar um novo item, requer confirmação de preço novamente
+        priceConfirmed = false;
         updateSpinButtonState();
     }
 
@@ -210,6 +258,8 @@ document.addEventListener('DOMContentLoaded', function () {
         updateRouletteUI(); 
         updateResultSliderUI(); 
         updatePriceFromChance(); 
+        // ao ajustar slider consideramos que o usuário escolheu/confirmou um percentual
+        priceConfirmed = true;
         updateSpinButtonState(); // <-- CORRIGIDO
     }
     
@@ -234,15 +284,37 @@ document.addEventListener('DOMContentLoaded', function () {
         } 
     }
     
-    function handlePriceInputChange() { if (selectedSnack) updateChanceFromPrice(); updateSpinButtonState(); }
+    function handlePriceInputChange() { 
+        // Ao digitar, consideramos que o usuário ainda não confirmou o valor
+        priceConfirmed = false;
+        if (selectedSnack) updateChanceFromPrice(); 
+        updateSpinButtonState(); 
+    }
     
-    function handleMaxPriceClick() { if (selectedSnack) { const maxPriceValue = selectedSnack.price * (MAX_PERCENT / 100); priceInput.value = maxPriceValue.toFixed(2); handlePriceInputChange(); } }
+    function handleMaxPriceClick() { if (selectedSnack) { const maxPriceValue = selectedSnack.price * (MAX_PERCENT / 100); priceInput.value = maxPriceValue.toFixed(2); handlePriceInputChange(); // ação explícita = considera confirmado
+        priceConfirmed = true; updateSpinButtonState(); } }
     
-    function handleShortcutClick(e) { const percent = parseInt(e.target.dataset.value, 10); sweepAngle = (percent / 100) * 360; sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, sweepAngle)); updateRouletteUI(); updateChanceDisplays(); updatePriceFromChance(); updateSpinButtonState(); }
+    function handleShortcutClick(e) { const percent = parseInt(e.target.dataset.value, 10); sweepAngle = (percent / 100) * 360; sweepAngle = Math.max(MIN_SWEEP_ANGLE, Math.min(MAX_SWEEP_ANGLE, sweepAngle)); updateRouletteUI(); updateChanceDisplays(); updatePriceFromChance(); // ação via atalho = confirmado
+        priceConfirmed = true; updateSpinButtonState(); }
     
     function resetSelection() { selectedSnack = null; startAngle = 0; sweepAngle = (MIN_PERCENT / 100) * 360; priceInput.value = '0.00'; previewImage.style.backgroundImage = ''; previewText.textContent = 'Selecione um Rango abaixo para começar'; document.querySelectorAll('.product-card').forEach(card => card.classList.remove('selected')); updateRouletteUI(); updateChanceDisplays(); updatePreviewInfo(); updateSpinButtonState(); }
     
-    function updateSpinButtonState() { const price = parseFloat(priceInput.value) || 0; const enabled = selectedSnack && price > 0 && !isSpinning; selectRangeBtn.disabled = !enabled; demoBtn.disabled = isSpinning; if (enabled) { selectRangeBtn.textContent = `Girar por R$${price.toFixed(2).replace('.',',')}`; } else if (!selectedSnack) { selectRangeBtn.textContent = 'Selecione um item'; } else { selectRangeBtn.textContent = 'Girar'; } }
+    function updateSpinButtonState() { 
+        const price = parseFloat(priceInput.value) || 0; 
+        // Agora requer que o preço tenha sido confirmado (ENTER ou blur)
+        const enabled = selectedSnack && price > 0 && !isSpinning && priceConfirmed; 
+        selectRangeBtn.disabled = !enabled; 
+        demoBtn.disabled = isSpinning; 
+        if (enabled) { 
+            selectRangeBtn.textContent = `Girar por R$${price.toFixed(2).replace('.',',')}`; 
+        } else if (!selectedSnack) { 
+            selectRangeBtn.textContent = 'Selecione um item'; 
+        } else if (!priceConfirmed) {
+            selectRangeBtn.textContent = 'Girar';
+        } else { 
+            selectRangeBtn.textContent = 'Girar'; 
+        } 
+    }
     
     async function spinRoulette(isDemo) {
         if (isSpinning || (!selectedSnack && !isDemo)) return;
