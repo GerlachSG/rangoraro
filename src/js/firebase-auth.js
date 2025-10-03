@@ -1,27 +1,5 @@
-// js/firebase-auth.js
 
-// Small immediate-run logic: apply last-known auth state (from localStorage)
-// to the <body> as early as possible so the header doesn't flicker between pages.
-try {
-    const state = localStorage.getItem('rango_auth_state'); // 'logged-in' or 'logged-out'
-    if (state && typeof document !== 'undefined' && document.body) {
-        document.body.classList.add('auth-ready', state);
-    }
-} catch (e) {
-    // ignore
-}
-
-// If this script somehow runs before <body> exists, try again on DOMContentLoaded
-if (typeof document !== 'undefined' && !document.body) {
-    document.addEventListener('DOMContentLoaded', () => {
-        try {
-            const state = localStorage.getItem('rango_auth_state');
-            if (state) document.body.classList.add('auth-ready', state);
-        } catch (e) {}
-    });
-}
-
-/// Lógica de inicialização (seu código original)
+// Lógica de inicialização (seu código original)
 try { const state = localStorage.getItem('rango_auth_state'); if (state && document.body) { document.body.classList.add('auth-ready', state); }} catch (e) {}
 if (!document.body) { document.addEventListener('DOMContentLoaded', () => { try { const state = localStorage.getItem('rango_auth_state'); if (state) document.body.classList.add('auth-ready', state); } catch (e) {} }); }
 
@@ -89,20 +67,19 @@ auth.onAuthStateChanged(user => {
                 window.rangoState.user = userData;
 
                 document.body.classList.add('auth-ready', 'logged-in');
+                try { localStorage.setItem('rango_auth_state', 'logged-in'); } catch (e) {}
                 updateUIForLoggedInUser(userData);
 
                 // Chama o widget de suporte
                 if (window.RangoSupportWidget) {
                     window.RangoSupportWidget.init();
                 }
-            } else {
-                // Se o usuário está autenticado mas não tem registro no DB, desloga para evitar erros
-                logout();
-            }
+            } 
         });
     } else {
         window.rangoState.user = null;
         document.body.classList.add('auth-ready', 'logged-out');
+        try { localStorage.setItem('rango_auth_state', 'logged-out'); } catch (e) {}
         updateUIForLoggedOutUser();
     }
 });

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Suporte - Rango Raro</title>
+    <link rel="stylesheet" href="../css/admin-suporte.css">
+</head>
+<body>
+    <div id="auth-screen">
+        <h2>Painel de Suporte</h2>
+        <p>Faça login para acessar o painel de suporte</p>
+        <button id="login-btn">
+            <img src="../assets/icons/google-icon.svg" alt="Google" style="width: 18px; margin-right: 8px; vertical-align: middle;">
+            Login com Google
+        </button>
+    </div>
+    <div id="support-dashboard">
+        <div id="chat-list">
+            <div class="chat-list-content">
+                <h2>Conversas Ativas</h2>
+                <!-- Chat items will be added here -->
+            </div>
+            <div class="chat-list-footer">
+                <button class="control-btn minimize-chat" id="minimize-chat" title="Minimizar chat atual">
+                    <span class="icon">▼</span>
+                    <span>Minimizar</span>
+                </button>
+                <button class="control-btn logout" id="logout-btn" title="Sair do painel">
+                    <span class="icon">↪</span>
+                    <span>Sair</span>
+                </button>
+            </div>
+        </div>
+        <div id="welcome-screen">
+            <img src="../assets/icons/icon-logo.png" alt="Rango Raro Logo" class="logo">
+            <h2>Bem-vindo ao Suporte Rango Raro</h2>
+            <p>Selecione uma conversa para começar o atendimento</p>
+        </div>
+        <div id="chat-view">
+            <div id="chat-view-header">
+                <div class="user-info-container">
+                    <div class="user-photo">
+                        <img id="user-avatar" src="" alt="Avatar do usuário">
+                        <span id="user-status" class="status-indicator"></span>
+                    </div>
+                    <div class="user-details">
+                        <strong id="chat-user-name"></strong>
+                        <div class="user-metadata">
+                            <span id="user-email"></span>
+                            <span class="separator">•</span>
+                            <span id="user-id"></span>
+                        </div>
+                    </div>
+                    <button class="control-btn close-chat" id="close-current-chat" title="Fechar chat atual">
+                        <span class="icon">✕</span>
+                    </button>
+                </div>
+                <div class="user-stats">
+                    <div class="stat-item">
+                        <span class="stat-label">Saldo</span>
+                        <span id="user-balance" class="stat-value">R$ 0,00</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Tickets</span>
+                        <span id="user-tickets" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Membro desde</span>
+                        <span id="user-created-at" class="stat-value">-</span>
+                    </div>
+                </div>
+                <div class="chat-actions">
+                    <button id="user-history-btn" class="action-btn">Ver Histórico</button>
+                    <button id="close-chat-btn">Resolver Conversa</button>
+                </div>
+            </div>
+            <div id="messages-area">
+                <div class="empty-state">
+                    <div class="icon">🦗</div>
+                    <div class="message">Cri cri cri...</div>
+                    <div class="submessage">Selecione uma conversa para começar o atendimento</div>
+                </div>
+            </div>
+            <div id="reply-area">
+                <input type="text" id="reply-input" placeholder="Digite sua resposta...">
+                <button id="reply-btn">Enviar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmação -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Resolver Conversa</h3>
+            </div>
+            <div class="modal-body">
+                <p>Tem certeza que deseja resolver esta conversa?</p>
+                <p>O usuário será notificado que o atendimento foi encerrado.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn cancel" id="modal-cancel">Cancelar</button>
+                <button class="modal-btn confirm" id="modal-confirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading States -->
+    <template id="loading-chat-list">
+        <div class="chat-item skeleton"></div>
+        <div class="chat-item skeleton"></div>
+        <div class="chat-item skeleton"></div>
+    </template>
+
+    <template id="loading-messages">
+        <div class="message skeleton"></div>
+        <div class="message skeleton"></div>
+        <div class="message skeleton"></div>
+    </template>
+
+    <template id="error-state">
+        <div class="error-state">
+            <div class="icon">⚠️</div>
+            <div class="message">Ocorreu um erro ao carregar os dados</div>
+            <button class="retry-btn">Tentar novamente</button>
+        </div>
+    </template>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    <script src="../js/firebase-auth.js"></script>
+    <script src="../js/admin-suporte.js"></script>
+</body>
+</html>
