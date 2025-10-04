@@ -319,6 +319,7 @@
     background-position: var(--tutorial-image-x-position) var(--tutorial-image-y-position);
     background-repeat: no-repeat;
     position: relative;
+    overflow: hidden;
 }
 
 .tutorial-column:nth-child(1) {
@@ -490,3 +491,25 @@
     --tutorial-image-x-position: center;
 }
 
+
+.tutorial-img-container{
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    overflow: visible;
+}
+
+.tutorial-img-container img{
+    width: 260px;
+    height: auto;
+    z-index: 11;
+}
+
+.rarity-glow {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    background: radial-gradient(circle, #D9732B 10%, transparent 70%);
+    z-index: 10;
+}
