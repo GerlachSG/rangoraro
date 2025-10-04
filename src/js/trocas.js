@@ -148,8 +148,9 @@ document.addEventListener('DOMContentLoaded', function () {
         const selectedCard = document.querySelector(`[data-snack-id='${snack.id}']`);
         if (selectedCard) selectedCard.classList.add('selected');
         updatePriceFromChance();
-        // Ao selecionar um novo item, requer confirmação de preço novamente
-        priceConfirmed = false;
+        // Ao selecionar um novo item, mantém a porcentagem atual e considera o preço confirmado
+        // para permitir girar imediatamente com o valor calculado pela roleta.
+        priceConfirmed = true;
         updateSpinButtonState();
     }
 
