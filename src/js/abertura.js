@@ -342,9 +342,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         });
                     }
 
-                    // Dispara confete uma única vez por reveal para evitar múltiplos disparos
-                    const raridadesComConfete = ['incomum', 'raro', 'epico', 'lendario'];
-                    if ( (raridadesComConfete.includes(itemFinal.raridade) || itemFinal.valor > pacoteAtual.preco) && !targetItem.__confettiFired ) {
+                    // Dispara confete ao ganhar um item cujo valor é maior que o valor de abertura do pacote atual
+                    if ( (itemFinal.valor > pacoteAtual.preco) && !targetItem.__confettiFired ) {
                         targetItem.__confettiFired = true;
                         try { dispararConfetes(targetItem); } catch (e) { console.error('Erro ao disparar confetes:', e); }
                     }
