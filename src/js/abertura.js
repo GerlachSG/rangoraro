@@ -338,7 +338,10 @@ document.addEventListener('DOMContentLoaded', () => {
                             id: itemFinal.id,
                             name: itemFinal.nome,
                             price: itemFinal.valor,
-                            image: itemFinal.imagemUrl
+                            image: itemFinal.imagemUrl,
+                            fastfood: itemFinal.fastfood,
+                            opcoes: Array.isArray(itemFinal.opcoes) ? itemFinal.opcoes.slice() : undefined,
+                            'opcoes-retirar': Array.isArray(itemFinal['opcoes-retirar']) ? itemFinal['opcoes-retirar'].slice() : undefined
                         });
                     }
 

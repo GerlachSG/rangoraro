@@ -165,8 +165,6 @@ body {
 .cart-second-actions {width: 100%; display: flex; flex-direction: line; gap: 10px}
 .cart-action-btn { flex: 1; padding: 10px 12px; border-radius: 8px; border: none; font-weight: 600; }
 
-
-.cart-item-image { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; }
 .cart-item-info { flex: 1; }
 .cart-item-name { font-weight: 600; color: var(--cor-texto-principal); }
 .cart-item-price { color: var(--cor-texto-secundario); }
@@ -519,6 +517,42 @@ body {
     border: 1px solid var(--cor-borda);
 }
 
+/* Delivery modal reuse cart modal styles but adjust inner layout */
+
+.delivery-modal {
+    /* Match cart modal sizing */
+    background: var(--cor-fundo);
+    border-radius: 12px;
+    width: 90%;
+    max-width: 600px;
+    height: 60vh;
+    min-height: 500px;
+    border: 1px solid var(--cor-borda);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.delivery-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--cor-borda);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.delivery-header h3 { margin: 0; font-size: 1.5rem; color: var(--cor-texto-principal); }
+.delivery-close { background: none; border: none; color: var(--cor-texto-secundario); font-size: 1.5rem; cursor: pointer; }
+
+.delivery-body { padding: 16px 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; overflow:auto; flex: 1 1 auto; }
+.delivery-body label { display:flex; flex-direction:column; font-size:0.9rem; color:var(--cor-texto-secundario); }
+.delivery-body input[type="text"], .delivery-body select { background: var(--cor-fundo-secundario); border: 1px solid var(--cor-borda); color:var(--cor-texto-principal); padding:8px 10px; border-radius:6px; min-width:140px; }
+
+.delivery-actions { padding: 12px 20px; display:flex; gap:10px; justify-content:flex-start; border-top: 1px solid var(--cor-borda); background: var(--cor-fundo); position: sticky; bottom: 0; z-index: 20; }
+.btn-secondary { background: var(--cor-fundo-secundario); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
+
+.delivery-modal .opt-row { display:flex; align-items:center; gap:8px; margin:6px 0; }
+
+
 .empty-cart-display h2 {
     font-size: 1.4rem;
     color: var(--cor-texto-principal);
@@ -546,8 +580,8 @@ body {
 }
 
 .cart-item-image {
-    width: 60px;
-    height: 60px;
+    width: 15%;
+    height: 100%;
     border-radius: 6px;
     margin-right: 15px;
     object-fit: cover;
@@ -981,4 +1015,52 @@ body.logged-in .header-right {
     border-radius: 8px;
     margin-top: 4px; 
     font-weight: 700;
+}
+
+/* Delivery modal specific layout */
+.delivery-modal { max-width: 600px; width: 90%; max-height: 80vh; }
+.delivery-options-body { display: block; gap: 12px; padding: 16px; height: calc(80vh - 160px); overflow: auto; }
+
+/* Each item: 90% width of modal body, 10% height of the body (so stacked vertically)
+   Layout: [ left: image (fixed) ] [ center: name (top-aligned) ] [ right: options (fixed) ] */
+.delivery-item-row { display: flex; gap: 12px; align-items: center; padding: 12px; border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.02); width: 100%; box-sizing: border-box; margin: 0 auto 12px auto; }
+.delivery-item-left { width: 92px; display: flex; align-items: center; justify-content: center; flex: 0 0 92px; }
+.delivery-item-thumb { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; display: block; margin: 0 auto; }
+.delivery-item-center { flex: 1 1 auto; display: flex; flex-direction: column; align-self: flex-start; }
+.delivery-item-name { font-size: 1rem; color: var(--cor-texto-principal); text-align: left; font-weight: 700; width: 200px;}
+.delivery-item-right { width: 260px; flex: 0 0 200px; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+.opt-label { gap: 6px; }
+.optacoes-multi .opt-row { display: flex; gap: 8px; align-items: center; }
+.optacoes-multi label { color: var(--cor-texto-principal); }
+
+/* Style for multi-select to match single select look */
+.opt-label select, .optacoes-multi-select {
+    background: var(--cor-fundo);
+    color: var(--cor-texto-principal);
+    border: 1px solid var(--cor-borda);
+    padding: 5px 0px 5px 5px;
+    border-radius: 8px;
+}
+.optacoes-multi-select { width: 100%; min-width: 160px; max-width: 260px; }
+
+/* Selected option background for opcoes-retirar (multi-select) */
+.optacoes-multi-select option:checked {
+    background-color: #2e1e1e;
+    color: #ff5f5f;
+    border-radius: 10px;
+}
+
+/* Ensure the options close button inherits cart-close styling (already set via class reuse) */
+.options-close.cart-close { font-size: 1.25rem; color: var(--cor-texto-secundario); background: none; border: none; cursor: pointer; }
+
+@media (max-width: 760px) {
+    .delivery-item-row { flex-direction: row; }
+    .delivery-item-right { width: 200px; flex: 0 0 200px; }
+}
+
+@media (max-width: 560px) {
+    .delivery-item-row { flex-direction: column; align-items: stretch; height: auto; }
+    .delivery-item-left { width: 100%; justify-content: flex-start; padding-left: 8px; }
+    .delivery-item-center { padding-left: 8px; }
+    .delivery-item-right { width: 100%; flex: none; align-items: stretch; }
 }

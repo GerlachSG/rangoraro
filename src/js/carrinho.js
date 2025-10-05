@@ -94,14 +94,25 @@ async function addToCart(item) {
 
     try {
         const userCartCol = db.collection('users').doc(user.uid).collection('carrinho');
-        await userCartCol.add({
+        // Build payload including optional fields only when present
+        const payload = {
             itemId: item.id,
             id: item.id,
             name: item.name,
             image: item.image,
             price: (typeof item.price === 'number') ? item.price : Number(item.price) || 0,
-            addedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+            addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            fastfood: item.fastfood || null
+        };
+
+        if (Array.isArray(item.opcoes) && item.opcoes.length > 0) {
+            payload.opcoes = item.opcoes.slice();
+        }
+        if (Array.isArray(item['opcoes-retirar']) && item['opcoes-retirar'].length > 0) {
+            payload['opcoes-retirar'] = item['opcoes-retirar'].slice();
+        }
+
+        await userCartCol.add(payload);
     } catch (error) {
         console.error('Erro ao adicionar item ao carrinho:', error);
     }
@@ -110,14 +121,24 @@ async function addToCart(item) {
 async function saveItemToInventory(userId, item) {
     try {
         const userCartCol = db.collection('users').doc(userId).collection('carrinho');
-        await userCartCol.add({
+        const payload = {
             itemId: item.id,
             id: item.id,
             name: item.name,
             image: item.image,
             price: (typeof item.price === 'number') ? item.price : Number(item.price) || 0,
-            addedAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
+            addedAt: firebase.firestore.FieldValue.serverTimestamp(),
+            fastfood: item.fastfood || null
+        };
+
+        if (Array.isArray(item.opcoes) && item.opcoes.length > 0) {
+            payload.opcoes = item.opcoes.slice();
+        }
+        if (Array.isArray(item['opcoes-retirar']) && item['opcoes-retirar'].length > 0) {
+            payload['opcoes-retirar'] = item['opcoes-retirar'].slice();
+        }
+
+        await userCartCol.add(payload);
     } catch (err) {
         console.error('Erro ao salvar item no inventário:', err);
     }
@@ -398,7 +419,435 @@ function withdrawFunds() {
 
 function requestDelivery() {
     if (selectedItems.size === 0) return;
-    console.log("Requisitando entrega para:", Array.from(selectedItems));
+    console.log('requestDelivery called. selectedItems size:', selectedItems.size);
+    const user = auth.currentUser;
+    if (!user) {
+        console.warn('Usuário não logado - não é possível solicitar entrega.');
+        alert('Para solicitar entrega você precisa estar logado.');
+        return;
+    }
+
+    const selected = cartItems.filter(item => selectedItems.has(item.docId));
+
+    // Ensure delivery modals exist in DOM
+    ensureDeliveryModals();
+
+    // Check if user has address document
+    const userRef = db.collection('users').doc(user.uid);
+    const addressCol = userRef.collection('address');
+    const enderecoDocRef = addressCol.doc('endereco');
+
+    // Use Promise.race to fallback to address modal if Firestore get() stalls or fails
+    const getPromise = enderecoDocRef.get();
+    const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ __timeout: true }), 2000));
+
+    Promise.race([getPromise, timeoutPromise]).then(result => {
+        if (result && result.__timeout) {
+            console.warn('Leitura de endereço demorou/estourou timeout — abrindo modal de endereço como fallback');
+            openAddressModal(user, enderecoDocRef, selected);
+            return;
+        }
+
+        const doc = result; // firestore document snapshot
+        const data = doc.exists ? doc.data() : null;
+        console.log('Endereco document snapshot received. exists:', doc.exists, 'data:', data);
+        if (!doc.exists || !isAddressComplete(data)) {
+            openAddressModal(user, enderecoDocRef, selected);
+        } else {
+            openOptionsModal(user, selected, enderecoDocRef, data);
+        }
+    }).catch(err => {
+        console.error('Erro ao ler endereço do usuário (catch):', err);
+        // fallback: open address modal so user can input
+        openAddressModal(user, enderecoDocRef, selected);
+    });
+}
+
+// Helper: check address completeness
+function isAddressComplete(data) {
+    if (!data) return false;
+    if (!data.cep || !data.cidade || !data.bairro || !data.rua) return false;
+    // numero must be an integer > 0
+    const num = data.numero;
+    if (num === undefined || num === null) return false;
+    const parsed = parseInt(num, 10);
+    return !isNaN(parsed) && parsed > 0;
+}
+
+// Ensure modals markup added only once
+let _deliveryModalsInjected = false;
+function ensureDeliveryModals() {
+    if (_deliveryModalsInjected) return;
+    console.log('ensureDeliveryModals: injecting delivery modals into DOM');
+
+    const html = `
+    <div class="cart-modal-overlay delivery-address-modal-overlay delivery-modal-hidden">
+        <div class="delivery-modal">
+            <div class="delivery-header"><h3>Endereço de Entrega</h3><button class="delivery-close">&times;</button></div>
+            <div class="delivery-body">
+                <label for="delivery-cep">CEP<input id="delivery-cep" name="cep" type="text" class="delivery-cep" placeholder="00000-000" autocomplete="postal-code"></label>
+                <label for="delivery-cidade">Cidade<input id="delivery-cidade" name="cidade" type="text" class="delivery-cidade" autocomplete="address-level2"></label>
+                <label for="delivery-bairro">Bairro<input id="delivery-bairro" name="bairro" type="text" class="delivery-bairro" autocomplete="address-level3"></label>
+                <label for="delivery-rua">Rua<input id="delivery-rua" name="rua" type="text" class="delivery-rua" autocomplete="street-address"></label>
+                <label for="delivery-numero">Número<input id="delivery-numero" name="numero" type="text" class="delivery-numero" autocomplete="address-line2"></label>
+                <label for="delivery-complemento">Complemento<input id="delivery-complemento" name="complemento" type="text" class="delivery-complemento" autocomplete="off"></label>
+                <label for="delivery-referencia">Referência<input id="delivery-referencia" name="referencia" type="text" class="delivery-referencia" autocomplete="off"></label>
+            </div>
+            <div class="delivery-actions">
+                <button class="btn btn-secondary delivery-cancel">Cancelar</button>
+                <button class="btn btn-primary delivery-save">Salvar e Continuar</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="cart-modal-overlay delivery-options-modal-overlay delivery-modal-hidden">
+        <div class="delivery-modal">
+            <div class="delivery-header"><h3>Opções do Pedido</h3><button class="cart-close options-close">&times;</button></div>
+            <div class="delivery-body delivery-options-body">
+                <!-- options will be injected here -->
+            </div>
+            <div class="delivery-actions">
+                <button class="btn btn-secondary options-cancel">Cancelar</button>
+                <button class="btn btn-primary options-confirm">Confirmar e Enviar</button>
+            </div>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    console.log('ensureDeliveryModals: injected');
+
+    // Wire up basic buttons
+    document.querySelector('.delivery-close').addEventListener('click', () => closeModal('.delivery-address-modal-overlay'));
+    document.querySelector('.delivery-cancel').addEventListener('click', () => closeModal('.delivery-address-modal-overlay'));
+    document.querySelector('.delivery-save').addEventListener('click', onSaveAddressClicked);
+
+    document.querySelector('.options-close').addEventListener('click', () => closeModal('.delivery-options-modal-overlay'));
+    document.querySelector('.options-cancel').addEventListener('click', () => closeModal('.delivery-options-modal-overlay'));
+
+    // Close when clicking outside (overlay)
+    const addrOverlay = document.querySelector('.delivery-address-modal-overlay');
+    if (addrOverlay) {
+        addrOverlay.addEventListener('click', e => { if (e.target === addrOverlay) closeModal('.delivery-address-modal-overlay'); });
+    }
+    const optOverlay = document.querySelector('.delivery-options-modal-overlay');
+    if (optOverlay) {
+        optOverlay.addEventListener('click', e => { if (e.target === optOverlay) closeModal('.delivery-options-modal-overlay'); });
+    }
+
+    _deliveryModalsInjected = true;
+}
+
+function openModal(selector) {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    el.classList.remove('delivery-modal-hidden');
+    el.style.display = 'flex';
+    document.body.classList.add('modal-open');
+}
+
+function closeModal(selector) {
+    const el = document.querySelector(selector);
+    if (!el) return;
+    el.classList.add('delivery-modal-hidden');
+    el.style.display = 'none';
+    document.body.classList.remove('modal-open');
+}
+
+// Open address modal and prefill if possible
+let _currentDeliveryContext = null; // { user, selectedItems, enderecoRef }
+function openAddressModal(user, enderecoDocRef, selected) {
+    console.log('openAddressModal called');
+    _currentDeliveryContext = { user, selected, enderecoDocRef };
+    const overlay = document.querySelector('.delivery-address-modal-overlay');
+    if (!overlay) return;
+
+    // Clear fields
+    ['cep','cidade','bairro','rua','numero','complemento','referencia'].forEach(k => {
+        const el = document.querySelector('.delivery-' + k);
+        if (el) el.value = '';
+    });
+
+    // Try to prefill from firestore
+    enderecoDocRef.get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            if (data) {
+                if (data.cep) document.querySelector('.delivery-cep').value = data.cep;
+                if (data.cidade) document.querySelector('.delivery-cidade').value = data.cidade;
+                if (data.bairro) document.querySelector('.delivery-bairro').value = data.bairro;
+                if (data.rua) document.querySelector('.delivery-rua').value = data.rua;
+                if (data.numero !== undefined && data.numero !== null) document.querySelector('.delivery-numero').value = String(data.numero);
+                if (data.complemento) document.querySelector('.delivery-complemento').value = data.complemento;
+                if (data.referencia) document.querySelector('.delivery-referencia').value = data.referencia;
+            }
+        }
+    }).catch(() => {});
+
+    // Wire CEP autocomplete
+    const cepInput = document.querySelector('.delivery-cep');
+    if (cepInput) {
+        cepInput.removeEventListener('blur', onCepBlur);
+        cepInput.addEventListener('blur', onCepBlur);
+    }
+
+    openModal('.delivery-address-modal-overlay');
+}
+
+// CEP autocomplete using ViaCEP (no key required) - only fills cidade, bairro, rua
+function onCepBlur(e) {
+    const cepRaw = e.target.value || '';
+    const cep = cepRaw.replace(/[^0-9]/g, '');
+    if (cep.length !== 8) return;
+
+    const url = `https://viacep.com.br/ws/${cep}/json/`;
+    fetch(url).then(res => res.json()).then(data => {
+        if (data && !data.erro) {
+            if (data.localidade) document.querySelector('.delivery-cidade').value = data.localidade;
+            if (data.bairro) document.querySelector('.delivery-bairro').value = data.bairro;
+            if (data.logradouro) document.querySelector('.delivery-rua').value = data.logradouro;
+            // leave numero, complemento, referencia empty for user to fill
+        }
+    }).catch(err => {
+        console.warn('Erro ao buscar CEP:', err);
+    });
+}
+
+// Save address and proceed to options modal
+function onSaveAddressClicked() {
+    if (!_currentDeliveryContext) return;
+    const { user, selected, enderecoDocRef } = _currentDeliveryContext;
+
+    const data = {
+        cep: (document.querySelector('.delivery-cep') || { value: '' }).value.trim(),
+        cidade: (document.querySelector('.delivery-cidade') || { value: '' }).value.trim(),
+        bairro: (document.querySelector('.delivery-bairro') || { value: '' }).value.trim(),
+        rua: (document.querySelector('.delivery-rua') || { value: '' }).value.trim(),
+        numero: (document.querySelector('.delivery-numero') || { value: '' }).value.trim(),
+        complemento: (document.querySelector('.delivery-complemento') || { value: '' }).value.trim(),
+        referencia: (document.querySelector('.delivery-referencia') || { value: '' }).value.trim()
+    };
+
+    // Basic validation: required fields
+    if (!data.cep || !data.cidade || !data.bairro || !data.rua || data.numero === '') {
+        alert('Por favor preencha CEP, cidade, bairro, rua e número.');
+        return;
+    }
+
+    // Convert numero to integer
+    const numeroParsed = parseInt(data.numero.replace(/[^0-9]/g, ''), 10);
+    if (isNaN(numeroParsed) || numeroParsed <= 0) {
+        alert('Número inválido. Insira um número válido.');
+        return;
+    }
+    data.numero = numeroParsed;
+
+    enderecoDocRef.set(data, { merge: true }).then(() => {
+        closeModal('.delivery-address-modal-overlay');
+        // proceed to options modal using saved address
+        openOptionsModal(user, selected, enderecoDocRef, data);
+    }).catch(err => {
+        console.error('Erro ao salvar endereço:', err);
+        alert('Erro ao salvar endereço. Tente novamente.');
+    });
+}
+
+// Build and open options modal
+function openOptionsModal(user, selectedItemsArray, enderecoDocRef, addressData) {
+    _currentDeliveryContext = { user, selected: selectedItemsArray, enderecoDocRef, addressData };
+    const overlay = document.querySelector('.delivery-options-modal-overlay');
+    console.log('openOptionsModal called. selectedItemsArray length:', (selectedItemsArray || []).length);
+    if (!overlay) return;
+
+    const container = overlay.querySelector('.delivery-options-body');
+    container.innerHTML = '';
+
+    // For each selected item, render option selectors if arrays exist on the item
+    selectedItemsArray.forEach((item, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'delivery-item-options delivery-item-row';
+
+    // Left column: image only (fixed to the left)
+    const leftCol = document.createElement('div');
+    leftCol.className = 'delivery-item-left';
+    const img = document.createElement('img');
+    img.className = 'delivery-item-thumb';
+    img.src = item.image || '';
+    img.alt = item.name || 'Produto';
+    leftCol.appendChild(img);
+
+    // Center column: name (top-aligned)
+    const centerCol = document.createElement('div');
+    centerCol.className = 'delivery-item-center';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'delivery-item-name';
+    nameEl.textContent = item.name || 'Produto';
+    centerCol.appendChild(nameEl);
+
+        // Right column: options (single + multiple)
+        const rightCol = document.createElement('div');
+        rightCol.className = 'delivery-item-right';
+
+        // opcoes (single choice)
+        if (Array.isArray(item.opcoes) && item.opcoes.length > 0) {
+            const label = document.createElement('label');
+            label.className = 'opt-label';
+            label.textContent = 'Opção:';
+            const sel = document.createElement('select');
+            sel.className = 'optacoes-single';
+            sel.dataset.docId = item.docId;
+            const emptyOpt = document.createElement('option'); emptyOpt.value = ''; emptyOpt.textContent = 'Escolha...'; sel.appendChild(emptyOpt);
+            item.opcoes.forEach(opt => {
+                const o = document.createElement('option'); o.value = opt; o.textContent = opt; sel.appendChild(o);
+            });
+            label.appendChild(sel);
+            rightCol.appendChild(label);
+        }
+
+        // opcoes-retirar (multiple choice) rendered as a select[multiple] to match visual style
+        if (Array.isArray(item['opcoes-retirar']) && item['opcoes-retirar'].length > 0) {
+            const labelm = document.createElement('label');
+            labelm.className = 'opt-label';
+            labelm.textContent = 'Retirar opções:';
+            const multiSel = document.createElement('select');
+            multiSel.className = 'optacoes-multi-select';
+            multiSel.multiple = true;
+            multiSel.size = Math.min(4, item['opcoes-retirar'].length);
+            multiSel.dataset.docId = item.docId;
+            item['opcoes-retirar'].forEach(opt => {
+                const o = document.createElement('option'); o.value = opt; o.textContent = opt; multiSel.appendChild(o);
+            });
+            labelm.appendChild(multiSel);
+            rightCol.appendChild(labelm);
+        }
+
+        // hidden fields for item basic info
+        const infoDiv = document.createElement('div'); infoDiv.style.display = 'none';
+        infoDiv.dataset.docId = item.docId;
+        infoDiv.dataset.nome = item.name || '';
+        infoDiv.dataset.imagemUrl = item.image || '';
+        infoDiv.dataset.fastfood = item.fastfood || '';
+        infoDiv.dataset.valor = (typeof item.price === 'number') ? item.price : (item.price || 0);
+
+    wrapper.appendChild(leftCol);
+    wrapper.appendChild(centerCol);
+    wrapper.appendChild(rightCol);
+        wrapper.appendChild(infoDiv);
+
+        container.appendChild(wrapper);
+    });
+
+    // Wire confirm button
+    const confirmBtn = document.querySelector('.options-confirm');
+    // Disable confirm by default; it will be enabled when all required selects are filled
+    confirmBtn.removeEventListener('click', onOptionsConfirm);
+    confirmBtn.addEventListener('click', event => {
+        // final guard: validate required selects before running confirm
+        if (!areRequiredOptionsSelected()) {
+            alert('Por favor selecione as opções obrigatórias antes de confirmar.');
+            return;
+        }
+        onOptionsConfirm();
+    });
+
+    // Add listeners to inputs to toggle confirm button state
+    function updateConfirmButtonState() {
+        if (!confirmBtn) return;
+        confirmBtn.disabled = !areRequiredOptionsSelected();
+        if (confirmBtn.disabled) confirmBtn.classList.remove('btn-primary');
+        else confirmBtn.classList.add('btn-primary');
+    }
+
+    function areRequiredOptionsSelected() {
+        const containerLocal = overlay.querySelector('.delivery-options-body');
+        if (!containerLocal) return true;
+        let ok = true;
+        containerLocal.querySelectorAll('.delivery-item-row').forEach(block => {
+            const select = block.querySelector('select.optacoes-single');
+            if (select) {
+                if (!select.value || select.value === '') ok = false;
+            }
+        });
+        return ok;
+    }
+
+    // wire change handlers
+    overlay.querySelectorAll('select.optacoes-single').forEach(sel => {
+        sel.addEventListener('change', updateConfirmButtonState);
+    });
+    overlay.querySelectorAll('.optacoes-multi-select').forEach(sel => {
+        sel.addEventListener('change', updateConfirmButtonState);
+
+        // Allow click-to-toggle on multiple select options (no Shift/Ctrl needed)
+        sel.addEventListener('mousedown', function (e) {
+            const target = e.target;
+            if (target && target.tagName === 'OPTION') {
+                e.preventDefault(); // prevent default multi-select behavior
+                // toggle selection
+                target.selected = !target.selected;
+                // notify change
+                const evt = new Event('change', { bubbles: true });
+                sel.dispatchEvent(evt);
+            }
+        });
+    });
+
+    // Initial state
+    updateConfirmButtonState();
+
+    openModal('.delivery-options-modal-overlay');
+}
+
+function onOptionsConfirm() {
+    if (!_currentDeliveryContext) return;
+    const { user, selected, enderecoDocRef, addressData } = _currentDeliveryContext;
+
+    const itemsPayload = [];
+    const container = document.querySelector('.delivery-options-body');
+    if (!container) return;
+
+    // iterate each delivery-item-options block
+    container.querySelectorAll('.delivery-item-options').forEach(block => {
+        const info = block.querySelector('div[data-doc-id]');
+        const docId = info ? info.dataset.docId : null;
+        const nome = info ? info.dataset.nome : '';
+        const imagemUrl = info ? info.dataset.imagemUrl : '';
+        const fastfood = info ? info.dataset.fastfood : '';
+        const valor = info ? Number(info.dataset.valor) : 0;
+
+        const singleSel = block.querySelector('select.optacoes-single');
+        const single = singleSel ? singleSel.value : null;
+
+        const multi = [];
+        const multiSel = block.querySelector('select.optacoes-multi-select');
+        if (multiSel) {
+            Array.from(multiSel.selectedOptions || []).forEach(opt => multi.push(opt.value));
+        }
+
+    itemsPayload.push({ docId, nome, imagemUrl, fastfood, valor, 'opcoes': single ? [single] : [], 'opcoes-retirar': multi });
+    });
+
+    // Build organized console log
+    const now = new Date();
+    const userInfo = {
+        displayName: user.displayName || user.email || 'Usuário',
+        photoUrl: user.photoURL || null,
+        horario: now.toLocaleString()
+    };
+
+    const output = {
+        usuario: userInfo,
+        endereco: addressData || null,
+        itens: itemsPayload
+    };
+
+    console.log('Pedido de Entrega:', output);
+
+    // Close modal after confirming
+    closeModal('.delivery-options-modal-overlay');
+    // Optionally clear selection
+    // selectedItems.clear(); updateCartUI();
 }
 
 document.addEventListener('DOMContentLoaded', initCart);

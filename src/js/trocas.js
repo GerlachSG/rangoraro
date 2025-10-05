@@ -57,7 +57,15 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             allSnacks = itemsCollection.docs.map(doc => {
                 const data = doc.data();
-                return { id: doc.id, name: data.nome, price: parseFloat(data.valor || 0), image: data.imagemUrl };
+                return {
+                    id: doc.id,
+                    name: data.nome,
+                    price: parseFloat(data.valor || 0),
+                    image: data.imagemUrl,
+                    fastfood: data.fastfood || null,
+                    opcoes: Array.isArray(data.opcoes) ? data.opcoes.slice() : undefined,
+                    'opcoes-retirar': Array.isArray(data['opcoes-retirar']) ? data['opcoes-retirar'].slice() : undefined
+                };
             });
             init();
         } catch (error) {
@@ -415,7 +423,14 @@ document.addEventListener('DOMContentLoaded', function () {
                 const multiplier = selectedSnack.price > 0 ? (selectedSnack.price / Math.max(inputPrice, 0.01)).toFixed(2) : 0;
                 
                 // A variável correta com os dados do ganho
-                const itemWon = { ...selectedSnack, paidPrice: inputPrice, multiplier: multiplier };
+                const itemWon = {
+                    ...selectedSnack,
+                    paidPrice: inputPrice,
+                    multiplier: multiplier,
+                    fastfood: selectedSnack.fastfood || null,
+                    opcoes: Array.isArray(selectedSnack.opcoes) ? selectedSnack.opcoes.slice() : undefined,
+                    'opcoes-retirar': Array.isArray(selectedSnack['opcoes-retirar']) ? selectedSnack['opcoes-retirar'].slice() : undefined
+                };
                 
                 if (typeof saveItemToInventory === 'function') saveItemToInventory(user.uid, itemWon);
                 
