@@ -828,21 +828,25 @@ function onOptionsConfirm() {
     itemsPayload.push({ docId, nome, imagemUrl, fastfood, valor, 'opcoes': single ? [single] : [], 'opcoes-retirar': multi });
     });
 
-    // Build organized console log
+    // Build organized console log with address embedded into usuario
     const now = new Date();
+    const formattedAddress = addressData ? `${addressData.rua || ''}${addressData.numero ? ', ' + addressData.numero : ''}${addressData.bairro ? ' - ' + addressData.bairro : ''}` : null;
     const userInfo = {
         displayName: user.displayName || user.email || 'Usuário',
         photoUrl: user.photoURL || null,
-        horario: now.toLocaleString()
+        horario: now.toLocaleString(),
+        endereco: formattedAddress,
+        cidade: addressData && addressData.cidade ? addressData.cidade : '',
+        complemento: addressData && addressData.complemento ? addressData.complemento : '',
+        referencia: addressData && addressData.referencia ? addressData.referencia : ''
     };
 
     const output = {
         usuario: userInfo,
-        endereco: addressData || null,
         itens: itemsPayload
     };
 
-    console.log('Pedido de Entrega:', output);
+    console.log('Pedido pra Verificar:', output);
 
     // Close modal after confirming
     closeModal('.delivery-options-modal-overlay');
