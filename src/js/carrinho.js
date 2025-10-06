@@ -721,20 +721,26 @@ function openAddressModal(user, enderecoDocRef, selected) {
     function validateNumero() {
         if (!numeroInput) return true;
         const numValue = numeroInput.value.trim();
-        if (numValue === '') return true; // Not invalid if empty, but will fail allFieldsFilled check
+        
+        // Garante que o valor contém apenas dígitos
+        const isInteger = /^\d+$/.test(numValue);
+        const parsedNum = parseInt(numValue, 10);
 
-        const isNumeroValid = !isNaN(parsedNum) && parsedNum > 0;
+        // Valida se é um número inteiro, positivo e com no máximo 4 dígitos.
+        const isNumeroValid = isInteger && !isNaN(parsedNum) && parsedNum > 0 && numValue.length <= 4;
 
-        if (!isNumeroValid) {
-            numeroInput.classList.add('input-error');
-            return false;
-        } else {
-            numeroInput.classList.remove('input-error');
-            return true;
+        if (numeroInput.dataset.touched === "true") {
+            if (!isNumeroValid) {
+                numeroInput.classList.add('input-error');
+            } else {
+                numeroInput.classList.remove('input-error');
+            }
         }
+        
+        return isNumeroValid;
     }
 
-    function validateRequiredFieldWithMinLength(input, minLength = 3) {
+    function validateRequiredFieldWithMinLength(input, minLength = 4) {
         if (!input) return false; // Should not happen if selector is correct
         const value = input.value.trim();
         
@@ -755,35 +761,45 @@ function openAddressModal(user, enderecoDocRef, selected) {
     }
 
     if (numeroInput) {
-        numeroInput.addEventListener('input', () => {
+        numeroInput.addEventListener('input', (e) => {
+            // Remove caracteres não numéricos (exceto dígitos)
+            let value = e.target.value.replace(/[^\d]/g, '');
+            
+            // Limita o comprimento a 4 dígitos
+            if (value.length > 4) {
+                value = value.slice(0, 4);
+            }
+            
+            // Atualiza o valor do campo
+            e.target.value = value;
+
             numeroInput.dataset.touched = "true";
             validateNumero();
             updateSaveButtonState();
         });
     }
-    // Complemento e Referência não são mais obrigatórios
-    // if (complementoInput) {
-    //     complementoInput.addEventListener('input', () => {
-    //         complementoInput.dataset.touched = "true";
-    //         validateRequiredFieldWithMinLength(complementoInput);
-    //         updateSaveButtonState();
-    //     });
-    // }
-    // if (referenciaInput) {
-    //     referenciaInput.addEventListener('input', () => {
-    //         referenciaInput.dataset.touched = "true";
-    //         validateRequiredFieldWithMinLength(referenciaInput);
-    //         updateSaveButtonState();
-    //     });
-    // }
+    if (complementoInput) {
+        complementoInput.addEventListener('input', () => {
+            complementoInput.dataset.touched = "true";
+            validateRequiredFieldWithMinLength(complementoInput);
+            updateSaveButtonState();
+        });
+    }
+    if (referenciaInput) {
+        referenciaInput.addEventListener('input', () => {
+            referenciaInput.dataset.touched = "true";
+            validateRequiredFieldWithMinLength(referenciaInput);
+            updateSaveButtonState();
+        });
+    }
 
     function updateSaveButtonState() {
         const saveBtn = document.querySelector('.delivery-save');
         if (!saveBtn) return;
 
         const isNumeroValid = validateNumero();
-        // const isComplementoValid = validateRequiredFieldWithMinLength(complementoInput);
-        // const isReferenciaValid = validateRequiredFieldWithMinLength(referenciaInput);
+        const isComplementoValid = validateRequiredFieldWithMinLength(complementoInput);
+        const isReferenciaValid = validateRequiredFieldWithMinLength(referenciaInput);
 
         const allRequiredFieldsFilled = [
             (document.querySelector('.delivery-cep') || {}).value,
@@ -792,11 +808,11 @@ function openAddressModal(user, enderecoDocRef, selected) {
             (document.querySelector('.delivery-bairro') || {}).value,
             (document.querySelector('.delivery-rua') || {}).value,
             (document.querySelector('.delivery-numero') || {}).value,
-            // (document.querySelector('.delivery-complemento') || {}).value, // Não obrigatório
-            // (document.querySelector('.delivery-referencia') || {}).value // Não obrigatório
+            (document.querySelector('.delivery-complemento') || {}).value,
+            (document.querySelector('.delivery-referencia') || {}).value
         ].every(v => v && v.trim() !== '');
 
-        if (allRequiredFieldsFilled && isNumeroValid) {
+        if (allRequiredFieldsFilled && isNumeroValid && isComplementoValid && isReferenciaValid) {
             saveBtn.disabled = false;
             saveBtn.style.opacity = '1';
             saveBtn.style.backgroundColor = '';
@@ -1549,11 +1565,13 @@ function haversineDistance(coords1, coords2) {
  * @param {object} horarios O mapa de horários do Firestore.
  * @returns {{isOpen: boolean, closingTime: string}}
  */
-function isStoreOpen(horarios) {
-    // Desabilitado temporariamente: sempre retorna true para testes
-    return { isOpen: true, closingTime: '22:00' };
 
-    /*
+function isStoreOpen(horarios) {
+    
+    // PARA TESTES: DESCOMENTAR A LINHA ABAIXO PARA SIMULAR LOJA SEMPRE ABERTA
+    //return { isOpen: true, closingTime: '22:00' };
+
+    // COMENTAR O CÓDIGO ABAIXO PARA DESABILITAR A VERIFICAÇÃO DE HORÁRIO
     if (!horarios) return { isOpen: false, closingTime: '' };
     const now = new Date();
     const dayOfWeek = now.getDay().toString(); // 0=Domingo, 1=Segunda, ..., 6=Sábado
@@ -1572,7 +1590,6 @@ function isStoreOpen(horarios) {
     }
     const isOpen = now >= openTime && now <= closeTime;
     return { isOpen, closingTime: todayHours.fecha };
-    */
 }
 
 
