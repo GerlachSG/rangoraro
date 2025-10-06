@@ -545,7 +545,22 @@ body {
 
 .delivery-body { padding: 16px 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; overflow:auto; flex: 1 1 auto; }
 .delivery-body label { display:flex; flex-direction:column; font-size:0.9rem; color:var(--cor-texto-secundario); }
-.delivery-body input[type="text"], .delivery-body select { background: var(--cor-fundo-secundario); border: 1px solid var(--cor-borda); color:var(--cor-texto-principal); padding:8px 10px; border-radius:6px; min-width:140px; }
+.delivery-body input[type="text"], .delivery-body select { 
+    background: var(--cor-fundo-secundario); 
+    border: 1px solid var(--cor-borda); 
+    color: var(--cor-texto-principal); 
+    padding: 8px 10px; 
+    border-radius: 6px; 
+    min-width: 140px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+/* Estilo para inputs com erro */
+.delivery-body input[type="text"].input-error, 
+.delivery-body select.input-error {
+    background-color: #2e1e1e !important;
+    border: 1px solid #E53E3E;
+}
 
 .delivery-actions { padding: 12px 20px; display:flex; gap:10px; justify-content:flex-start; border-top: 1px solid var(--cor-borda); background: var(--cor-fundo); position: sticky; bottom: 0; z-index: 20; }
 .btn-secondary { background: var(--cor-fundo-secundario); color: #fff; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; }
@@ -577,6 +592,7 @@ body {
     border-radius: 8px;
     margin-bottom: 10px;
     background-color: var(--cor-fundo-secundario);
+    min-height: 40%;
 }
 
 .cart-item-image {
@@ -584,7 +600,7 @@ body {
     height: 100%;
     border-radius: 6px;
     margin-right: 15px;
-    object-fit: cover;
+    object-fit: contain;
 }
 
 .cart-item-info {
@@ -684,17 +700,18 @@ body {
 /* Overlay que aparece no hover e na seleção */
 .cart-item .selection-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 50%;
+    right: 20px; /* Posição fixa à direita */
+    transform: translateY(-50%); /* Alinhamento vertical */
+    width: 32px; /* Tamanho fixo para o círculo */
+    height: 32px; /* Tamanho fixo para o círculo */
     background-color: rgba(0, 0, 0, 0.3);
-    border-radius: 8px; /* Mesmo radius do cart-item */
+    border-radius: 50%; /* Círculo perfeito */
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 0;
-    transition: opacity 0.2s, background-color 0.2s;
+    transition: opacity 0.2s; background-color: 0.2s;
     pointer-events: none; /* Garante que o item ainda é clicável */
 }
 
@@ -1063,4 +1080,15 @@ body.logged-in .header-right {
     .delivery-item-left { width: 100%; justify-content: flex-start; padding-left: 8px; }
     .delivery-item-center { padding-left: 8px; }
     .delivery-item-right { width: 100%; flex: none; align-items: stretch; }
+}
+
+.delivery-item-row.item-error {
+    background-color: #2e1e1e !important;
+    border: 1px solid #E53E3E;
+}
+.delivery-error-message {
+    color: #E53E3E;
+    font-size: 0.8rem;
+    margin-top: 4px;
+    font-weight: 500;
 }
