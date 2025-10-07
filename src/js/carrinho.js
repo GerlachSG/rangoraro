@@ -570,7 +570,7 @@ function ensureDeliveryModals() {
         <div class="delivery-modal">
             <div class="delivery-header"><h3>Endereço de Entrega</h3><button class="delivery-close">&times;</button></div>
             <div class="delivery-body">
-                <label for="delivery-cep">CEP<input id="delivery-cep" name="cep" type="text" class="delivery-cep" placeholder="00000-000" autocomplete="postal-code"></label>
+                <label for="delivery-cep" class="delivery-cep-label">CEP<input id="delivery-cep" name="cep" type="text" class="delivery-cep" placeholder="00000-000" autocomplete="postal-code"><span class="cep-error-message" aria-hidden="true" style="display:none;">CEP inválido.</span></label>
                 <label for="delivery-estado">Estado (UF)<input id="delivery-estado" name="estado" type="text" class="delivery-estado" autocomplete="address-level1"></label>
                 <label for="delivery-cidade">Cidade<input id="delivery-cidade" name="cidade" type="text" class="delivery-cidade" autocomplete="address-level2"></label>
                 <label for="delivery-bairro">Bairro<input id="delivery-bairro" name="bairro" type="text" class="delivery-bairro" autocomplete="address-level3"></label>
@@ -685,6 +685,20 @@ function ensureDeliveryModals() {
         .address-option-details strong { font-size: 1rem; }
         .address-option-details span { font-size: 0.9rem; color: var(--cor-texto-secundario); }
         .address-option-extra { font-size: 0.8rem; color: #888; }
+        /* CEP error styles (não devem deslocar o layout) */
+        .delivery-cep-label { position: relative; display: block; }
+        .delivery-cep-label .cep-error-message {
+            position: absolute;
+            left: 0;
+            top: 100%;
+            margin-top: 6px;
+            color: #E53E3E;
+            font-size: 0.85rem;
+            background: transparent;
+            display: none;
+            pointer-events: none;
+        }
+        .delivery-cep.input-error { background-color: #ffecec; border: 1px solid #ff4d4d; }
         .add-new-address { 
             border-style: dashed; 
             align-items: center; /* Centraliza o texto */
@@ -924,7 +938,13 @@ function setupAddressFormValidation() {
             input.dataset.listenerAttached = 'true';
             input.addEventListener('input', () => {
                 input.dataset.touched = "true";
-                validateRequiredFieldWithMinLength(input);
+                // campo opcional: só valida se algo foi digitado
+                const val = input.value.trim();
+                if (val === '') {
+                    input.classList.remove('input-error');
+                } else {
+                    validateRequiredFieldWithMinLength(input);
+                }
                 updateSaveButtonState();
             });
         }
@@ -934,19 +954,24 @@ function setupAddressFormValidation() {
         const saveBtn = document.querySelector('.delivery-save');
         if (!saveBtn) return;
         const isNumeroValid = validateNumero();
-        const isComplementoValid = validateRequiredFieldWithMinLength(complementoInput);
-        const isReferenciaValid = validateRequiredFieldWithMinLength(referenciaInput);
+        // Complemento e referencia sao opcionais: se vazios, são válidos; se preenchidos, aplicam validação de comprimento
+        const isComplementoValid = complementoInput ? (complementoInput.value.trim() === '' ? true : validateRequiredFieldWithMinLength(complementoInput)) : true;
+        const isReferenciaValid = referenciaInput ? (referenciaInput.value.trim() === '' ? true : validateRequiredFieldWithMinLength(referenciaInput)) : true;
+        // Valida CEP: deve conter exatamente 8 dígitos (após remover não dígitos)
+        const cepValRaw = (document.querySelector('.delivery-cep') || {}).value || '';
+        const cepDigits = cepValRaw.replace(/[^0-9]/g, '');
+        const isCepValid = cepDigits.length === 8;
+
         const allRequiredFieldsFilled = [
-            (document.querySelector('.delivery-cep') || {}).value,
+            cepValRaw,
             (document.querySelector('.delivery-estado') || {}).value,
             (document.querySelector('.delivery-cidade') || {}).value,
             (document.querySelector('.delivery-bairro') || {}).value,
             (document.querySelector('.delivery-rua') || {}).value,
-            (document.querySelector('.delivery-numero') || {}).value,
-            (document.querySelector('.delivery-complemento') || {}).value,
-            (document.querySelector('.delivery-referencia') || {}).value
+            (document.querySelector('.delivery-numero') || {}).value
         ].every(v => v && v.trim() !== '');
-        if (allRequiredFieldsFilled && isNumeroValid && isComplementoValid && isReferenciaValid) {
+
+        if (allRequiredFieldsFilled && isNumeroValid && isComplementoValid && isReferenciaValid && isCepValid) {
             saveBtn.disabled = false;
             saveBtn.style.opacity = '1';
             saveBtn.style.backgroundColor = '';
@@ -966,6 +991,18 @@ function setupAddressFormValidation() {
             input.addEventListener('input', updateSaveButtonState);
         }
     });
+
+    // CEP: remover erro ao digitar e esconder mensagem
+    const cepInputLocal = document.querySelector('.delivery-cep');
+    if (cepInputLocal && !cepInputLocal.dataset.cepInputListener) {
+        cepInputLocal.dataset.cepInputListener = 'true';
+        cepInputLocal.addEventListener('input', function() {
+            this.classList.remove('input-error');
+            const msg = document.querySelector('.delivery-cep-label .cep-error-message');
+            if (msg) msg.style.display = 'none';
+            updateSaveButtonState();
+        });
+    }
 
     function compareBairros(bairro1, bairro2) {
         if (!bairro1 || !bairro2) return false;
@@ -1041,19 +1078,41 @@ function setupAddressFormValidation() {
 
 // Autocompletar CEP com ViaCEP.
 async function onCepBlur(e) {
-    const cep = (e.target.value || '').replace(/[^0-9]/g, '');
-    if (cep.length !== 8) return;
+    // Normaliza para apenas dígitos
+    let cepDigits = (e.target.value || '').replace(/[^0-9]/g, '');
+    const cepInputEl = e.target;
+    const errorMsgEl = document.querySelector('.delivery-cep-label .cep-error-message');
+
+    // Se tiver menos que 8 números, marca como inválido e mostra mensagem sem alterar layout
+    if (cepDigits.length < 8) {
+        if (cepInputEl) cepInputEl.classList.add('input-error');
+        if (errorMsgEl) errorMsgEl.style.display = 'block';
+        return;
+    }
+
+    // Se tiver mais que 8 dígitos, corta para 8 (evita letras ou sobra de números)
+    if (cepDigits.length > 8) cepDigits = cepDigits.slice(0, 8);
+
+    // Formata como 12345-678 e coloca no input
+    const formatted = cepDigits.slice(0,5) + '-' + cepDigits.slice(5);
+    if (cepInputEl) cepInputEl.value = formatted;
     try {
-        const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        // Consulta ao ViaCEP sempre com apenas os 8 dígitos (sem traço)
+        const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
         if (!res.ok) return;
         const data = await res.json();
         if (data.erro) return;
 
-        if (data.localidade) document.querySelector('.delivery-cidade').value = data.localidade;
-        if (data.uf) document.querySelector('.delivery-estado').value = data.uf;
-        if (data.bairro) document.querySelector('.delivery-bairro').value = data.bairro;
-        if (data.logradouro) document.querySelector('.delivery-rua').value = data.logradouro;
-        window.updateSaveButtonState();
+    if (data.localidade) document.querySelector('.delivery-cidade').value = data.localidade;
+    if (data.uf) document.querySelector('.delivery-estado').value = data.uf;
+    if (data.bairro) document.querySelector('.delivery-bairro').value = data.bairro;
+    if (data.logradouro) document.querySelector('.delivery-rua').value = data.logradouro;
+    // remove estado de erro do CEP se estava marcado
+    const cepInput = document.querySelector('.delivery-cep');
+    const cepMsg = document.querySelector('.delivery-cep-label .cep-error-message');
+    if (cepInput) cepInput.classList.remove('input-error');
+    if (cepMsg) cepMsg.style.display = 'none';
+    window.updateSaveButtonState();
     } catch (err) {
         console.warn('Erro ao buscar CEP:', err);
     }
@@ -1074,7 +1133,13 @@ function onSaveAddressClicked() {
     }
 
     const data = {
-        cep: (document.querySelector('.delivery-cep') || {}).value.trim(),
+        // Normaliza e formata o CEP antes de salvar: somente dígitos, formata 12345-678
+        cep: (function() {
+            const raw = (document.querySelector('.delivery-cep') || {}).value || '';
+            const digits = raw.replace(/[^0-9]/g, '').slice(0,8);
+            if (digits.length !== 8) return raw.trim();
+            return digits.slice(0,5) + '-' + digits.slice(5);
+        })(),
         estado: (document.querySelector('.delivery-estado') || {}).value.trim(),
         cidade: (document.querySelector('.delivery-cidade') || {}).value.trim(),
         bairro: (document.querySelector('.delivery-bairro') || {}).value.trim(),
