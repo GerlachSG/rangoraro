@@ -1,4 +1,4 @@
-/* css/main.css (Revisado para manter sua paleta de cores original) */
+/* CSS header */
 
 /* --- VARIÁVEIS DE COR E RESET GLOBAL --- */
 :root {
@@ -1069,6 +1069,7 @@ body.logged-in .header-right {
 
 /* Ensure the options close button inherits cart-close styling (already set via class reuse) */
 .options-close.cart-close { font-size: 1.25rem; color: var(--cor-texto-secundario); background: none; border: none; cursor: pointer; }
+.options-close.options-close { font-size: 1.25rem; color: var(--cor-texto-secundario); background: none; border: none; cursor: pointer; }
 
 @media (max-width: 760px) {
     .delivery-item-row { flex-direction: row; }

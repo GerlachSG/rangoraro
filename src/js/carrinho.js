@@ -1,4 +1,4 @@
-// Cart System for RangoRaro
+// JavaScript carrinho
 
 let cartItems = []; // Array de itens com seus IDs de documento
 let selectedItems = new Set(); // Armazena os IDs dos documentos dos itens selecionados
@@ -440,7 +440,14 @@ function withdrawFunds() {
     console.log("Requisitando saque para:", Array.from(selectedItems));
 }
 
-function requestDelivery() {
+// ===================================================================
+// === LÓGICA DE ENTREGA (INÍCIO) ===
+// ===================================================================
+
+let _currentDeliveryContext = null; // { user, selectedItems, enderecoRef, addressData }
+
+// Função principal que inicia o fluxo de entrega.
+async function requestDelivery() {
     if (selectedItems.size === 0) return;
     const user = auth.currentUser;
     if (!user) {
@@ -449,37 +456,97 @@ function requestDelivery() {
     }
 
     const selected = cartItems.filter(item => selectedItems.has(item.docId));
-
-
-    // Ensure delivery modals exist in DOM
+    
+    // Garante que todos os modais necessários existem no DOM.
     ensureDeliveryModals();
 
-    // Check if user has address document
     const userRef = db.collection('users').doc(user.uid);
     const addressCol = userRef.collection('address');
-    const enderecoDocRef = addressCol.doc('endereco');
 
-    // Use Promise.race to fallback to address modal if Firestore get() stalls or fails
-    const getPromise = enderecoDocRef.get();
-    const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ __timeout: true }), 2000));
-
-    Promise.race([getPromise, timeoutPromise]).then(result => {
-        if (result && result.__timeout) {
-            openAddressModal(user, enderecoDocRef, selected);
-            return;
-        }
-
-        const doc = result; // firestore document snapshot
-        const data = doc.exists ? doc.data() : null;
-        if (!doc.exists || !isAddressComplete(data)) {
-            openAddressModal(user, enderecoDocRef, selected);
+    try {
+        const snapshot = await addressCol.get();
+        
+        if (snapshot.empty) {
+            // Nenhum endereço cadastrado: abre o modal para criar o primeiro ('endereco-1').
+            const firstAddressRef = addressCol.doc('endereco-1');
+            openAddressModal(user, selected, firstAddressRef);
         } else {
-            openOptionsModal(user, selected, enderecoDocRef, data);
+            // Endereços existem: abre o modal de seleção.
+            const addresses = [];
+            snapshot.forEach(doc => {
+                addresses.push({ id: doc.id, ...doc.data() });
+            });
+            // Ordena os endereços para garantir a ordem (endereco-1, endereco-2, etc.).
+            addresses.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+            openAddressSelectionModal(user, selected, addresses);
         }
-    }).catch(err => {
-        // fallback: open address modal so user can input
-        openAddressModal(user, enderecoDocRef, selected);
+    } catch (err) {
+        console.error("Erro ao buscar endereços:", err);
+        alert("Ocorreu um erro ao verificar seus endereços. Tente novamente.");
+    }
+}
+
+
+// Abre o modal para o usuário escolher um endereço existente ou adicionar um novo.
+function openAddressSelectionModal(user, selectedItems, addresses) {
+    const overlay = document.querySelector('.delivery-address-selection-modal-overlay');
+    if (!overlay) return;
+
+    const container = overlay.querySelector('.delivery-address-list');
+    container.innerHTML = ''; // Limpa conteúdo anterior.
+
+    // Renderiza cada endereço salvo.
+    addresses.forEach(addr => {
+        const addrElement = document.createElement('div');
+        addrElement.className = 'address-option';
+
+        const detailsSpan = `<span>${addr.bairro}, ${addr.cidade} - ${addr.estado.toUpperCase()}</span>`;
+        
+        let extraInfo = '';
+        if (addr.complemento && addr.referencia) {
+            extraInfo = `${addr.complemento} - ${addr.referencia}`;
+        } else if (addr.complemento) {
+            extraInfo = addr.complemento;
+        } else if (addr.referencia) {
+            extraInfo = addr.referencia;
+        }
+        const extraSpan = extraInfo ? `<span class="address-option-extra">(${extraInfo})</span>` : '';
+
+        addrElement.innerHTML = `
+            <div class="address-option-details">
+                <strong>${addr.rua}, ${addr.numero}</strong>
+                ${detailsSpan}
+                ${extraSpan}
+            </div>
+        `;
+        addrElement.addEventListener('click', () => {
+            closeModal('.delivery-address-selection-modal-overlay');
+            // Procede para a tela de opções com o endereço selecionado.
+            openOptionsModal(user, selectedItems, null, addr);
+        });
+        container.appendChild(addrElement);
     });
+
+    // Renderiza o botão de "Adicionar Novo Endereço" se houver menos de 5.
+    if (addresses.length < 5) {
+        const addButton = document.createElement('div');
+        addButton.className = 'address-option add-new-address';
+        addButton.innerHTML = `
+            <div class="address-option-details">
+                <strong>Adicionar Novo Endereço</strong>
+            </div>
+        `;
+        addButton.addEventListener('click', () => {
+            const nextAddressNumber = addresses.length + 1;
+            const nextDocId = `endereco-${nextAddressNumber}`;
+            const newAddressRef = db.collection('users').doc(user.uid).collection('address').doc(nextDocId);
+            closeModal('.delivery-address-selection-modal-overlay');
+            openAddressModal(user, selectedItems, newAddressRef);
+        });
+        container.appendChild(addButton);
+    }
+
+    openModal('.delivery-address-selection-modal-overlay');
 }
 
 // Helper: check address completeness
@@ -493,7 +560,7 @@ function isAddressComplete(data) {
     return !isNaN(parsed) && parsed > 0;
 }
 
-// Ensure modals markup added only once
+// Garante que a estrutura HTML de todos os modais de entrega foi injetada no DOM.
 let _deliveryModalsInjected = false;
 function ensureDeliveryModals() {
     if (_deliveryModalsInjected) return;
@@ -519,9 +586,20 @@ function ensureDeliveryModals() {
         </div>
     </div>
 
+    <div class="cart-modal-overlay delivery-address-selection-modal-overlay delivery-modal-hidden">
+        <div class="delivery-modal">
+            <div class="delivery-header"><h3>Selecione o Endereço</h3><button class="delivery-close">&times;</button></div>
+            <div class="delivery-body delivery-address-list">
+                </div>
+            <div class="delivery-actions">
+                 <button class="btn btn-secondary address-selection-cancel">Voltar</button>
+            </div>
+        </div>
+    </div>
+
     <div class="cart-modal-overlay delivery-options-modal-overlay delivery-modal-hidden">
         <div class="delivery-modal">
-            <div class="delivery-header"><h3>Opções do Pedido</h3><button class="cart-close options-close">&times;</button></div>
+            <div class="delivery-header"><h3>Opções do Pedido</h3><button class="options-close">&times;</button></div>
             <div class="delivery-body delivery-options-body">
                 </div>
             <div class="delivery-actions">
@@ -560,7 +638,7 @@ function ensureDeliveryModals() {
             display: flex; flex-direction: column; align-items: center; gap: 20px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.3);
             border: 1px solid var(--cor-borda);
-            min-width: 280px; /* Garante que o modal não mude de tamanho */
+            min-width: 280px;
             text-align: center;
         }
         .loading-spinner {
@@ -569,37 +647,73 @@ function ensureDeliveryModals() {
             border-radius: 50%; width: 50px; height: 50px;
             animation: spin 1s linear infinite;
         }
-        .loading-success {
-            display: none; /* Hidden by default */
+        .loading-success { display: none; }
+        .success-checkmark { width: 55px; height: 55px; color: #28a745; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Estilos para o novo modal de seleção de endereço */
+        .delivery-address-list { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 15px; 
+            width: 100%;
+            flex-grow: 1;
         }
-        .success-checkmark {
-            width: 55px;
-            height: 55px;
-            color: #28a745;
+        .address-option { 
+            display: flex; 
+            flex-direction: column;
+            justify-content: center;
+            width: 100%;
+            min-height: 25%;
+            padding: 15px;
+            background-color: var(--cor-fundo-secundario); 
+            border-radius: 8px;
+            border: 1px solid var(--cor-borda); 
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            box-sizing: border-box; /* Garante que padding não afete o tamanho total */
         }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .address-option:hover { 
+            border-color: var(--cor-destaque); 
+            background-color: var(--cor-hover); 
+        }
+        .address-option-details { 
+            display: flex; 
+            flex-direction: column;
+            gap: 4px; /* Espaçamento entre as linhas de texto */
+        }
+        .address-option-details strong { font-size: 1rem; }
+        .address-option-details span { font-size: 0.9rem; color: var(--cor-texto-secundario); }
+        .address-option-extra { font-size: 0.8rem; color: #888; }
+        .add-new-address { 
+            border-style: dashed; 
+            align-items: center; /* Centraliza o texto */
         }
     `;
     document.head.appendChild(style);
 
-
-    // Wire up basic buttons
+    // Conecta os botões dos modais
+    // Modal de Inserir Endereço
     document.querySelector('.delivery-close').addEventListener('click', () => closeModal('.delivery-address-modal-overlay'));
     document.querySelector('.delivery-cancel').addEventListener('click', () => closeModal('.delivery-address-modal-overlay'));
     document.querySelector('.delivery-save').addEventListener('click', onSaveAddressClicked);
-
-    document.querySelector('.options-close').addEventListener('click', () => closeModal('.delivery-options-modal-overlay'));
-    document.querySelector('.options-cancel').addEventListener('click', () => closeModal('.delivery-options-modal-overlay'));
-
-    // Close when clicking outside (overlay)
     const addrOverlay = document.querySelector('.delivery-address-modal-overlay');
-    if (addrOverlay) {
-        addrOverlay.addEventListener('click', e => { if (e.target === addrOverlay) closeModal('.delivery-address-modal-overlay'); });
+    if (addrOverlay) addrOverlay.addEventListener('click', e => { if (e.target === addrOverlay) closeModal('.delivery-address-modal-overlay'); });
+
+    // Modal de Seleção de Endereço
+    const selOverlay = document.querySelector('.delivery-address-selection-modal-overlay');
+    // Adiciona listener para o 'X' (que agora tem a classe .delivery-close)
+    if (selOverlay) {
+       selOverlay.querySelector('.delivery-close').addEventListener('click', () => closeModal('.delivery-address-selection-modal-overlay'));
+       selOverlay.querySelector('.address-selection-cancel').addEventListener('click', () => closeModal('.delivery-address-selection-modal-overlay'));
+       selOverlay.addEventListener('click', e => { if (e.target === selOverlay) closeModal('.delivery-address-selection-modal-overlay'); });
     }
+
+    // Modal de Opções do Pedido
     const optOverlay = document.querySelector('.delivery-options-modal-overlay');
     if (optOverlay) {
+        optOverlay.querySelector('.options-close').addEventListener('click', () => closeModal('.delivery-options-modal-overlay'));
+        optOverlay.querySelector('.options-cancel').addEventListener('click', () => closeModal('.delivery-options-modal-overlay'));
         optOverlay.addEventListener('click', e => { if (e.target === optOverlay) closeModal('.delivery-options-modal-overlay'); });
     }
 
@@ -653,12 +767,58 @@ function closeModal(selector) {
     if (!el) return;
     el.classList.add('delivery-modal-hidden');
     el.style.display = 'none';
-    document.body.classList.remove('modal-open');
+    // Só remove a classe do body se nenhum outro modal estiver aberto
+    if (!document.querySelector('.cart-modal-overlay[style*="display: flex"]') &&
+        !document.querySelector('.delivery-modal-hidden[style*="display: flex"]')) {
+        document.body.classList.remove('modal-open');
+    }
 }
 
-// Open address modal and prefill if possible
-let _currentDeliveryContext = null; // { user, selectedItems, enderecoRef }
-function openAddressModal(user, enderecoDocRef, selected) {
+// Abre o modal de inserção de endereço.
+function openAddressModal(user, selected, enderecoDocRef) {
+    _currentDeliveryContext = { user, selected, enderecoDocRef };
+    
+    // Limpa os campos e o estado de validação
+    ['cep','estado','cidade','bairro','rua','numero','complemento','referencia'].forEach(k => {
+        const el = document.querySelector('.delivery-' + k);
+        if (el) {
+            el.value = '';
+            el.classList.remove('input-error');
+            delete el.dataset.touched;
+        }
+    });
+
+    // Tenta preencher com dados existentes (útil para edição futura)
+    enderecoDocRef.get().then(doc => {
+        if (doc.exists) {
+            const data = doc.data();
+            if (data) {
+                Object.keys(data).forEach(key => {
+                    const input = document.querySelector(`.delivery-${key}`);
+                    if (input) input.value = data[key];
+                });
+            }
+        }
+        updateSaveButtonState();
+    }).catch(() => {
+        updateSaveButtonState();
+    });
+    
+    // Lógica de validação e autocompletar (mantida)
+    setupAddressFormValidation();
+
+    const cepInput = document.querySelector('.delivery-cep');
+    if (cepInput) {
+        cepInput.removeEventListener('blur', onCepBlur);
+        cepInput.addEventListener('blur', onCepBlur);
+    }
+
+    openModal('.delivery-address-modal-overlay');
+    updateSaveButtonState();
+}
+
+// Configura toda a validação e lógica de autocompletar do formulário de endereço.
+function setupAddressFormValidation() {
     // Tipos de logradouro comuns
     const tiposLogradouro = ['Rua', 'Avenida', 'Travessa', 'Praça', 'Alameda', 'Estrada', 'Rodovia', 'Via', 'Largo', 'Vila', 'Conjunto', 'Quadra', 'Setor', 'Residencial', 'Parque', 'Jardim'];
     function autocompleteTipoRua(rua) {
@@ -672,7 +832,8 @@ function openAddressModal(user, enderecoDocRef, selected) {
     }
     // Autocomplete Estado para sigla ao perder foco
     const estadoInput = document.querySelector('.delivery-estado');
-    if (estadoInput) {
+    if (estadoInput && !estadoInput.dataset.listenerAttached) {
+        estadoInput.dataset.listenerAttached = 'true';
         estadoInput.addEventListener('blur', function() {
             const ufRaw = estadoInput.value.trim();
             const ufSigla = getUfSigla(ufRaw);
@@ -686,7 +847,8 @@ function openAddressModal(user, enderecoDocRef, selected) {
 
     // Setup input listeners para cada campo
     [cidadeInput, bairroInput, ruaInput].forEach(input => {
-        if (input) {
+        if (input && !input.dataset.listenerAttached) {
+            input.dataset.listenerAttached = 'true';
             // Remove estilo de erro quando começa a digitar
             input.addEventListener('input', function() {
                 this.classList.remove('input-error');
@@ -721,86 +883,59 @@ function openAddressModal(user, enderecoDocRef, selected) {
     function validateNumero() {
         if (!numeroInput) return true;
         const numValue = numeroInput.value.trim();
-        
-        // Garante que o valor contém apenas dígitos
         const isInteger = /^\d+$/.test(numValue);
         const parsedNum = parseInt(numValue, 10);
-
-        // Valida se é um número inteiro, positivo e com no máximo 4 dígitos.
         const isNumeroValid = isInteger && !isNaN(parsedNum) && parsedNum > 0 && numValue.length <= 4;
-
         if (numeroInput.dataset.touched === "true") {
-            if (!isNumeroValid) {
-                numeroInput.classList.add('input-error');
-            } else {
-                numeroInput.classList.remove('input-error');
-            }
+            if (!isNumeroValid) { numeroInput.classList.add('input-error'); }
+            else { numeroInput.classList.remove('input-error'); }
         }
-        
         return isNumeroValid;
     }
 
     function validateRequiredFieldWithMinLength(input, minLength = 4) {
-        if (!input) return false; // Should not happen if selector is correct
+        if (!input) return false;
         const value = input.value.trim();
-        
-        // Only validate (and show error) if the field has been touched by the user
         if (input.dataset.touched === "true") {
             if (value.length < minLength) {
                 input.classList.add('input-error');
                 return false;
             }
         }
-        
-        // Always remove error if valid, regardless of touched state
         if (value.length >= minLength) {
             input.classList.remove('input-error');
         }
-        
         return value.length >= minLength;
     }
 
-    if (numeroInput) {
+    if (numeroInput && !numeroInput.dataset.listenerAttached) {
+        numeroInput.dataset.listenerAttached = 'true';
         numeroInput.addEventListener('input', (e) => {
-            // Remove caracteres não numéricos (exceto dígitos)
             let value = e.target.value.replace(/[^\d]/g, '');
-            
-            // Limita o comprimento a 4 dígitos
-            if (value.length > 4) {
-                value = value.slice(0, 4);
-            }
-            
-            // Atualiza o valor do campo
+            if (value.length > 4) value = value.slice(0, 4);
             e.target.value = value;
-
             numeroInput.dataset.touched = "true";
             validateNumero();
             updateSaveButtonState();
         });
     }
-    if (complementoInput) {
-        complementoInput.addEventListener('input', () => {
-            complementoInput.dataset.touched = "true";
-            validateRequiredFieldWithMinLength(complementoInput);
-            updateSaveButtonState();
-        });
-    }
-    if (referenciaInput) {
-        referenciaInput.addEventListener('input', () => {
-            referenciaInput.dataset.touched = "true";
-            validateRequiredFieldWithMinLength(referenciaInput);
-            updateSaveButtonState();
-        });
-    }
+    [complementoInput, referenciaInput].forEach(input => {
+        if (input && !input.dataset.listenerAttached) {
+            input.dataset.listenerAttached = 'true';
+            input.addEventListener('input', () => {
+                input.dataset.touched = "true";
+                validateRequiredFieldWithMinLength(input);
+                updateSaveButtonState();
+            });
+        }
+    });
 
     function updateSaveButtonState() {
         const saveBtn = document.querySelector('.delivery-save');
         if (!saveBtn) return;
-
         const isNumeroValid = validateNumero();
         const isComplementoValid = validateRequiredFieldWithMinLength(complementoInput);
         const isReferenciaValid = validateRequiredFieldWithMinLength(referenciaInput);
-
         const allRequiredFieldsFilled = [
             (document.querySelector('.delivery-cep') || {}).value,
             (document.querySelector('.delivery-estado') || {}).value,
@@ -811,7 +946,6 @@ function openAddressModal(user, enderecoDocRef, selected) {
             (document.querySelector('.delivery-complemento') || {}).value,
             (document.querySelector('.delivery-referencia') || {}).value
         ].every(v => v && v.trim() !== '');
-
         if (allRequiredFieldsFilled && isNumeroValid && isComplementoValid && isReferenciaValid) {
             saveBtn.disabled = false;
             saveBtn.style.opacity = '1';
@@ -827,41 +961,23 @@ function openAddressModal(user, enderecoDocRef, selected) {
 
     ['.delivery-cep', '.delivery-estado', '.delivery-cidade', '.delivery-bairro', '.delivery-rua', '.delivery-numero', '.delivery-complemento', '.delivery-referencia'].forEach(selector => {
         const input = document.querySelector(selector);
-        if (input) {
+        if (input && !input.dataset.listenerAttached) {
+            input.dataset.listenerAttached = 'true';
             input.addEventListener('input', updateSaveButtonState);
         }
     });
 
-    // Função auxiliar para comparar similaridade de bairros
     function compareBairros(bairro1, bairro2) {
         if (!bairro1 || !bairro2) return false;
-        
-        // Normaliza os bairros (remove acentos, converte para minúsculas)
-        const normalize = (str) => str.toLowerCase()
-            .replace(/\s+/g, ' ').trim();
-        
+        const normalize = (str) => str.toLowerCase().replace(/\s+/g, ' ').trim();
         const b1 = normalize(bairro1);
         const b2 = normalize(bairro2);
-        
-        // Verifica igualdade exata
         if (b1 === b2) return true;
-        
-        // Divide em palavras e verifica se todas as palavras de um estão no outro
         const words1 = new Set(b1.split(' '));
         const words2 = new Set(b2.split(' '));
-        
-        // Remove palavras comuns que não são relevantes para a comparação
         const commonWords = ['bairro', 'vila', 'jardim', 'parque', 'residencial'];
-        commonWords.forEach(w => {
-            words1.delete(w);
-            words2.delete(w);
-        });
-        
-        // Verifica se as palavras principais são as mesmas
-        const array1 = Array.from(words1);
-        const array2 = Array.from(words2);
-        
-        return array1.some(word => array2.includes(word));
+        commonWords.forEach(w => { words1.delete(w); words2.delete(w); });
+        return Array.from(words1).some(word => Array.from(words2).includes(word));
     }
 
     async function tryAutocompleteCep() {
@@ -871,235 +987,123 @@ function openAddressModal(user, enderecoDocRef, selected) {
         let rua = ruaInput ? ruaInput.value.trim() : '';
         const bairroInformado = document.querySelector('.delivery-bairro')?.value.trim() || '';
 
-        if (!uf || !cidade || !rua || !bairroInformado) {
-            return; 
-        }
-
+        if (!uf || !cidade || !rua || !bairroInformado) return;
         rua = autocompleteTipoRua(rua);
 
-        // Alterado para usar o ViaCEP diretamente
         const url = `https://viacep.com.br/ws/${encodeURIComponent(uf)}/${encodeURIComponent(cidade)}/${encodeURIComponent(rua)}/json/`;
-
         try {
             const res = await fetch(url);
-            if (res.ok) {
-                const data = await res.json();
+            if (!res.ok) throw new Error(`Falha na requisição ao ViaCEP: ${res.statusText}`);
+            const data = await res.json();
+            if (data.erro) throw new Error("CEP não encontrado para o endereço.");
+            
+            let melhorMatch = null;
+            if (Array.isArray(data)) {
+                melhorMatch = data.find(endereco => compareBairros(bairroInformado, endereco.bairro)) || data[0];
+            } else if (typeof data === 'object' && data.cep) {
+                melhorMatch = data;
+            }
 
-                if (data.erro) {
-                    throw new Error("CEP não encontrado para o endereço.");
-                }
-                
-                let melhorMatch = null;
-                if (Array.isArray(data)) {
-                    // Se for uma lista, encontra a melhor correspondência de bairro
-                    melhorMatch = data.find(endereco => compareBairros(bairroInformado, endereco.bairro)) || data[0];
-                } else if (typeof data === 'object' && data.cep) {
-                    // Se for um objeto único
-                    melhorMatch = data;
-                }
-
-                if (melhorMatch) {
-                    // Sucesso: preenche o formulário
-                    cidadeInput?.classList.remove('input-error');
-                    bairroInput?.classList.remove('input-error');
-                    ruaInput?.classList.remove('input-error');
-                    
-                    document.querySelector('.delivery-cep').value = melhorMatch.cep || '';
-                    document.querySelector('.delivery-bairro').value = melhorMatch.bairro || '';
-                    document.querySelector('.delivery-cidade').value = melhorMatch.localidade || '';
-                    document.querySelector('.delivery-estado').value = melhorMatch.uf || '';
-                    document.querySelector('.delivery-rua').value = melhorMatch.logradouro || '';
-                } else {
-                    // Se não houver correspondência
-                    throw new Error("Nenhuma correspondência de endereço encontrada.");
-                }
+            if (melhorMatch) {
+                cidadeInput?.classList.remove('input-error');
+                bairroInput?.classList.remove('input-error');
+                ruaInput?.classList.remove('input-error');
+                document.querySelector('.delivery-cep').value = melhorMatch.cep || '';
+                document.querySelector('.delivery-bairro').value = melhorMatch.bairro || '';
+                document.querySelector('.delivery-cidade').value = melhorMatch.localidade || '';
+                document.querySelector('.delivery-estado').value = melhorMatch.uf || '';
+                document.querySelector('.delivery-rua').value = melhorMatch.logradouro || '';
             } else {
-                // Erro na requisição
-                throw new Error(`Falha na requisição ao ViaCEP: ${res.statusText}`);
+                throw new Error("Nenhuma correspondência de endereço encontrada.");
             }
         } catch (e) {
             console.error('Erro na busca de endereço via ViaCEP:', e.message);
-            // Adiciona classes de erro em caso de falha
             cidadeInput?.classList.add('input-error');
             ruaInput?.classList.add('input-error');
             bairroInput?.classList.add('input-error');
         }
-        
         updateSaveButtonState();
     }
-    // Remove estilo de erro quando o campo recebe foco
-    cidadeInput && cidadeInput.addEventListener('focus', function() {
-        this.classList.remove('input-error');
-        ruaInput.classList.remove('input-error');
-        bairroInput.classList.remove('input-error');
-    });
-    ruaInput && ruaInput.addEventListener('focus', function() {
-        this.classList.remove('input-error');
-        bairroInput.classList.remove('input-error');
-        cidadeInput.classList.remove('input-error');
-    });
-    bairroInput && bairroInput.addEventListener('focus', function() {
-        this.classList.remove('input-error');
-        ruaInput.classList.remove('input-error');
-        cidadeInput.classList.remove('input-error');
-    });
-
-    // Variável para controlar se algum campo está em foco
-    let isAnyFieldFocused = false;
-
-    // Eventos de focus e blur para controlar o estado
-    [cidadeInput, ruaInput].forEach(input => {
-        if (input) {
-            input.addEventListener('focus', () => {
-                isAnyFieldFocused = true;
-            });
-            input.addEventListener('blur', () => {
-                setTimeout(() => {
-                    // Verifica se nenhum campo está em foco antes de validar
-                    if (!document.activeElement.matches('.delivery-body input[type="text"], .delivery-body select')) {
-                        isAnyFieldFocused = false;
-                        tryAutocompleteCep();
-                    }
-                }, 100); // Pequeno delay para garantir que o activeElement está atualizado
-            });
-        }
-    });
-    // Só permite salvar se todos os campos obrigatórios estiverem preenchidos
     
-    estadoInput && estadoInput.addEventListener('input', updateSaveButtonState);
-    cidadeInput && cidadeInput.addEventListener('input', updateSaveButtonState);
-    bairroInput && bairroInput.addEventListener('input', updateSaveButtonState);
-    ruaInput && ruaInput.addEventListener('input', updateSaveButtonState);
-    document.querySelector('.delivery-cep') && document.querySelector('.delivery-cep').addEventListener('input', updateSaveButtonState);
-    document.querySelector('.delivery-numero') && document.querySelector('.delivery-numero').addEventListener('input', updateSaveButtonState);
-    _currentDeliveryContext = { user, selected, enderecoDocRef };
-    const overlay = document.querySelector('.delivery-address-modal-overlay');
-    if (!overlay) return;
-
-    // Clear fields and reset validation state
-    ['cep','estado','cidade','bairro','rua','numero','complemento','referencia'].forEach(k => {
-        const el = document.querySelector('.delivery-' + k);
-        if (el) {
-            el.value = '';
-            el.classList.remove('input-error');
-            delete el.dataset.touched;
+    [cidadeInput, ruaInput, bairroInput].forEach(input => {
+        if(input && !input.dataset.focusListener) {
+            input.dataset.focusListener = 'true';
+            input.addEventListener('focus', function() {
+                cidadeInput.classList.remove('input-error');
+                ruaInput.classList.remove('input-error');
+                bairroInput.classList.remove('input-error');
+            });
         }
     });
 
-    // Try to prefill from firestore
-    enderecoDocRef.get().then(doc => {
-        if (doc.exists) {
-            const data = doc.data();
-            if (data) {
-                if (data.cep) document.querySelector('.delivery-cep').value = data.cep;
-                if (data.estado) document.querySelector('.delivery-estado').value = data.estado;
-                if (data.cidade) document.querySelector('.delivery-cidade').value = data.cidade;
-                if (data.bairro) document.querySelector('.delivery-bairro').value = data.bairro;
-                if (data.rua) document.querySelector('.delivery-rua').value = data.rua;
-                if (data.numero !== undefined && data.numero !== null) document.querySelector('.delivery-numero').value = String(data.numero);
-                if (data.complemento) document.querySelector('.delivery-complemento').value = data.complemento;
-                if (data.referencia) document.querySelector('.delivery-referencia').value = data.referencia;
-            }
-        }
-        updateSaveButtonState();
-    }).catch(() => {
-        updateSaveButtonState();
-    });
-
-    // Wire CEP autocomplete
-    const cepInput = document.querySelector('.delivery-cep');
-    if (cepInput) {
-        cepInput.removeEventListener('blur', onCepBlur);
-        cepInput.addEventListener('blur', onCepBlur);
-    }
-
-    openModal('.delivery-address-modal-overlay');
-    updateSaveButtonState();
+    window.updateSaveButtonState = updateSaveButtonState;
 }
 
-// CEP autocomplete using ViaCEP (no key required) - fills all address fields
+// Autocompletar CEP com ViaCEP.
 async function onCepBlur(e) {
-    const cepRaw = e.target.value || '';
-    const cep = cepRaw.replace(/[^0-9]/g, '');
-    
-    if (cep.length !== 8) {
-        return;
-    }
-
-    const url = `https://viacep.com.br/ws/${cep}/json/`;
-    
+    const cep = (e.target.value || '').replace(/[^0-9]/g, '');
+    if (cep.length !== 8) return;
     try {
-        const res = await fetch(url);
-        if (!res.ok) {
-            return;
-        }
-
+        const res = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+        if (!res.ok) return;
         const data = await res.json();
-        if (data.erro) {
-            return;
-        }
+        if (data.erro) return;
 
-        // Preenche todos os campos disponíveis
         if (data.localidade) document.querySelector('.delivery-cidade').value = data.localidade;
         if (data.uf) document.querySelector('.delivery-estado').value = data.uf;
         if (data.bairro) document.querySelector('.delivery-bairro').value = data.bairro;
         if (data.logradouro) document.querySelector('.delivery-rua').value = data.logradouro;
-        
-        // leave numero, complemento, referencia empty for user to fill
+        window.updateSaveButtonState();
     } catch (err) {
         console.warn('Erro ao buscar CEP:', err);
     }
 }
 
-// Save address and proceed to options modal
+// Salva o endereço e abre o modal de seleção.
 function onSaveAddressClicked() {
     if (!_currentDeliveryContext) return;
+    const { user, selected, enderecoDocRef } = _currentDeliveryContext;
 
+    // A validação já é feita pelo botão, mas uma checagem final é boa prática.
     const numeroInput = document.querySelector('.delivery-numero');
     const numValue = numeroInput ? numeroInput.value.trim() : '';
     const parsedNum = parseInt(numValue, 10);
-    const isNumeroValid = !isNaN(parsedNum) && parsedNum > 0;
-
-    if (!isNumeroValid) {
-        if (numeroInput) {
-            numeroInput.classList.add('input-error');
-        }
-        // Não exibe mais o alerta, o feedback visual é suficiente
+    if (isNaN(parsedNum) || parsedNum <= 0) {
+        if (numeroInput) numeroInput.classList.add('input-error');
         return;
     }
-
-    const { user, selected, enderecoDocRef } = _currentDeliveryContext;
 
     const data = {
-        cep: (document.querySelector('.delivery-cep') || { value: '' }).value.trim(),
-        estado: (document.querySelector('.delivery-estado') || { value: '' }).value.trim(),
-        cidade: (document.querySelector('.delivery-cidade') || { value: '' }).value.trim(),
-        bairro: (document.querySelector('.delivery-bairro') || { value: '' }).value.trim(),
-        rua: (document.querySelector('.delivery-rua') || { value: '' }).value.trim(),
-        numero: numValue, // Usar o valor já validado
-        complemento: (document.querySelector('.delivery-complemento') || { value: '' }).value.trim(),
-        referencia: (document.querySelector('.delivery-referencia') || { value: '' }).value.trim()
+        cep: (document.querySelector('.delivery-cep') || {}).value.trim(),
+        estado: (document.querySelector('.delivery-estado') || {}).value.trim(),
+        cidade: (document.querySelector('.delivery-cidade') || {}).value.trim(),
+        bairro: (document.querySelector('.delivery-bairro') || {}).value.trim(),
+        rua: (document.querySelector('.delivery-rua') || {}).value.trim(),
+        numero: parsedNum,
+        complemento: (document.querySelector('.delivery-complemento') || {}).value.trim(),
+        referencia: (document.querySelector('.delivery-referencia') || {}).value.trim()
     };
-
-    // A validação de campos vazios é tratada pelo estado do botão, mas mantemos como uma segurança extra
-    if (!data.cep || !data.estado || !data.cidade || !data.bairro || !data.rua || !data.numero) {
-        // Este alerta pode ser removido se o botão desabilitado for suficiente
-        alert('Por favor preencha todos os campos obrigatórios.');
-        return;
-    }
-
-    data.numero = parsedNum; // Salvar o número parseado
-
+    
+    // Salva o endereço no Firestore.
     enderecoDocRef.set(data, { merge: true }).then(() => {
         closeModal('.delivery-address-modal-overlay');
-        openOptionsModal(user, selected, enderecoDocRef, data);
+        
+        // Após salvar, busca todos os endereços novamente e abre o modal de seleção.
+        const addressCol = db.collection('users').doc(user.uid).collection('address');
+        addressCol.get().then(snapshot => {
+            const addresses = [];
+            snapshot.forEach(doc => addresses.push({ id: doc.id, ...doc.data() }));
+            addresses.sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
+            openAddressSelectionModal(user, selected, addresses);
+        });
+
     }).catch(err => {
         console.error('Erro ao salvar endereço:', err);
         alert('Erro ao salvar endereço. Tente novamente.');
     });
 }
 
-// Build and open options modal
+// Constrói e abre o modal de opções do item.
 function openOptionsModal(user, selectedItemsArray, enderecoDocRef, addressData) {
     _currentDeliveryContext = { user, selected: selectedItemsArray, enderecoDocRef, addressData };
     const overlay = document.querySelector('.delivery-options-modal-overlay');
@@ -1108,11 +1112,10 @@ function openOptionsModal(user, selectedItemsArray, enderecoDocRef, addressData)
     const container = overlay.querySelector('.delivery-options-body');
     container.innerHTML = '';
 
-    // For each selected item, render option selectors if arrays exist on the item
-    selectedItemsArray.forEach((item, idx) => {
+    // Renderiza as opções para cada item selecionado.
+    selectedItemsArray.forEach((item) => {
         const wrapper = document.createElement('div');
         wrapper.className = 'delivery-item-options delivery-item-row';
-        // Add data-doc-id to the main wrapper for easier selection later
         wrapper.dataset.docId = item.docId;
 
         const leftCol = document.createElement('div');
@@ -1220,7 +1223,7 @@ function openOptionsModal(user, selectedItemsArray, enderecoDocRef, addressData)
     openModal('.delivery-options-modal-overlay');
 }
 
-// Wrapper to manage button state and call the main verification logic
+// Wrapper para gerenciar o estado do botão de confirmação e chamar a lógica de verificação.
 async function onOptionsConfirmWrapper() {
     const confirmBtn = document.querySelector('.options-confirm');
     if (!confirmBtn || confirmBtn.disabled) return;
@@ -1233,7 +1236,7 @@ async function onOptionsConfirmWrapper() {
     showLoadingModal('Confirmando pedido...');
     
     try {
-        await onOptionsConfirm(); // Call the actual logic
+        await onOptionsConfirm(); // Chama a lógica principal
     } catch (error) {
         // Se onOptionsConfirm der erro, o modal de loading é escondido
         hideLoadingModal();
@@ -1303,7 +1306,8 @@ async function onOptionsConfirm() {
             complemento: addressData.complemento,
             referencia: addressData.referencia
         },
-        itens: itemsPayload
+        itens: itemsPayload,
+        timestamp: now // Adiciona o timestamp para uso posterior
     };
 
     // 2. Inicia o processo de verificação
@@ -1323,6 +1327,7 @@ async function processDeliveryRequest(pedido) {
     const userCoords = await geocodeAddress(`${usuario.endereco}, ${usuario.cidade}`);
     if (!userCoords) {
         alert('Não foi possível verificar seu endereço. Por favor, verifique os dados e tente novamente.');
+        hideLoadingModal(); // Esconde o loading em caso de falha
         return;
     }
 
@@ -1341,9 +1346,9 @@ async function processDeliveryRequest(pedido) {
 
     // Finaliza o processo com base nos resultados
     if (failedItems.length > 0) {
+        hideLoadingModal(); // Esconde o loading se houver erros
         console.warn("Falha na verificação. Itens com problema:", failedItems);
         showDeliveryErrors(failedItems);
-        alert('Alguns itens do seu pedido não puderam ser processados. Verifique os avisos em vermelho.');
     } else {
         // Todos os itens foram verificados com sucesso. Agora, criar o "Pedido de Entrega".
         await createDeliveryOrder(pedido, successfulItems);
@@ -1371,7 +1376,7 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
         // 3. Formatar endereço do usuário
         const { endereco, cidade, complemento, referencia } = usuario;
         const mainAddress = `${endereco}, ${cidade}`;
-        const enderecoAdd = complemento || referencia ? `${complemento || ''}, ${referencia || ''}` : '';
+        const enderecoAdd = complemento || referencia ? `${complemento || ''}, ${referencia || ''}`.trim().replace(/^,|,$/g, '') : '';
 
 
         // 4. Estruturar o payload do pedido
@@ -1381,7 +1386,8 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
                 displayName: usuario.displayName,
                 endereco: mainAddress,
                 enderecoAdd: enderecoAdd,
-                valorViagem: valorViagem
+                valorViagem: valorViagem,
+                horarioDoPedido: horarioDoPedido,
             },
             itensPedido: successfulItems.map(item => {
                 // Encontra o item original para pegar a imagemUrl
@@ -1407,7 +1413,7 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
         showSuccessAndHideModal('Pedido confirmado!');
         closeModal('.delivery-options-modal-overlay');
 
-        /*
+        
         // 6. Limpar itens do carrinho
         const docsToRemove = new Set(originalItems.map(i => i.docId));
         const batch = db.batch();
@@ -1418,8 +1424,8 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
         await batch.commit();
 
         selectedItems.clear();
-        updateCartUI();
-        */
+        // A atualização da UI será acionada pelo listener do Firestore.
+        
 
     } catch (error) {
         console.error("Erro ao criar o pedido de entrega:", error);
@@ -1462,25 +1468,6 @@ async function verifyItem(item, cityId, userCoords) {
             } else {
                 storeDistances.push({ nome: store.nome, endereco: store.endereco, distancia: null, id: store.id });
             }
-        }
-
-        storeDistances.forEach(s => {
-            if (s.distancia !== null) {
-                console.log(`- ${s.nome}: ${s.distancia.toFixed(2)} km`);
-            } else {
-                console.log(`- ${s.nome}: Distância não encontrada`);
-            }
-        });
-
-        if (closestStore) {
-            const closest = storeDistances.find(s => s.nome === closestStore.nome && s.endereco === closestStore.endereco);
-            if (closest && closest.distancia !== null) {
-                console.log(`Loja escolhida: ${closestStore.nome} (${closest.distancia.toFixed(2)} km)`);
-            } else {
-                console.log(`Loja escolhida: ${closestStore.nome} (distância não encontrada)`);
-            }
-        } else {
-            console.log(`[LOG] Nenhuma loja com coordenadas válidas encontrada para o item '${item.nome}'.`);
         }
 
         if (!closestStore) {
@@ -1567,7 +1554,6 @@ function haversineDistance(coords1, coords2) {
  */
 
 function isStoreOpen(horarios) {
-    
     // PARA TESTES: DESCOMENTAR A LINHA ABAIXO PARA SIMULAR LOJA SEMPRE ABERTA
     //return { isOpen: true, closingTime: '22:00' };
 
