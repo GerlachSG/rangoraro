@@ -94,11 +94,21 @@
                 </div>
             </div>
 
-            <div class="item-list-container">
+            <div class="item-list-wrapper">
+                <div class="location-update-overlay" style="display: none;">
+                    <div class="location-update-box">
+                        <h4 id="location-overlay-title">Ação Necessária</h4>
+                        <p id="location-overlay-text">Para prosseguir, precisamos da sua localização atual.</p>
+                        <button class="btn-main-accept" id="btn-update-location-overlay">📍 Atualizar Localização</button>
+                        <span id="location-status-overlay"></span>
+                    </div>
                 </div>
+                <div class="item-list-container">
+                </div>
+            </div>
 
             <div class="main-actions-footer">
-                </div>
+            </div>
         </div>
     </template>
 
@@ -117,7 +127,6 @@
             </div>
         </div>
     </template>
-
 
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>

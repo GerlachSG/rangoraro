@@ -1420,6 +1420,80 @@ async function processDeliveryRequest(pedido) {
     }
 }
 
+
+// =================================================================================
+// === INÍCIO DO BLOCO DE CÁLCULO DE VIAGEM ========================================
+// =================================================================================
+
+/**
+ * Calcula a distância em linha reta (Haversine) entre duas coordenadas.
+ * @returns {number} A distância em quilômetros.
+ */
+function haversineDistance(coords1, coords2) {
+    if (!coords1 || !coords2) return Infinity;
+    const R = 6371; // Raio da Terra em km
+    const dLat = (coords2.lat - coords1.lat) * Math.PI / 180;
+    const dLon = (coords2.lon - coords1.lon) * Math.PI / 180;
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(coords1.lat * Math.PI / 180) * Math.cos(coords2.lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+
+// NOVA FUNÇÃO HELPER: Geocodifica múltiplos endereços em paralelo
+async function geocodeAddressesInParallel(addresses) {
+    const promises = addresses.map(addr => geocodeAddress(addr));
+    return Promise.all(promises);
+}
+
+// NOVA FUNÇÃO HELPER: Calcula a rota e a distância total, AGORA COM LOGS
+function calculateNearestNeighborRoute(waypoints) {
+    if (waypoints.length === 0) return 0;
+    
+    // LOG:
+    console.log("--- Calculando rota do Vizinho Mais Próximo ---");
+
+    let unvisited = [...waypoints];
+    let currentNode = unvisited.shift(); 
+    let totalDistance = 0;
+
+    // LOG:
+    console.log(`📍 Ponto de partida: ${currentNode.address}`);
+
+    while (unvisited.length > 0) {
+        let nearestIndex = -1;
+        let minDistance = Infinity;
+
+        for (let i = 0; i < unvisited.length; i++) {
+            const distance = haversineDistance(currentNode.coords, unvisited[i].coords);
+            if (distance < minDistance) {
+                minDistance = distance;
+                nearestIndex = i;
+            }
+        }
+
+        if (nearestIndex > -1) {
+            const nextNode = unvisited[nearestIndex];
+            // LOG:
+            console.log(`  -> Próximo trecho: De "${currentNode.address}" para "${nextNode.address}"`);
+            console.log(`     Distância do trecho: ${minDistance.toFixed(2)} km`);
+
+            totalDistance += minDistance;
+            currentNode = nextNode;
+            unvisited.splice(nearestIndex, 1);
+
+            // LOG:
+            console.log(`     Distância acumulada: ${totalDistance.toFixed(2)} km`);
+        } else {
+            break;
+        }
+    }
+    return totalDistance;
+}
+
+
 /**
  * Cria o "Pedido de Entrega" final no Firestore.
  * @param {object} pedidoOriginal O pedido que foi verificado.
@@ -1431,22 +1505,73 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
     if (!user) return;
 
     try {
-        // 1. Calcular valor total e valor da viagem
-        const valorTotalItens = successfulItems.reduce((sum, item) => sum + item.valor, 0);
-        const valorViagem = parseFloat((valorTotalItens * 0.15).toFixed(2)); // 15% (0.15) do valor total dos itens
+        // LOG:
+        console.groupCollapsed("DETALHES DO CÁLCULO DO VALOR DA VIAGEM");
 
-        // 2. Formatar horários
+        const PRECO_POR_KM = 3.00;
+        let valorViagem = 0;
+
+        const storeAddresses = [...new Set(successfulItems.map(item => item.loja_endereco))];
+        const customerAddress = `${usuario.endereco}, ${usuario.cidade}`;
+        
+        // LOG:
+        console.log("1. Endereços para a rota:", { lojas: storeAddresses, cliente: customerAddress });
+
+        const allAddresses = [...storeAddresses, customerAddress];
+        const allCoords = await geocodeAddressesInParallel(allAddresses);
+        
+        const storeCoords = allCoords.slice(0, storeAddresses.length);
+        const customerCoords = allCoords[allCoords.length - 1];
+
+        const waypoints = storeCoords.map((coords, i) => ({
+            id: `store_${i}`,
+            address: storeAddresses[i],
+            coords: coords
+        })).filter(wp => wp.coords);
+
+        // LOG:
+        console.log("2. Coordenadas geográficas encontradas:", { lojas: storeCoords, cliente: customerCoords });
+
+        if (customerCoords && waypoints.length > 0) {
+            const waypointsWithCustomer = [...waypoints, { id: 'customer', address: customerAddress, coords: customerCoords }];
+            
+            // LOG:
+            console.log("3. Calculando a distância da rota...");
+            const totalDistanceInKm = calculateNearestNeighborRoute(waypointsWithCustomer);
+            console.log(`4. Distância total da rota calculada: ${totalDistanceInKm.toFixed(2)} km`);
+
+            const valorBruto = totalDistanceInKm * PRECO_POR_KM;
+            valorViagem = valorBruto;
+            // LOG:
+            console.log(`5. Cálculo do valor bruto: ${totalDistanceInKm.toFixed(2)} km * R$ ${PRECO_POR_KM.toFixed(2)} = R$ ${valorBruto.toFixed(2)}`);
+
+        } else {
+            console.warn("Não foi possível geocodificar o endereço do cliente ou das lojas. Usando valor de viagem padrão.");
+            const valorTotalItens = successfulItems.reduce((sum, item) => sum + item.valor, 0);
+            valorViagem = parseFloat((valorTotalItens * 0.15).toFixed(2));
+        }
+        
+        if (valorViagem < 7.50) {
+            // LOG:
+            console.log(`6. Verificação do valor mínimo: Valor calculado (R$ ${valorViagem.toFixed(2)}) é menor que o mínimo (R$ 7.50). Ajustando.`);
+            valorViagem = 7.50;
+        } else {
+            // LOG:
+            console.log("6. Verificação do valor mínimo: Valor calculado está acima do mínimo.");
+        }
+
+        // LOG:
+        console.log(`7. VALOR FINAL DA VIAGEM: R$ ${valorViagem.toFixed(2)}`);
+        console.groupEnd();
+
         const horarioDoPedido = new Date(pedidoOriginal.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false });
 
-        // 3. Formatar endereço do usuário
         const { endereco, cidade, complemento, referencia } = usuario;
         const mainAddress = `${endereco}, ${cidade}`;
         const enderecoAdd = complemento || referencia ? `${complemento || ''}, ${referencia || ''}`.trim().replace(/^,|,$/g, '') : '';
 
-
-        // 4. Estruturar o payload do pedido
         const deliveryOrderPayload = {
-            userId: user.uid, // Adiciona o ID do usuário para a regra de segurança
+            userId: user.uid,
             userInfo: {
                 displayName: usuario.displayName,
                 endereco: mainAddress,
@@ -1455,7 +1580,6 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
                 horarioDoPedido: horarioDoPedido,
             },
             itensPedido: successfulItems.map(item => {
-                // Encontra o item original para pegar a imagemUrl
                 const originalItem = originalItems.find(orig => orig.nome === item.nome);
                 return {
                     imagemUrl: originalItem ? originalItem.imagemUrl : '',
@@ -1468,18 +1592,15 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
                     enderecoLoja: item.loja_endereco
                 };
             }),
-            status: 'pendente', // Status inicial do pedido
+            status: 'pendente',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
 
-        // 5. Salvar no Firestore
         await db.collection('pedidos').add(deliveryOrderPayload);
 
         showSuccessAndHideModal('Pedido confirmado!');
         closeModal('.delivery-options-modal-overlay');
-
         
-        // 6. Limpar itens do carrinho
         const docsToRemove = new Set(originalItems.map(i => i.docId));
         const batch = db.batch();
         docsToRemove.forEach(docId => {
@@ -1489,15 +1610,20 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
         await batch.commit();
 
         selectedItems.clear();
-        // A atualização da UI será acionada pelo listener do Firestore.
         
-
     } catch (error) {
+        // LOG:
+        console.groupEnd(); // Garante que o grupo de logs seja fechado em caso de erro
         console.error("Erro ao criar o pedido de entrega:", error);
         alert("Ocorreu um erro ao finalizar seu pedido. Por favor, tente novamente.");
-        throw error; // Propaga o erro para o wrapper
+        throw error;
     }
 }
+
+// =================================================================================
+// === FIM DO BLOCO DE CÁLCULO DE VIAGEM ===========================================
+// =================================================================================
+
 
 /**
  * Verifica um único item: encontra lojas, calcula a mais próxima e checa se está aberta.
@@ -1598,21 +1724,6 @@ async function geocodeAddress(address) {
 }
 
 /**
- * Calcula a distância em linha reta (Haversine) entre duas coordenadas.
- * @returns {number} A distância em quilômetros.
- */
-function haversineDistance(coords1, coords2) {
-    const R = 6371; // Raio da Terra em km
-    const dLat = (coords2.lat - coords1.lat) * Math.PI / 180;
-    const dLon = (coords2.lon - coords1.lon) * Math.PI / 180;
-    const a = 
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(coords1.lat * Math.PI / 180) * Math.cos(coords2.lat * Math.PI / 180) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-}
-
-/**
  * Verifica se uma loja está aberta com base no horário atual.
  * @param {object} horarios O mapa de horários do Firestore.
  * @returns {{isOpen: boolean, closingTime: string}}
@@ -1620,9 +1731,10 @@ function haversineDistance(coords1, coords2) {
 
 function isStoreOpen(horarios) {
     // PARA TESTES: DESCOMENTAR A LINHA ABAIXO PARA SIMULAR LOJA SEMPRE ABERTA
-    //return { isOpen: true, closingTime: '22:00' };
+    /* return { isOpen: true, closingTime: '22:00' }; */
 
     // COMENTAR O CÓDIGO ABAIXO PARA DESABILITAR A VERIFICAÇÃO DE HORÁRIO
+    
     if (!horarios) return { isOpen: false, closingTime: '' };
     const now = new Date();
     const dayOfWeek = now.getDay().toString(); // 0=Domingo, 1=Segunda, ..., 6=Sábado
@@ -1640,7 +1752,7 @@ function isStoreOpen(horarios) {
         closeTime.setDate(closeTime.getDate() + 1);
     }
     const isOpen = now >= openTime && now <= closeTime;
-    return { isOpen, closingTime: todayHours.fecha };
+    return { isOpen, closingTime: todayHours.fecha }; 
 }
 
 
