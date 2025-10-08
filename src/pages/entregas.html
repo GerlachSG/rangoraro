@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RangoRaro Entregas</title>
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo-aba.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="../css/entregas.css">
+</head>
+<body>
+
+    <header class="header">
+        <a href="index.html" class="logo">
+            <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo.svg" alt="Logo RangoRaro">
+            <span>RangoRaro Entregas</span>
+        </a>
+        <div class="header-right" style="display: none;">
+            <div class="profile-menu">
+                <img id="profile-pic" class="profile-pic" alt="Foto de Perfil">
+                <div class="dropdown-menu">
+                    <a href="#" id="logout-btn">Deslogar</a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div id="loading-screen" class="screen-container">
+        <h2>Verificando credenciais...</h2>
+    </div>
+
+    <div id="login-screen" class="screen-container" style="display: none;">
+        <div class="auth-modal">
+            <h2>Painel de Entregas</h2>
+            <p>Entre com sua conta para visualizar os pedidos.</p>
+            <button id="google-login-btn">
+                <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/google.svg" alt="Google">
+                Entrar com <b>Google</b>
+            </button>
+        </div>
+    </div>
+    
+    <main id="main-content" class="main-container" style="display: none;">
+        <nav class="view-switcher">
+            <button id="btn-entregas" class="view-btn active">Entregas</button>
+            <button id="btn-pedidos-pendentes" class="view-btn">Pedidos Pendentes</button>
+        </nav>
+
+        <div class="view-container"> 
+            <div id="entregas-view">
+                <div id="active-delivery-display">
+                    </div>
+                <div id="waiting-for-orders" style="display: none;">
+                    <p>Aguardando novos pedidos...</p>
+                    <div class="loading-spinner"></div>
+                </div>
+            </div>
+
+            <div id="pedidos-pendentes-view" style="display: none;">
+                <div id="pending-orders-list" class="pending-orders-grid">
+                    </div>
+            </div>
+        </div>
+    </main>
+
+    <template id="pending-order-card-template">
+        <div class="order-card">
+            <div class="order-card-header">
+                <span class="order-user-name"></span>
+                <span class="order-value"></span>
+            </div>
+            <div class="order-card-body">
+                <p class="order-address"></p>
+                <p class="order-time"></p>
+            </div>
+            <div class="order-card-footer">
+                <button class="btn-accept">Aceitar</button>
+            </div>
+        </div>
+    </template>
+    
+    <template id="delivery-view-template">
+        <div class="delivery-details-card">
+            <div class="user-info-box">
+                <h3 class="customer-name"></h3>
+                <p class="customer-address"></p>
+                <p class="customer-address-add"></p>
+                <div class="delivery-meta">
+                    <span>Pedido em: <strong class="customer-order-time"></strong></span>
+                    <span>Valor da Viagem: <strong class="travel-value"></strong></span>
+                </div>
+            </div>
+
+            <div class="item-list-container">
+                </div>
+
+            <div class="main-actions-footer">
+                </div>
+        </div>
+    </template>
+
+    <template id="delivery-item-template">
+        <div class="item-row">
+            <div class="item-info">
+                <div class="item-thumb">
+                    <img class="item-image" src="" alt="Imagem do item">
+                    <div class="item-action"></div>
+                </div>
+                <div class="item-details">
+                    <p class="item-name"></p>
+                    <p class="item-store"></p>
+                    <p class="item-options"></p>
+                </div>
+            </div>
+        </div>
+    </template>
+
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script src="../js/delivery.js"></script>
+</body>
+</html>
