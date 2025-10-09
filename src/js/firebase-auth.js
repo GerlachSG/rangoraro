@@ -118,7 +118,6 @@ function updateUIForLoggedInUser(userData) {
     } else {
         profilePicDiv.style.backgroundImage = '';
     }
-    profilePicDiv.onclick = logout;
 }
 
 
