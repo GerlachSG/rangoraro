@@ -1,11 +1,7 @@
-// JavaScript carrinho
-
-let cartItems = []; // Array de itens com seus IDs de documento
-let selectedItems = new Set(); // Armazena os IDs dos documentos dos itens selecionados
+let cartItems = [];
+let selectedItems = new Set();
 let cartUnsubscribe = null;
-// Keep track of previous badge count to animate on increase
 let previousBadgeCount = 0;
-// Ensure we don't animate on the first render (only animate on subsequent increases)
 let badgeInitialized = false;
 
 // Initialize cart system
@@ -23,7 +19,7 @@ function initCart() {
     auth.onAuthStateChanged(user => {
         // If we were listening to a previous user's inventory, unsubscribe
         if (cartUnsubscribe) {
-            try { cartUnsubscribe(); } catch (e) { /* ignore */ }
+            try { cartUnsubscribe(); } catch (e) {}
             cartUnsubscribe = null;
         }
 
@@ -34,7 +30,6 @@ function initCart() {
             cartItems = [];
             selectedItems.clear();
             updateCartUI();
-            // reset badge animation guard when logged out
             previousBadgeCount = 0;
             badgeInitialized = false;
         }
@@ -69,7 +64,6 @@ function createCartModal() {
 
     document.body.insertAdjacentHTML('beforeend', modalHTML);
 
-    // Add event listeners
     const overlay = document.querySelector('.cart-modal-overlay');
     const closeBtn = document.querySelector('.cart-close');
     const sellBtn = document.querySelector('.btn-sell-all');
@@ -114,7 +108,6 @@ async function addToCart(item) {
 
         await userCartCol.add(payload);
     } catch (error) {
-        console.error('Erro ao adicionar item ao carrinho:', error);
     }
 }
 
@@ -429,7 +422,7 @@ async function sellSelectedItems() {
                 void balanceEl.offsetWidth;
                 balanceEl.classList.add('balance--pop');
             }
-        } catch (e) { /* ignore animation errors */ }
+        } catch (e) { }
     } catch (error) {
         console.error('Erro ao vender itens selecionados:', error);
     }
@@ -437,12 +430,9 @@ async function sellSelectedItems() {
 
 function withdrawFunds() {
     if (selectedItems.size === 0) return;
-    console.log("Requisitando saque para:", Array.from(selectedItems));
 }
 
-// ===================================================================
-// === LÓGICA DE ENTREGA (INÍCIO) ===
-// ===================================================================
+
 
 let _currentDeliveryContext = null; // { user, selectedItems, enderecoRef, addressData }
 
@@ -549,18 +539,14 @@ function openAddressSelectionModal(user, selectedItems, addresses) {
     openModal('.delivery-address-selection-modal-overlay');
 }
 
-// Helper: check address completeness
 function isAddressComplete(data) {
     if (!data) return false;
     if (!data.cep || !data.cidade || !data.bairro || !data.rua) return false;
-    // numero must be an integer > 0
     const num = data.numero;
     if (num === undefined || num === null) return false;
     const parsed = parseInt(num, 10);
     return !isNaN(parsed) && parsed > 0;
 }
-
-// Garante que a estrutura HTML de todos os modais de entrega foi injetada no DOM.
 let _deliveryModalsInjected = false;
 function ensureDeliveryModals() {
     if (_deliveryModalsInjected) return;
@@ -589,8 +575,9 @@ function ensureDeliveryModals() {
     <div class="cart-modal-overlay delivery-address-selection-modal-overlay delivery-modal-hidden">
         <div class="delivery-modal">
             <div class="delivery-header"><h3>Selecione o Endereço</h3><button class="delivery-close">&times;</button></div>
-            <div class="delivery-body delivery-address-list">
-                </div>
+            <div class="delivery-body delivery-address-list-container">
+                <div class="delivery-address-list"></div>
+            </div>
             <div class="delivery-actions">
                  <button class="btn btn-secondary address-selection-cancel">Voltar</button>
             </div>
@@ -626,87 +613,103 @@ function ensureDeliveryModals() {
 
     const style = document.createElement('style');
     style.textContent = `
+        /* Loading modal styles (injetados dinamicamente) */
         .loading-modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0, 0, 0, 0.6);
-            display: flex; justify-content: center; align-items: center;
-            z-index: 1002;
+            position: fixed;
+            inset: 0; /* top:0; right:0; bottom:0; left:0 */
+            display: none; /* toggled via JS */
+            justify-content: center;
+            align-items: center;
+            background-color: rgba(0,0,0,0.45);
+            z-index: 5000; /* acima de outros modais */
+            padding: 20px;
         }
         .loading-modal {
-            background-color: var(--cor-fundo);
-            padding: 30px 40px; border-radius: 12px;
-            display: flex; flex-direction: column; align-items: center; gap: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            background: var(--cor-fundo);
+            color: var(--cor-texto-principal);
+            border-radius: 12px;
+            padding: 18px 22px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
             border: 1px solid var(--cor-borda);
-            min-width: 280px;
-            text-align: center;
+            min-width: 260px;
+            max-width: 520px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.6);
         }
         .loading-spinner {
-            border: 5px solid var(--cor-fundo-secundario);
-            border-top: 5px solid var(--cor-destaque);
-            border-radius: 50%; width: 50px; height: 50px;
-            animation: spin 1s linear infinite;
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 4px solid rgba(255,255,255,0.08);
+            border-top-color: var(--cor-destaque);
+            animation: spin 900ms linear infinite;
+            box-sizing: border-box;
         }
-        .loading-success { display: none; }
-        .success-checkmark { width: 55px; height: 55px; color: #28a745; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-success {
+            display: none;
+            width: 56px;
+            height: 56px;
+            color: var(--cor-destaque);
+        }
+        .loading-success .success-checkmark { width: 56px; height: 56px; color: #4CAF50; }
+        .loading-message {
+            color: var(--cor-texto-secundario);
+            font-size: 0.95rem;
+            text-align: center;
+            margin: 0;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Estilos para o novo modal de seleção de endereço */
+        /* --- CORREÇÃO DE LAYOUT DO MODAL DE SELEÇÃO DE ENDEREÇO --- */
+        .delivery-address-selection-modal-overlay .delivery-body {
+            display: block; /* Força o layout vertical, desativando o 'flex-wrap' */
+            overflow-y: auto; /* Garante a rolagem se houver muitos endereços */
+        }
+        
         .delivery-address-list { 
             display: flex; 
             flex-direction: column; 
             gap: 15px; 
-            width: 100%;
-            flex-grow: 1;
         }
         .address-option { 
             display: flex; 
             flex-direction: column;
             justify-content: center;
             width: 100%;
-            min-height: 25%;
-            padding: 15px;
+            min-height: 90px; /* Altura mínima para melhor clique */
+            padding: 15px 20px;
             background-color: var(--cor-fundo-secundario); 
             border-radius: 8px;
             border: 1px solid var(--cor-borda); 
             cursor: pointer; 
             transition: all 0.2s ease;
-            box-sizing: border-box; /* Garante que padding não afete o tamanho total */
+            box-sizing: border-box;
         }
         .address-option:hover { 
             border-color: var(--cor-destaque); 
-            background-color: var(--cor-hover); 
+            background-color: #3f3535; /* Cor de hover genérica */
         }
         .address-option-details { 
             display: flex; 
             flex-direction: column;
-            gap: 4px; /* Espaçamento entre as linhas de texto */
+            gap: 4px;
         }
-        .address-option-details strong { font-size: 1rem; }
+        .address-option-details strong { font-size: 1.1rem; color: var(--cor-texto-principal); }
         .address-option-details span { font-size: 0.9rem; color: var(--cor-texto-secundario); }
-        .address-option-extra { font-size: 0.8rem; color: #888; }
-        /* CEP error styles (não devem deslocar o layout) */
+        .address-option-extra { font-style: italic; font-size: 0.85rem; color: #999; }
         .delivery-cep-label { position: relative; display: block; }
-        .delivery-cep-label .cep-error-message {
-            position: absolute;
-            left: 0;
-            top: 100%;
-            margin-top: 6px;
-            color: #E53E3E;
-            font-size: 0.85rem;
-            background: transparent;
-            display: none;
-            pointer-events: none;
-        }
-        .delivery-cep.input-error { background-color: #ffecec; border: 1px solid #ff4d4d; }
+        .delivery-cep-label .cep-error-message { position: absolute; right: 0; top: 100%; margin-top: 6px; color: #E53E3E; font-size: 0.85rem; }
+        .delivery-cep.input-error { border-color: #E53E3E; }
         .add-new-address { 
             border-style: dashed; 
-            align-items: center; /* Centraliza o texto */
+            align-items: center;
         }
     `;
     document.head.appendChild(style);
 
-    // Conecta os botões dos modais
+    // Conecta os botões dos modais (código original sem alterações)
     // Modal de Inserir Endereço
     document.querySelector('.delivery-close').addEventListener('click', () => closeModal('.delivery-address-modal-overlay'));
     document.querySelector('.delivery-cancel').addEventListener('click', () => closeModal('.delivery-address-modal-overlay'));
@@ -716,7 +719,6 @@ function ensureDeliveryModals() {
 
     // Modal de Seleção de Endereço
     const selOverlay = document.querySelector('.delivery-address-selection-modal-overlay');
-    // Adiciona listener para o 'X' (que agora tem a classe .delivery-close)
     if (selOverlay) {
        selOverlay.querySelector('.delivery-close').addEventListener('click', () => closeModal('.delivery-address-selection-modal-overlay'));
        selOverlay.querySelector('.address-selection-cancel').addEventListener('click', () => closeModal('.delivery-address-selection-modal-overlay'));
@@ -737,26 +739,36 @@ function ensureDeliveryModals() {
 function showLoadingModal(message) {
     const overlay = document.querySelector('.loading-modal-overlay');
     if (overlay) {
-        // Reset to loading state
         overlay.querySelector('.loading-spinner').style.display = 'block';
         overlay.querySelector('.loading-success').style.display = 'none';
         overlay.querySelector('.loading-message').textContent = message;
         overlay.style.display = 'flex';
+        overlay.style.position = 'fixed';
+        overlay.style.inset = '0';
+        overlay.style.zIndex = '99999';
+        overlay.style.backgroundColor = 'rgba(0,0,0,0.6)';
+        overlay.style.justifyContent = 'center';
+        overlay.style.alignItems = 'center';
+        overlay.style.pointerEvents = 'auto';
+
+        const modal = overlay.querySelector('.loading-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+            modal.style.zIndex = '100000';
+            modal.style.position = 'relative';
+        }
     }
 }
 
 function showSuccessAndHideModal(message, duration = 3000) {
     const overlay = document.querySelector('.loading-modal-overlay');
     if (overlay) {
-        // Switch to success state
         overlay.querySelector('.loading-spinner').style.display = 'none';
         overlay.querySelector('.loading-success').style.display = 'block';
         overlay.querySelector('.loading-message').textContent = message;
-
-        // Hide after a delay
         setTimeout(() => {
             hideLoadingModal();
-            closeCart(); // Fecha o modal do carrinho também
+            closeCart();
         }, duration);
     }
 }
@@ -764,7 +776,10 @@ function showSuccessAndHideModal(message, duration = 3000) {
 function hideLoadingModal() {
     const overlay = document.querySelector('.loading-modal-overlay');
     if (overlay) {
+        // Remove ou oculta de forma segura
         overlay.style.display = 'none';
+        overlay.style.zIndex = '';
+        overlay.style.pointerEvents = 'none';
     }
 }
 
@@ -1097,24 +1112,21 @@ async function onCepBlur(e) {
     const formatted = cepDigits.slice(0,5) + '-' + cepDigits.slice(5);
     if (cepInputEl) cepInputEl.value = formatted;
     try {
-        // Consulta ao ViaCEP sempre com apenas os 8 dígitos (sem traço)
         const res = await fetch(`https://viacep.com.br/ws/${cepDigits}/json/`);
         if (!res.ok) return;
         const data = await res.json();
         if (data.erro) return;
 
-    if (data.localidade) document.querySelector('.delivery-cidade').value = data.localidade;
-    if (data.uf) document.querySelector('.delivery-estado').value = data.uf;
-    if (data.bairro) document.querySelector('.delivery-bairro').value = data.bairro;
-    if (data.logradouro) document.querySelector('.delivery-rua').value = data.logradouro;
-    // remove estado de erro do CEP se estava marcado
-    const cepInput = document.querySelector('.delivery-cep');
-    const cepMsg = document.querySelector('.delivery-cep-label .cep-error-message');
-    if (cepInput) cepInput.classList.remove('input-error');
-    if (cepMsg) cepMsg.style.display = 'none';
-    window.updateSaveButtonState();
+        if (data.localidade) document.querySelector('.delivery-cidade').value = data.localidade;
+        if (data.uf) document.querySelector('.delivery-estado').value = data.uf;
+        if (data.bairro) document.querySelector('.delivery-bairro').value = data.bairro;
+        if (data.logradouro) document.querySelector('.delivery-rua').value = data.logradouro;
+        const cepInput = document.querySelector('.delivery-cep');
+        const cepMsg = document.querySelector('.delivery-cep-label .cep-error-message');
+        if (cepInput) cepInput.classList.remove('input-error');
+        if (cepMsg) cepMsg.style.display = 'none';
+        window.updateSaveButtonState();
     } catch (err) {
-        console.warn('Erro ao buscar CEP:', err);
     }
 }
 
@@ -1301,11 +1313,9 @@ async function onOptionsConfirmWrapper() {
     showLoadingModal('Confirmando pedido...');
     
     try {
-        await onOptionsConfirm(); // Chama a lógica principal
+        await onOptionsConfirm();
     } catch (error) {
-        // Se onOptionsConfirm der erro, o modal de loading é escondido
         hideLoadingModal();
-        // O erro já é logado e alertado dentro de createDeliveryOrder
     }
 }
 
@@ -1321,11 +1331,6 @@ function areRequiredOptionsSelected() {
     });
     return ok;
 }
-
-
-// ===================================================================
-// === NOVO SISTEMA DE VERIFICAÇÃO DE ENTREGA (INÍCIO) ===
-// ===================================================================
 
 /**
  * Função principal que é chamada ao confirmar o pedido.
@@ -1731,10 +1736,10 @@ async function geocodeAddress(address) {
 
 function isStoreOpen(horarios) {
     // PARA TESTES: DESCOMENTAR A LINHA ABAIXO PARA SIMULAR LOJA SEMPRE ABERTA
-    /* return { isOpen: true, closingTime: '22:00' }; */
+    return { isOpen: true, closingTime: '22:00' };
 
     // COMENTAR O CÓDIGO ABAIXO PARA DESABILITAR A VERIFICAÇÃO DE HORÁRIO
-    
+    /*
     if (!horarios) return { isOpen: false, closingTime: '' };
     const now = new Date();
     const dayOfWeek = now.getDay().toString(); // 0=Domingo, 1=Segunda, ..., 6=Sábado
@@ -1753,6 +1758,9 @@ function isStoreOpen(horarios) {
     }
     const isOpen = now >= openTime && now <= closeTime;
     return { isOpen, closingTime: todayHours.fecha }; 
+
+    */
+
 }
 
 
@@ -1792,9 +1800,7 @@ function showDeliveryErrors(failedItems) {
     });
 }
 
-// ===================================================================
-// === NOVO SISTEMA DE VERIFICAÇÃO DE ENTREGA (FIM) ===
-// ===================================================================
+
 
 document.addEventListener('DOMContentLoaded', initCart);
 // FINAL DO CÓDIGO

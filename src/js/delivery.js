@@ -1,3 +1,5 @@
+// js/delivery.js
+
 document.addEventListener("DOMContentLoaded", () => {
     // Inicializa o app quando o DOM estiver pronto
     const firebaseConfig = {
@@ -28,12 +30,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const activeDeliveryDisplay = document.getElementById("active-delivery-display");
     const waitingForOrders = document.getElementById("waiting-for-orders");
     const pendingOrdersList = document.getElementById("pending-orders-list");
+    const authCodeOverlay = document.getElementById('auth-code-verification-overlay');
+    const authCodeInputs = authCodeOverlay.querySelectorAll('.auth-code-input');
+    const btnCancelAuthCode = document.getElementById('btn-cancel-auth-code');
+    const btnConfirmAuthCode = document.getElementById('btn-confirm-auth-code');
+    const authCodeStatus = document.getElementById('auth-code-status-overlay');
 
     // Templates HTML
     const pendingOrderCardTemplate = document.getElementById('pending-order-card-template');
     const deliveryViewTemplate = document.getElementById('delivery-view-template');
     const deliveryItemTemplate = document.getElementById('delivery-item-template');
-    
+    const authCodeDisplayTemplate = document.getElementById('auth-code-display-template');
+
     // Estado da aplicação
     let currentEntregador = null;
     let passedOrderIds = new Set();
@@ -46,12 +54,11 @@ document.addEventListener("DOMContentLoaded", () => {
     let entregadorCoords = null;
     let entregadorEnderecoAtual = null;
     let lastStoreAddress = null;
-    let finalRouteGenerated = false;
 
     // Funções de autenticação
     const loginComGoogle = () => { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()); };
     const logout = () => { auth.signOut(); };
-    
+
     function showScreen(screenName) {
         loadingScreen.style.display = screenName === "loading" ? "flex" : "none";
         loginScreen.style.display = screenName === "login" ? "flex" : "none";
@@ -72,30 +79,24 @@ document.addEventListener("DOMContentLoaded", () => {
             btnPedidosPendentes.classList.add("active");
         }
     }
-    
+
     async function getAddressFromCoords(lat, lon) {
         const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
         try {
             const response = await fetch(url);
             const data = await response.json();
-            
             if (data && data.address) {
                 const addr = data.address;
                 const road = addr.road || '';
                 const houseNumber = addr.house_number || '';
                 const suburb = addr.suburb || '';
                 const city = addr.city || addr.town || addr.village || '';
-
                 let finalAddress = road;
                 if (houseNumber) finalAddress += `, ${houseNumber}`;
                 if (suburb) finalAddress += ` - ${suburb}`;
                 if (city) finalAddress += `, ${city}`;
-                
-                if (road && city) {
-                    return finalAddress;
-                } else {
-                    return data.display_name;
-                }
+                if (road && city) return finalAddress;
+                return data.display_name;
             }
             throw new Error("Não foi possível encontrar detalhes do endereço.");
         } catch (error) {
@@ -104,22 +105,6 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-
-    async function getCoordsFromAddress(address) {
-        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`;
-        try {
-            const response = await fetch(url);
-            const data = await response.json();
-            if (data && data.length > 0) {
-                return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
-            }
-            throw new Error("Endereço não encontrado.");
-        } catch (error) {
-            console.error("Erro de geocodificação:", error);
-            return null;
-        }
-    }
-    
     function getDistanceFromLatLonInKm(lat1, lon1, lat2, lon2) {
         const R = 6371;
         const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -139,11 +124,9 @@ document.addEventListener("DOMContentLoaded", () => {
     auth.onAuthStateChanged(async (user) => {
         listeners.forEach(unsubscribe => unsubscribe());
         listeners = [];
-        
         if (user) {
             showScreen("loading");
             const idTokenResult = await user.getIdTokenResult(true);
-            
             if (idTokenResult.claims.role === "entregador") {
                 currentEntregador = user;
                 profilePic.src = user.photoURL;
@@ -208,11 +191,11 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
         waitingForOrders.style.display = "none";
-        
+
         const isAccepted = !!currentActiveOrder;
         const view = deliveryViewTemplate.content.cloneNode(true);
         const userInfo = orderToShow.userInfo;
-        
+
         view.querySelector(".customer-name").textContent = userInfo.displayName;
         view.querySelector(".customer-address").textContent = userInfo.endereco;
         view.querySelector(".customer-address-add").textContent = userInfo.enderecoAdd || "Sem complemento.";
@@ -224,7 +207,22 @@ document.addEventListener("DOMContentLoaded", () => {
         const locationOverlay = view.querySelector('.location-update-overlay');
 
         if (isAccepted) {
-            if (!entregadorCoords) {
+            if (orderToShow.authCodigo) {
+                // SE O PEDIDO TEM CÓDIGO, SIGNIFICA QUE O ENTREGADOR ESTÁ A CAMINHO DO CLIENTE
+                const itemListWrapper = view.querySelector('.item-list-wrapper');
+                itemListWrapper.innerHTML = `<div class="auth-delivery-prompt">
+                    <h4>Aguardando confirmação</h4>
+                    <p>Ao chegar no local, peça ao cliente o código de 4 dígitos para finalizar a entrega.</p>
+                </div>`;
+                
+                const deliverBtn = document.createElement("button");
+                deliverBtn.className = "btn btn-main-deliver";
+                deliverBtn.textContent = "Finalizar Entrega";
+                deliverBtn.onclick = () => showAuthCodeVerification(orderToShow);
+                mainActionsFooter.appendChild(deliverBtn);
+
+            } else if (!entregadorCoords) {
+                // SE NÃO TEM COORDENADAS, PEDE A LOCALIZAÇÃO
                 locationOverlay.style.display = 'flex';
                 const btnUpdate = view.querySelector('#btn-update-location-overlay');
                 const statusSpan = view.querySelector('#location-status-overlay');
@@ -233,21 +231,15 @@ document.addEventListener("DOMContentLoaded", () => {
                     navigator.geolocation.getCurrentPosition(async (position) => {
                         try {
                             entregadorCoords = { latitude: position.coords.latitude, longitude: position.coords.longitude };
-                            
                             statusSpan.textContent = 'Convertendo para endereço...';
                             entregadorEnderecoAtual = await getAddressFromCoords(position.coords.latitude, position.coords.longitude);
-                            
                             statusSpan.textContent = 'Salvando endereço...';
                             if (currentEntregador) {
                                 const userRef = db.collection("users").doc(currentEntregador.uid);
-                                await userRef.update({
-                                    'endereco-atual': entregadorEnderecoAtual
-                                });
+                                await userRef.update({ 'endereco-atual': entregadorEnderecoAtual });
                             }
-
                             statusSpan.textContent = 'Localização obtida!';
                             setTimeout(() => updateUI(), 500);
-
                         } catch (error) {
                             console.error("Erro ao atualizar a localização no DB:", error);
                             statusSpan.textContent = 'Erro ao salvar localização.';
@@ -258,47 +250,36 @@ document.addEventListener("DOMContentLoaded", () => {
                     });
                 };
             } else {
+                // ETAPA DE COLETA DOS ITENS
                 locationOverlay.style.display = 'none';
-                
                 const firstUnfinishedItemIndex = orderToShow.itensPedido.findIndex(item => item.status !== 'pronto');
 
                 orderToShow.itensPedido.forEach((item, index) => {
                     if (index > firstUnfinishedItemIndex && firstUnfinishedItemIndex !== -1) return;
-
                     const itemRow = deliveryItemTemplate.content.cloneNode(true);
                     itemRow.querySelector(".item-image").src = item.imagemUrl;
                     itemRow.querySelector(".item-name").textContent = item.nomeDoItem;
                     itemRow.querySelector(".item-store").textContent = `${item.nomeLoja} (fecha ${item.fechaLoja})`;
-                    
                     const itemAction = itemRow.querySelector(".item-action");
                     const itemStatus = item.status || "pendente";
                     let btn;
-
                     switch (itemStatus) {
                         case "pendente":
                             btn = document.createElement("button");
                             btn.className = "btn btn-produzir";
                             btn.textContent = "Gerar Rota";
-                            btn.onclick = function() { // Usando function() para ter acesso ao 'this'
-                                // **ALTERADO: Desabilita o botão para evitar clique duplo**
-                                this.textContent = 'Aguarde...';
-                                this.disabled = true;
-
-                                // **ALTERADO: Usa as coordenadas exatas para máxima precisão**
+                            btn.onclick = function() {
+                                this.textContent = 'Aguarde...'; this.disabled = true;
                                 const origin = lastStoreAddress || `${entregadorCoords.latitude},${entregadorCoords.longitude}`;
                                 const destination = `${item.nomeLoja}, ${userInfo.endereco.split(',').slice(-2).join(',')}`;
-                                
                                 openGoogleMapsRoute(origin, destination);
-                                console.log(`Item ${item.nomeDoItem} pedido para a loja ${item.nomeLoja}`);
-                                
-                                // Atualiza o status no banco de dados. A UI será redesenhada pelo listener.
                                 updateItemStatus(orderToShow.id, index, "produzindo");
                             };
                             break;
                         case "produzindo":
                             btn = document.createElement("button");
                             btn.className = "btn btn-concluir";
-                            btn.textContent = "Concluir";
+                            btn.textContent = "Coletado";
                             btn.onclick = () => {
                                 lastStoreAddress = `${item.nomeLoja}, ${userInfo.endereco.split(',').slice(-2).join(',')}`;
                                 updateItemStatus(orderToShow.id, index, "pronto");
@@ -308,101 +289,37 @@ document.addEventListener("DOMContentLoaded", () => {
                             const done = document.createElement("button");
                             done.className = "btn btn-done";
                             done.innerHTML = '<i class="fa fa-check" aria-hidden="true"></i>';
-                            done.disabled = true;
-                            btn = done;
+                            done.disabled = true; btn = done;
                             break;
                     }
                     if (btn) itemAction.appendChild(btn);
-                    
                     if (index === firstUnfinishedItemIndex) {
                         itemRow.querySelector('.item-row').classList.add('item-enter-anim');
                     }
-
                     itemListContainer.appendChild(itemRow);
                 });
 
                 if (firstUnfinishedItemIndex === -1) {
-                    if (finalRouteGenerated) {
-                        const deliverBtn = document.createElement("button");
-                        deliverBtn.className = "btn btn-main-deliver";
-                        deliverBtn.textContent = "Entregar Pedido";
-                        
-                        deliverBtn.onclick = () => {
-                            const itemList = activeDeliveryDisplay.querySelector('.item-list-container');
-                            const footer = activeDeliveryDisplay.querySelector('.main-actions-footer');
-                            if (itemList) itemList.style.display = 'none';
-                            if (footer) footer.style.display = 'none';
-
-                            const overlay = activeDeliveryDisplay.querySelector('.location-update-overlay');
-                            const title = activeDeliveryDisplay.querySelector('#location-overlay-title');
-                            const text = activeDeliveryDisplay.querySelector('#location-overlay-text');
-                            
-                            title.textContent = "Confirmação Final";
-                            text.textContent = "Atualize sua localização para confirmar que está no endereço do cliente.";
-                            overlay.style.display = 'flex';
-
-                            const btnUpdate = activeDeliveryDisplay.querySelector('#btn-update-location-overlay');
-                            const statusSpan = activeDeliveryDisplay.querySelector('#location-status-overlay');
-                            
-                            btnUpdate.onclick = async () => {
-                                 statusSpan.textContent = 'Verificando...';
-                                 navigator.geolocation.getCurrentPosition(async (position) => {
-                                    const currentCoords = { lat: position.coords.latitude, lon: position.coords.longitude };
-                                    const customerCoords = await getCoordsFromAddress(userInfo.endereco);
-
-                                    if (customerCoords) {
-                                        const distance = getDistanceFromLatLonInKm(currentCoords.lat, currentCoords.lon, customerCoords.latitude, customerCoords.longitude);
-                                        // Considera-se "no local" se estiver a até 300 metros (0.3 km)
-                                        if (distance <= 0.3) {
-                                            completeDelivery(orderToShow);
-                                        } else {
-                                            alert(`Você está a ${distance.toFixed(2)}km de distância. Aproxime-se do cliente para finalizar.`);
-                                            statusSpan.textContent = 'Muito distante.';
-                                        }
-                                    } else {
-                                        alert("Não foi possível verificar a localização do cliente.");
-                                        statusSpan.textContent = 'Erro ao verificar.';
-                                    }
-
-                                 }, (error) => {
-                                    statusSpan.textContent = 'Erro ao obter sua localização.';
-                                 });
-                            };
-                        };
-                        mainActionsFooter.appendChild(deliverBtn);
-
-                    } else {
-                        const routeToCustomerBtn = document.createElement("button");
-                        routeToCustomerBtn.className = "btn btn-main-deliver";
-                        routeToCustomerBtn.textContent = "Gerar Rota até Cliente";
-                        routeToCustomerBtn.onclick = function() { // Usando function() para ter acesso ao 'this'
-                            // **ALTERADO: Desabilita o botão para evitar clique duplo**
-                            this.textContent = 'Aguarde...';
-                            this.disabled = true;
-
-                            // **ALTERADO: Usa as coordenadas exatas para máxima precisão**
-                            const origin = `${entregadorCoords.latitude},${entregadorCoords.longitude}`;
-                            const destination = userInfo.endereco;
-                            
-                            openGoogleMapsRoute(origin, destination);
-                            finalRouteGenerated = true;
-                            
-                            // A UI será atualizada pelo listener do Firestore, mas podemos forçar uma atualização
-                            // para que o botão "Entregar Pedido" apareça imediatamente.
-                            setTimeout(() => updateUI(), 100);
-                        };
-                        mainActionsFooter.appendChild(routeToCustomerBtn);
-                    }
+                    const routeToCustomerBtn = document.createElement("button");
+                    routeToCustomerBtn.className = "btn btn-main-deliver";
+                    routeToCustomerBtn.textContent = "Gerar Rota até Cliente";
+                    routeToCustomerBtn.onclick = function() {
+                        this.textContent = 'Gerando...'; this.disabled = true;
+                        const origin = lastStoreAddress || `${entregadorCoords.latitude},${entregadorCoords.longitude}`;
+                        const destination = userInfo.endereco;
+                        openGoogleMapsRoute(origin, destination);
+                        generateAndSetAuthCode(orderToShow.id);
+                    };
+                    mainActionsFooter.appendChild(routeToCustomerBtn);
                 }
             }
         } else {
+            // SE O PEDIDO NÃO FOI ACEITO AINDA
             const acceptBtn = document.createElement("button");
             acceptBtn.className = "btn btn-main-accept";
             acceptBtn.textContent = "Aceitar";
             acceptBtn.onclick = () => acceptOrder(orderToShow.id);
-            if (entregadorStatus !== "aguardando-ordem") {
-                acceptBtn.disabled = true;
-            }
+            if (entregadorStatus !== "aguardando-ordem") { acceptBtn.disabled = true; }
             const passBtn = document.createElement("button");
             passBtn.className = "btn btn-main-pass";
             passBtn.textContent = "Passar";
@@ -436,7 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     entregadorCoords = null;
                     entregadorEnderecoAtual = null;
                     lastStoreAddress = null;
-                    finalRouteGenerated = false;
                 } else {
                     activeOrder = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() };
                 }
@@ -489,12 +405,76 @@ document.addEventListener("DOMContentLoaded", () => {
                 const order = doc.data();
                 const itens = [...order.itensPedido];
                 itens[itemIndex].status = newStatus;
-                const allItemsReady = itens.every(i => i.status === "pronto");
-                let orderStatus = allItemsReady ? "entregando" : "produzindo";
-                t.update(orderRef, { itensPedido: itens, status: orderStatus });
+                t.update(orderRef, { itensPedido: itens });
             });
         } catch (error) { console.error("Erro ao atualizar status do item:", error); }
     }
+
+    async function generateAndSetAuthCode(orderId) {
+        const orderRef = db.collection("pedidos").doc(orderId);
+        const codigo = Math.floor(1000 + Math.random() * 9000);
+        try {
+            await orderRef.update({
+                authCodigo: codigo,
+                status: "entregando"
+            });
+        } catch (error) {
+            console.error("Erro ao gerar código de autenticação:", error);
+            alert("Não foi possível gerar o código. Tente novamente.");
+        }
+    }
+
+    function showAuthCodeVerification(order) {
+        authCodeOverlay.classList.add('active');
+        authCodeInputs.forEach(input => input.value = '');
+        authCodeInputs[0].focus();
+        authCodeStatus.textContent = '';
+
+        const confirmHandler = () => {
+            const enteredCode = Array.from(authCodeInputs).map(input => input.value).join('');
+            if (enteredCode.length === 4) {
+                if (parseInt(enteredCode, 10) === order.authCodigo) {
+                    authCodeStatus.textContent = 'Código correto! Finalizando...';
+                    authCodeStatus.style.color = 'var(--cor-verde)';
+                    completeDelivery(order);
+                    hideAuthCodeVerification();
+                } else {
+                    authCodeStatus.textContent = 'Código incorreto. Tente novamente.';
+                    authCodeStatus.style.color = 'var(--cor-vermelho)';
+                    authCodeInputs.forEach(input => input.value = '');
+                    authCodeInputs[0].focus();
+                }
+            } else {
+                authCodeStatus.textContent = 'Por favor, preencha os 4 dígitos.';
+                authCodeStatus.style.color = 'var(--cor-vermelho)';
+            }
+        };
+
+        const cancelHandler = () => hideAuthCodeVerification();
+
+        btnConfirmAuthCode.replaceWith(btnConfirmAuthCode.cloneNode(true));
+        document.getElementById('btn-confirm-auth-code').addEventListener('click', confirmHandler);
+        
+        btnCancelAuthCode.replaceWith(btnCancelAuthCode.cloneNode(true));
+        document.getElementById('btn-cancel-auth-code').addEventListener('click', cancelHandler);
+    }
+
+    function hideAuthCodeVerification() {
+        authCodeOverlay.classList.remove('active');
+    }
+
+    authCodeInputs.forEach((input, index) => {
+        input.addEventListener('input', () => {
+            if (input.value && index < authCodeInputs.length - 1) {
+                authCodeInputs[index + 1].focus();
+            }
+        });
+        input.addEventListener('keydown', (e) => {
+            if (e.key === "Backspace" && !input.value && index > 0) {
+                authCodeInputs[index - 1].focus();
+            }
+        });
+    });
 
     async function completeDelivery(order) {
         const orderRef = db.collection("pedidos").doc(order.id);

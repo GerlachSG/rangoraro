@@ -65,6 +65,24 @@
             </div>
         </div>
     </main>
+    
+    <div id="auth-code-verification-overlay" class="auth-code-verification-overlay">
+        <div class="auth-code-verification-card">
+            <h4>Código de Entrega</h4>
+            <p>Peça ao cliente o código para finalizar.</p>
+            <div class="auth-code-inputs">
+                <input type="number" class="auth-code-input" maxlength="1">
+                <input type="number" class="auth-code-input" maxlength="1">
+                <input type="number" class="auth-code-input" maxlength="1">
+                <input type="number" class="auth-code-input" maxlength="1">
+            </div>
+            <span id="auth-code-status-overlay"></span>
+            <div class="main-actions-footer">
+                <button class="btn btn-main-pass" id="btn-cancel-auth-code">Cancelar</button>
+                <button class="btn btn-main-accept" id="btn-confirm-auth-code">Confirmar</button>
+            </div>
+        </div>
+    </div>
 
     <template id="pending-order-card-template">
         <div class="order-card">
@@ -106,7 +124,7 @@
                 <div class="item-list-container">
                 </div>
             </div>
-
+             <div id="auth-code-container-placeholder"></div>
             <div class="main-actions-footer">
             </div>
         </div>
@@ -127,6 +145,20 @@
             </div>
         </div>
     </template>
+    
+    <template id="auth-code-display-template">
+        <div class="auth-code-container">
+            <p class="auth-code-label">CÓDIGO DE ENTREGA</p>
+            <div class="auth-code-display">
+                <span class="auth-code-digit"></span>
+                <span class="auth-code-digit"></span>
+                <span class="auth-code-digit"></span>
+                <span class="auth-code-digit"></span>
+            </div>
+            <p class="auth-code-info">O cliente fornecerá este código para finalizar o pedido.</p>
+        </div>
+    </template>
+
 
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>

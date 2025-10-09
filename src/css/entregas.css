@@ -659,3 +659,89 @@ body {
     font-weight: 500;
     min-height: 20px;
 }
+
+.auth-code-verification-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 200;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.auth-code-verification-card {
+    background-color: var(--cor-fundo-principal);
+    padding: 25px;
+    border-radius: 12px;
+    border: 1px solid var(--cor-borda);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+    text-align: center;
+    width: 90%;
+    max-width: 340px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.auth-code-verification-overlay.active {
+    display: flex;
+    opacity: 1;
+}
+
+.auth-code-inputs {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.auth-code-input {
+    width: 45px;
+    height: 55px;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid var(--cor-borda);
+    background-color: rgba(255, 255, 255, 0.02);
+    color: var(--cor-texto-principal);
+    -webkit-appearance: textfield;
+    -moz-appearance: textfield;
+    appearance: textfield;
+}
+
+.auth-code-input::-webkit-outer-spin-button,
+.auth-code-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+#auth-code-status-overlay {
+    font-size: 0.9rem;
+    font-weight: 500;
+    min-height: 20px;
+    color: var(--cor-vermelho);
+}
+
+/* --- NOVO ESTILO PARA PROMPT DO ENTREGADOR --- */
+.auth-delivery-prompt {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    margin: 10px 0;
+}
+.auth-delivery-prompt h4 {
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+.auth-delivery-prompt p {
+    color: var(--cor-texto-secundario);
+    font-size: 0.9rem;
+}
