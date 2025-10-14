@@ -81,7 +81,9 @@ document.addEventListener("DOMContentLoaded", () => {
         openChats: el('kpi-open-chats'),
         openChatsSub: el('kpi-open-chats-sub'),
         supportTime: el('kpi-support-time'),
-        supportTimeSub: el('kpi-support-time-sub')
+        supportTimeSub: el('kpi-support-time-sub'),
+        supportRating: el('kpi-support-rating'),
+        supportRatingSub: el('kpi-support-rating-sub')
     };
 
     // Chart instances
@@ -394,15 +396,57 @@ document.addEventListener("DOMContentLoaded", () => {
         // Chats abertos deve ser independente do filtro de período
         const q = db.collection('support_chats');
         const unsub = q.onSnapshot(snap=>{
-            const open=[]; let totalResolution=0; let closedCount=0;
-            snap.forEach(d=>{ const c=d.data(); if(c.status==='open') open.push(c); if(c.status==='closed' && c.createdAt?.toMillis && c.lastUpdated?.toMillis){ totalResolution += (c.lastUpdated.toMillis() - c.createdAt.toMillis()); closedCount++; }} );
+            const open=[]; 
+            let totalResolution=0; 
+            let closedCount=0;
+            let totalRating=0;
+            let ratedCount=0;
+            
+            snap.forEach(d=>{ 
+                const c=d.data(); 
+                
+                // Chats abertos
+                if(c.status==='open') open.push(c); 
+                
+                // Tempo médio de resolução
+                if(c.status==='closed' && c.createdAt?.toMillis && c.lastUpdated?.toMillis){ 
+                    totalResolution += (c.lastUpdated.toMillis() - c.createdAt.toMillis()); 
+                    closedCount++; 
+                }
+                
+                // Rating médio
+                if(c.rating && typeof c.rating === 'number' && c.rating > 0) {
+                    totalRating += c.rating;
+                    ratedCount++;
+                }
+            });
+            
+            // Lista de chats abertos
             pushList(LISTS.openChats, open.slice(0,6), c=>`<span>${c.userName||'Usuário'}</span><span class='meta'>${(c.lastMessage||'...').slice(0,20)}</span>`);
+            
+            // KPI: Chats abertos
             if(KPI_SUPPORT.openChats) KPI_SUPPORT.openChats.textContent = open.length;
             if(KPI_SUPPORT.openChatsSub) KPI_SUPPORT.openChatsSub.textContent = 'ativos';
+            
+            // KPI: Tempo médio de resposta
             if(closedCount>0){
                 const avg = totalResolution/closedCount;
                 if(KPI_SUPPORT.supportTime) KPI_SUPPORT.supportTime.textContent = durationHMM(avg);
                 if(KPI_SUPPORT.supportTimeSub) KPI_SUPPORT.supportTimeSub.textContent = closedCount + ' resolvidos';
+            }
+            
+            // KPI: Rating médio
+            if(ratedCount > 0) {
+                const avgRating = totalRating / ratedCount;
+                if(KPI_SUPPORT.supportRating) {
+                    KPI_SUPPORT.supportRating.textContent = avgRating.toFixed(1) + ' ⭐';
+                }
+                if(KPI_SUPPORT.supportRatingSub) {
+                    KPI_SUPPORT.supportRatingSub.textContent = ratedCount + ' avaliações';
+                }
+            } else {
+                if(KPI_SUPPORT.supportRating) KPI_SUPPORT.supportRating.textContent = '—';
+                if(KPI_SUPPORT.supportRatingSub) KPI_SUPPORT.supportRatingSub.textContent = 'sem avaliações';
             }
         });
         unsubscribers.push(unsub);
