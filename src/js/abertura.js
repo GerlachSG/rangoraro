@@ -388,12 +388,14 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Define o preço do pacote (necessário para XP depois)
+        const price = (pacoteAtual && typeof pacoteAtual.preco === 'number') ? pacoteAtual.preco : (pacoteAtual && pacoteAtual.preco ? Number(pacoteAtual.preco) : 0);
+
     // Se não for demo E estivermos no estágio 1, verifica saldo e debita o preço do pacote dentro de uma transaction
     // (não debitar ao abrir item especial no estágio 2)
     if (!isDemo && currentStage === 1) {
             try {
                 const user = auth.currentUser;
-                const price = (pacoteAtual && typeof pacoteAtual.preco === 'number') ? pacoteAtual.preco : (pacoteAtual && pacoteAtual.preco ? Number(pacoteAtual.preco) : 0);
                 const userRef = firebase.firestore().collection('users').doc(user.uid);
 
                 // Pre-cria a ref da transação para podermos atualizá-la depois
@@ -508,6 +510,17 @@ document.addEventListener('DOMContentLoaded', () => {
                                     wonItemValue: wonItem ? (wonItem.valor || wonItem.price) : null,
                                     completedAt: firebase.firestore.FieldValue.serverTimestamp()
                                 });
+
+                                // ✨ ADICIONA XP APÓS ABRIR PACOTE
+                                if (!isDemo && window.XPSystem && auth.currentUser) {
+                                    const xpGanho = XPSystem.calculateXP('pacote', price);
+                                    const result = await XPSystem.addXP(auth.currentUser.uid, xpGanho, `Abriu pacote (R$ ${price.toFixed(2)})`);
+                                    
+                                    if (result) {
+                                        XPSystem.showXPNotification(xpGanho, 'Pacote aberto');
+                                    }
+                                }
+
                             } catch (err) {
                                 console.error('Erro ao marcar transação de abertura como completed:', err);
                             } finally {

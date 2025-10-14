@@ -9,10 +9,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const modalConfirm = document.getElementById('modal-confirm');
     const modalCancel = document.getElementById('modal-cancel');
     const welcomeScreen = document.getElementById('welcome-screen');
+    const historyModal = document.getElementById('history-modal');
+    const ordersModal = document.getElementById('orders-modal');
+    const userHistoryBtn = document.getElementById('user-history-btn');
+    const userOrdersBtn = document.getElementById('user-orders-btn');
+    const closeHistoryModal = document.getElementById('close-history-modal');
+    const closeOrdersModal = document.getElementById('close-orders-modal');
+    const activityTimeDisplay = document.getElementById('activity-time');
     
     // Control Buttons
-    const minimizeBtn = document.getElementById('minimize-chat');
-    const closeCurrentBtn = document.getElementById('close-current-chat');
     const logoutBtn = document.getElementById('logout-btn');
 
     // Templates
@@ -20,7 +25,58 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadingMessagesTemplate = document.getElementById('loading-messages');
     const errorStateTemplate = document.getElementById('error-state');
 
-    let currentChatId = null, currentUser = null, messageListener = null;
+    let currentChatId = null, currentUser = null, messageListener = null, currentUserId = null;
+    let activityTimer = null;
+    let activitySeconds = 0;
+
+    // Activity Timer Functions
+    function startActivityTimer() {
+        // Recuperar tempo salvo do localStorage
+        const savedTime = localStorage.getItem('supportActivityTime');
+        const savedDate = localStorage.getItem('supportActivityDate');
+        const today = new Date().toDateString();
+
+        // Se for o mesmo dia, recuperar o tempo, senão resetar
+        if (savedDate === today && savedTime) {
+            activitySeconds = parseInt(savedTime);
+        } else {
+            activitySeconds = 0;
+            localStorage.setItem('supportActivityDate', today);
+        }
+
+        updateActivityDisplay();
+
+        // Iniciar contador
+        if (activityTimer) clearInterval(activityTimer);
+        activityTimer = setInterval(() => {
+            activitySeconds++;
+            updateActivityDisplay();
+            // Salvar a cada 5 segundos
+            if (activitySeconds % 5 === 0) {
+                localStorage.setItem('supportActivityTime', activitySeconds.toString());
+            }
+        }, 1000);
+    }
+
+    function stopActivityTimer() {
+        if (activityTimer) {
+            clearInterval(activityTimer);
+            activityTimer = null;
+            // Salvar tempo final
+            localStorage.setItem('supportActivityTime', activitySeconds.toString());
+        }
+    }
+
+    function updateActivityDisplay() {
+        const hours = Math.floor(activitySeconds / 3600);
+        const minutes = Math.floor((activitySeconds % 3600) / 60);
+        const seconds = activitySeconds % 60;
+        
+        const timeString = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        if (activityTimeDisplay) {
+            activityTimeDisplay.textContent = timeString;
+        }
+    }
 
     loginBtn.onclick = () => loginComGoogle();
 
@@ -34,6 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     dashboard.style.display = 'flex';
                     welcomeScreen.style.display = 'flex';
                     chatView.classList.remove('active');
+                    startActivityTimer(); // Iniciar timer quando logar
                     loadOpenChats();
                 } else {
                     console.error('Usuário não tem claim de suporte:', user.uid); // Log para debug
@@ -135,6 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function loadUserInfo(userId) {
         try {
+            currentUserId = userId; // Salvar para uso posterior
             const userDoc = await db.collection('users').doc(userId).get();
             if (userDoc.exists) {
                 const userData = userDoc.data();
@@ -151,6 +209,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('user-balance').textContent = formatCurrency(userData.balance);
                 document.getElementById('user-tickets').textContent = userData.raffleTickets || 0;
                 document.getElementById('user-created-at').textContent = formatDate(userData.createdAt);
+                
+                // Contar pedidos ativos
+                const activePedidos = await db.collection('pedidos')
+                    .where('userId', '==', userId)
+                    .get();
+                document.getElementById('user-active-orders').textContent = activePedidos.size;
                 
                 // Adicionar título com informação completa nos elementos que podem ter texto truncado
                 document.getElementById('user-email').title = userData.email;
@@ -243,37 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Event Listeners
-    // Chat controls
-    function minimizeChat() {
-        if (!currentChatId) return;
-        chatView.classList.add('minimized');
-    }
-
-    function maximizeChat() {
-        chatView.classList.remove('minimized');
-    }
-
-    function closeCurrentChat() {
-        if (!currentChatId) return;
-        
-        // Limpar listener e estado atual
-        if (messageListener) {
-            messageListener();
-            messageListener = null;
-        }
-        currentChatId = null;
-        
-        // Resetar UI
-        chatView.classList.remove('active');
-        welcomeScreen.style.display = 'flex';
-        messagesArea.innerHTML = '';
-        minimizeBtn.disabled = true;
-        
-        // Remover estado ativo da lista
-        document.querySelectorAll('.chat-item').forEach(item => 
-            item.classList.remove('active')
-        );
-    }
+    // Chat controls - FUNÇÕES REMOVIDAS (minimizeChat, maximizeChat, closeCurrentChat)
 
     async function loadChat(chatId, userName) {
         try {
@@ -282,10 +316,8 @@ document.addEventListener('DOMContentLoaded', () => {
             // Configurar a UI inicial
             welcomeScreen.style.display = 'none';
             chatView.classList.add('active');
-            chatView.classList.remove('minimized');
             replyArea.style.display = 'flex';
             chatUserName.textContent = 'Carregando informações...';
-            minimizeBtn.disabled = false;
             messagesArea.innerHTML = '';
             
             // Carregar dados do chat
@@ -333,7 +365,9 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Erro ao carregar chat:', error);
             showError(messagesArea, error);
-            closeCurrentChat();
+            // Resetar UI em caso de erro
+            chatView.classList.remove('active');
+            welcomeScreen.style.display = 'flex';
         }
     }
 
@@ -345,16 +379,18 @@ document.addEventListener('DOMContentLoaded', () => {
     modalCancel.onclick = hideConfirmModal;
     loginBtn.onclick = () => loginComGoogle();
     
-    minimizeBtn.onclick = minimizeChat;
-    closeCurrentBtn.onclick = closeCurrentChat;
     logoutBtn.onclick = () => {
         if (confirm('Tem certeza que deseja sair?')) {
+            stopActivityTimer(); // Parar timer ao fazer logout
             logout();
         }
     };
 
-    // Restore maximized state when clicking on chat header
-    chatViewHeader.addEventListener('click', maximizeChat);
+    // Botões de modal
+    userHistoryBtn.onclick = showUserHistory;
+    userOrdersBtn.onclick = showUserOrders;
+    closeHistoryModal.onclick = () => historyModal.classList.remove('active');
+    closeOrdersModal.onclick = () => ordersModal.classList.remove('active');
     
     // Fechar modal ao clicar fora
     confirmModal.addEventListener('click', (e) => {
@@ -362,8 +398,183 @@ document.addEventListener('DOMContentLoaded', () => {
             hideConfirmModal();
         }
     });
+    
+    historyModal.addEventListener('click', (e) => {
+        if (e.target === historyModal) {
+            historyModal.classList.remove('active');
+        }
+    });
+    
+    ordersModal.addEventListener('click', (e) => {
+        if (e.target === ordersModal) {
+            ordersModal.classList.remove('active');
+        }
+    });
 
-    // Initialize control buttons state
-    minimizeBtn.disabled = true;
-    closeCurrentBtn.disabled = true;
+    // ===== FUNÇÕES DE HISTÓRICO E PEDIDOS =====
+    
+    async function showUserHistory() {
+        if (!currentUserId) return;
+        
+        historyModal.classList.add('active');
+        const historyContent = document.getElementById('history-content');
+        historyContent.innerHTML = '<div class="loading">Carregando depósitos...</div>';
+        
+        try {
+            // Buscar apenas os últimos 10 depósitos
+            const transactions = await db.collection('transactions')
+                .where('userId', '==', currentUserId)
+                .where('type', '==', 'deposit')
+                .orderBy('timestamp', 'desc')
+                .limit(10)
+                .get();
+            
+            let html = '<div class="history-list">';
+            
+            if (transactions.empty) {
+                html += `
+                    <div class="empty-state">
+                        <div class="icon">💰</div>
+                        <div class="message">Nenhum depósito encontrado</div>
+                        <div class="submessage">Este usuário ainda não fez nenhum depósito</div>
+                    </div>
+                `;
+            } else {
+                transactions.forEach(doc => {
+                    const tx = doc.data();
+                    html += `
+                        <div class="history-item deposit">
+                            <div class="history-icon">💳</div>
+                            <div class="history-left">
+                                <strong>Depósito</strong>
+                                <small>${formatDate(tx.timestamp)}</small>
+                            </div>
+                            <div class="history-right positive">
+                                +${formatCurrency(tx.amount || tx.finalAmount)}
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            
+            html += '</div>';
+            historyContent.innerHTML = html;
+            
+        } catch (error) {
+            console.error('Erro ao carregar histórico:', error);
+            historyContent.innerHTML = `
+                <div class="error-state">
+                    <div class="icon">⚠️</div>
+                    <div class="message">Erro ao carregar histórico</div>
+                    <div class="submessage">${error.message}</div>
+                </div>
+            `;
+        }
+    }
+    
+    async function showUserOrders() {
+        if (!currentUserId) return;
+        
+        ordersModal.classList.add('active');
+        const ordersContent = document.getElementById('orders-content');
+        ordersContent.innerHTML = '<div class="loading">Carregando pedidos...</div>';
+        
+        try {
+            // Buscar pedidos ativos
+            const activePedidos = await db.collection('pedidos')
+                .where('userId', '==', currentUserId)
+                .orderBy('createdAt', 'desc')
+                .get();
+            
+            // Buscar pedidos entregues
+            const deliveredPedidos = await db.collection('pedidos-entregues')
+                .where('userId', '==', currentUserId)
+                .orderBy('horaEntrega', 'desc')
+                .limit(10)
+                .get();
+            
+            let html = '';
+            
+            // Pedidos ativos
+            if (!activePedidos.empty) {
+                html += '<div class="orders-section"><h4>📦 Pedidos Ativos</h4>';
+                activePedidos.forEach(doc => {
+                    const pedido = doc.data();
+                    const statusEmoji = {
+                        'pendente': '⏳',
+                        'aceito': '✅',
+                        'em_preparo': '👨‍🍳',
+                        'pronto': '🍕',
+                        'em_entrega': '🚗'
+                    };
+                    html += `
+                        <div class="order-card active-order">
+                            <div class="order-header">
+                                <span class="order-id">ID: ${doc.id}</span>
+                                <span class="order-status status-${pedido.status}">
+                                    ${statusEmoji[pedido.status] || '📋'} ${pedido.status}
+                                </span>
+                            </div>
+                            <div class="order-details">
+                                <p><strong>Criado:</strong> ${formatDate(pedido.createdAt)}</p>
+                                ${pedido.entregadorId ? `<p><strong>Entregador:</strong> ${pedido.entregadorEmail}</p>` : ''}
+                                ${pedido.horaAceito ? `<p><strong>Aceito:</strong> ${formatDate(pedido.horaAceito)}</p>` : ''}
+                                <p><strong>Endereço:</strong> ${pedido.userInfo?.endereco || '-'}</p>
+                                <p><strong>Itens:</strong> ${pedido.itensPedido?.length || 0} item(ns)</p>
+                            </div>
+                            <div class="order-items">
+                                ${(pedido.itensPedido || []).map(item => `
+                                    <div class="item-row">
+                                        <span>${item.nomeDoItem}</span>
+                                        <span>${formatCurrency(item.valor)}</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            // Pedidos entregues
+            if (!deliveredPedidos.empty) {
+                html += '<div class="orders-section"><h4>✅ Últimos Pedidos Entregues</h4>';
+                deliveredPedidos.forEach(doc => {
+                    const pedido = doc.data();
+                    html += `
+                        <div class="order-card delivered-order">
+                            <div class="order-header">
+                                <span class="order-id">ID: ${doc.id}</span>
+                                <span class="order-status status-entregue">✅ entregue</span>
+                            </div>
+                            <div class="order-details">
+                                <p><strong>Entregue:</strong> ${formatDate(pedido.horaEntrega)}</p>
+                                <p><strong>Entregador:</strong> ${pedido.entregadorEmail}</p>
+                                <p><strong>Itens:</strong> ${pedido.itensPedido?.length || 0} item(ns)</p>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+            }
+            
+            if (activePedidos.empty && deliveredPedidos.empty) {
+                html = '<div class="empty-state"><p>Nenhum pedido encontrado</p></div>';
+            }
+            
+            ordersContent.innerHTML = html;
+            
+        } catch (error) {
+            console.error('Erro ao carregar pedidos:', error);
+            ordersContent.innerHTML = '<div class="error-state"><p>Erro ao carregar pedidos</p></div>';
+        }
+    }
+
+    // Salvar tempo de atividade antes de sair/recarregar
+    window.addEventListener('beforeunload', () => {
+        if (activityTimer) {
+            localStorage.setItem('supportActivityTime', activitySeconds.toString());
+            localStorage.setItem('supportActivityDate', new Date().toDateString());
+        }
+    });
 });

@@ -1,0 +1,154 @@
+Coleções Principais (Root-Level)
+1. admins
+
+Propósito: Lista de IDs de usuários (userId) que possuem permissões de administrador no sistema.
+
+Estrutura: Cada documento tem como ID o userId do administrador. O conteúdo do documento pode ser vazio ou conter informações adicionais sobre o admin.
+
+2. cidades
+
+Propósito: Gerencia as cidades onde o aplicativo opera.
+
+Estrutura: Cada documento representa uma cidade (ex: sao_jose_dos_campos).
+
+3. lojas
+
+Propósito: Catálogo de todas as lojas físicas de fast-food.
+
+Estrutura de um Documento (ex: burgerking_oriente):
+
+endereco (string): Endereço completo da loja.
+
+fastfoodId (string): ID que liga esta loja à sua marca na coleção fastfoods (ex: "burgerking").
+
+horarios (map): Um objeto que mapeia os dias da semana (0 = Domingo, 1 = Segunda, etc.) aos horários de funcionamento.
+
+nome (string): Nome completo da loja (ex: "Burger King Shopping Jardim Oriente").
+
+4. fastfoods
+
+Propósito: Catálogo das marcas de fast-food disponíveis.
+
+Estrutura de um Documento (ex: burgerking):
+
+nome (string): Nome da marca (ex: "Burger King").
+
+5. itens
+
+Propósito: O catálogo mestre de todos os itens vendáveis no app.
+
+Estrutura de um Documento (ex: 1-bibs-donuts):
+
+fastfood (string): ID da marca a que o item pertence.
+
+imagemUrl (string): Link para a imagem do produto.
+
+nome (string): Nome do item.
+
+valor (number): Preço base do item.
+
+6. pacotes
+
+Propósito: Define os "pacotes" ou "loot boxes" que os usuários podem comprar para ganhar itens aleatórios.
+
+Estrutura de um Documento (ex: almossar):
+
+imagemUrl (string): Imagem do pacote.
+
+nome (string): Nome do pacote.
+
+preco (number): Preço para comprar o pacote.
+
+itens (array): A parte mais importante. É uma lista de possíveis prêmios, cada um com:
+
+itemId (string): ID do item que pode ser ganho.
+
+raridade (string): "comum", "incomum", "raro", "epico", "lendario".
+
+chance (number): Um peso que define a probabilidade de ganhar este item.
+
+7. pedidos
+
+Propósito: Armazena os pedidos que estão em andamento (pendentes, em preparação, etc.).
+
+Estrutura de um Documento:
+
+createdAt (timestamp): Quando o pedido foi criado.
+
+status (string): "pendente", "aceito", "a caminho", etc.
+
+userId (string): ID do usuário que fez o pedido.
+
+userInfo (map): Uma cópia dos dados do usuário no momento do pedido (nome, endereço, etc.). Isso é ótimo para manter o histórico correto.
+
+itensPedido (array): Lista de itens no pedido, cada um com detalhes da loja, nome, valor, etc.
+
+valorViagem (number): Custo da entrega.
+
+8. pedidos-entregues
+
+Propósito: Um arquivo/histórico de todos os pedidos que já foram concluídos.
+
+Estrutura: Similar a pedidos, mas com informações adicionais sobre a entrega:
+
+entregadorId e entregadorEmail.
+
+horaAceito e horaEntrega (timestamps).
+
+O status final é "entregue".
+
+9. users (A Coleção Central)
+
+Propósito: Armazena todas as informações dos usuários.
+
+Estrutura de um Documento (ID é o userId):
+
+balance (number): Saldo de dinheiro do usuário no app.
+
+displayName, email, photoURL.
+
+role (string): Define o tipo de usuário ("cliente", "entregador", "admin").
+
+status (string): Status atual de um entregador (ex: "aguardando-ordem").
+
+Subcoleção address: Armazena os endereços salvos do usuário.
+
+Subcoleção carrinho: Armazena os itens que o usuário adicionou ao carrinho de compras.
+
+10. ganhosRecentes e ganhosTrocas
+
+Propósito: Funcionam como um "feed de atividades" global, mostrando os itens que os usuários ganharam (provavelmente ao abrir pacotes ou fazer trocas).
+
+Estrutura: Contêm informações sobre o item ganho, o usuário que ganhou e o timestamp. ganhosTrocas tem campos extras como multiplicador e valorPago, indicando um sistema de troca ou "upgrade" de itens.
+
+11. Outras Coleções de Suporte
+
+transactions: Registra transações financeiras (depósitos, saques).
+
+referral_codes: Gerencia códigos de indicação e seus bônus.
+
+support_chats: Estrutura para um sistema de chat de suporte, com uma subcoleção messages para cada conversa.
+
+Como Tudo se Conecta (Fluxo de Dados)
+Um usuário (users) navega pelas lojas (lojas) e pelos itens (itens).
+
+Ele adiciona itens ao seu carrinho (subcoleção em users).
+
+Ao finalizar, um novo documento é criado na coleção pedidos, usando o endereço salvo do usuário (subcoleção address).
+
+Um entregador (um usuário com role: "entregador") aceita o pedido.
+
+Quando o pedido é finalizado, ele é movido ou copiado para pedidos-entregues.
+
+Paralelamente, o usuário pode usar seu saldo (balance) para comprar pacotes.
+
+Ao abrir um pacote, um item aleatório (definido no array itens do pacote) é "dropado", e um registro dessa atividade é criado em ganhosRecentes.
+
+Sugestões e Observações
+Estrutura Sólida: Sua estrutura é muito boa e segue as melhores práticas do NoSQL/Firestore, como a desnormalização (copiar dados do usuário para o pedido) para garantir a integridade histórica.
+
+Clareza nos Nomes: Os nomes das coleções são claros e diretos.
+
+Gamificação: A lógica de pacotes, itens com raridade e os feeds de ganhosRecentes e ganhosTrocas é a base de um sistema de gamificação muito interessante para engajar os usuários.
+
+Escalabilidade: O uso de subcoleções para dados que podem crescer muito (como messages de um chat, carrinho e address de um usuário) é excelente para a performance.

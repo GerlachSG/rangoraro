@@ -71,46 +71,114 @@
     <!-- CONTEÚDO PRINCIPAL / DASHBOARD (Escondido por padrão) -->
     <div class="main-container" id="main-content" style="display: none;">
         <div class="main-content">
+            <div class="filters-bar">
+                <select id="period-selector" aria-label="Período">
+                    <option value="today">Hoje</option>
+                    <option value="3days">3 dias</option>
+                    <option value="7days">7 dias</option>
+                    <option value="1month">1 mês</option>
+                    <option value="6months">6 meses</option>
+                </select>
+            </div>
             <section class="secao-destaques">
-                <!-- Lucro e Métricas -->
-                <div class="lucro-container">
-                    <div class="lucro-card">
+                <div class="top-cards-row">
+                    <div class="lucro-card lucro-main" id="card-profit">
+                        <div class="card-head">
+                            <h3><i class="fas fa-chart-line"></i> Lucro</h3>
+                            <button class="breakdown-toggle" id="btn-profit-breakdown" aria-expanded="false" title="Detalhar">▾</button>
+                        </div>
+                        <p id="total-profit" class="value-lg">R$ 0,00</p>
+                        <div class="profit-breakdown" id="profit-breakdown" hidden>
+                            <div class="bd-row"><span class="bd-label">Depósitos</span><span class="bd-value" id="bd-deposits">R$ 0,00</span></div>
+                            <div class="bd-row"><span class="bd-label">Custos Viagem+Itens</span><span class="bd-value negativo" id="bd-delivery-cost">- R$ 0,00</span></div>
+                            <div class="bd-row"><span class="bd-label">Saques</span><span class="bd-value negativo" id="bd-withdrawals">- R$ 0,00</span></div>
+                            <div class="bd-total"><span class="bd-label">Lucro</span><span class="bd-value" id="bd-profit-final">R$ 0,00</span></div>
+                        </div>
+                    </div>
+                    <div class="lucro-card" id="card-deposits">
                         <h3><i class="fas fa-dollar-sign"></i> Depósitos</h3>
-                        <p id="total-deposits">R$ 0,00</p>
-                    </div>
-                    <div class="lucro-card">
-                        <h3><i class="fas fa-exchange-alt"></i> Total Circulado</h3>
-                        <p id="total-circulated">R$ 0,00</p>
-                    </div>
-                    <div class="lucro-card placeholder">
-                        <h3><i class="fas fa-arrow-down"></i> Saques</h3>
-                        <p>R$ 0,00</p>
-                    </div>
-                    <div class="lucro-card placeholder">
-                        <h3><i class="fas fa-truck"></i> Entregas</h3>
-                        <p>R$ 0,00</p>
+                        <p id="total-deposits" class="value-lg">R$ 0,00</p>
                     </div>
                 </div>
-                <!-- Filtros -->
-                <div class="filtros-container">
-                    <label for="period-selector">Mostrar dados de:</label>
-                    <select id="period-selector">
-                        <option value="today">Hoje</option>
-                        <option value="3days">Últimos 3 dias</option>
-                        <option value="7days">Últimos 7 dias</option>
-                        <option value="1month">Último mês</option>
-                        <option value="6months">Últimos 6 meses</option>
-                    </select>
+                <div class="second-cards-row">
+                    <div class="lucro-card" id="card-withdrawals">
+                        <h3><i class="fas fa-arrow-down"></i> Saques</h3>
+                        <p id="total-withdrawals" class="value-md">R$ 0,00</p>
+                    </div>
+                    <div class="lucro-card" id="card-delivery-cost">
+                        <h3><i class="fas fa-truck"></i> Custos Viagem+Itens</h3>
+                        <p id="total-delivery-cost" class="value-md">R$ 0,00</p>
+                    </div>
                 </div>
             </section>
+            <!-- KPIs Extras -->
+            <section class="kpi-groups" id="kpi-grid">
+                <div class="kpi-group" id="grp-users">
+                    <h4 class="kpi-group-title">Usuários</h4>
+                    <div class="kpi-card"><span class="kpi-label">Novos Usuários</span><span class="kpi-value" id="kpi-new-users">-</span><span class="kpi-sub" id="kpi-new-users-sub">—</span></div>
+                    <div class="kpi-card"><span class="kpi-label">Usuários Ativos</span><span class="kpi-value" id="kpi-active-users">-</span><span class="kpi-sub" id="kpi-active-users-sub">—</span></div>
+                    <div class="kpi-card balance-card"><span class="kpi-label">Saldo Total Usuários</span><span class="kpi-value" id="kpi-total-balance">R$ 0,00</span><span class="kpi-sub" id="kpi-total-balance-sub">—</span></div>
+                </div>
+                <div class="kpi-group" id="grp-deposits">
+                    <h4 class="kpi-group-title">Depósitos</h4>
+                    <div class="kpi-card kpi-avg-deposit-card"><span class="kpi-label">Valor Médio Depósito</span><span class="kpi-value" id="kpi-avg-deposit">R$ 0,00</span><span class="kpi-sub" id="kpi-avg-deposit-sub">—</span></div>
+                    <div class="kpi-card"><span class="kpi-label">Uso Referral</span><span class="kpi-value" id="kpi-referral-usage">0%</span><span class="kpi-sub" id="kpi-referral-usage-sub">—</span></div>
+                </div>
+                <div class="kpi-group" id="grp-deliveries">
+                    <h4 class="kpi-group-title">Entregas</h4>
+                    <div class="kpi-card"><span class="kpi-label">Pedidos Abertos</span><span class="kpi-value" id="kpi-open-orders">-</span><span class="kpi-sub" id="kpi-open-orders-sub">—</span></div>
+                    <div class="kpi-card"><span class="kpi-label">Tempo Médio Entrega</span><span class="kpi-value" id="kpi-delivery-time">--:--</span><span class="kpi-sub" id="kpi-delivery-time-sub">—</span></div>
+                    <div class="kpi-card"><span class="kpi-label">Pago a Entregadores</span><span class="kpi-value" id="kpi-payout-entregadores">R$ 0,00</span><span class="kpi-sub" id="kpi-payout-entregadores-sub">—</span></div>
+                </div>
+                <div class="kpi-group" id="grp-support">
+                    <h4 class="kpi-group-title">Suporte</h4>
+                    <div class="kpi-card"><span class="kpi-label">Chats Abertos</span><span class="kpi-value" id="kpi-open-chats">-</span><span class="kpi-sub" id="kpi-open-chats-sub">—</span></div>
+                    <div class="kpi-card"><span class="kpi-label">Tempo Médio Resposta</span><span class="kpi-value" id="kpi-support-time">--:--</span><span class="kpi-sub" id="kpi-support-time-sub">—</span></div>
+                </div>
+            </section>
+
+            <!-- Gráficos -->
+            <section class="charts-grid">
+                <div class="chart-card">
+                    <h4>Depósitos / Dia</h4>
+                    <canvas id="chart-deposits"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h4>Pedidos / Status</h4>
+                    <canvas id="chart-orders-status"></canvas>
+                </div>
+            </section>
+
+            <!-- Listas / Tabelas -->
+            <section class="lists-grid">
+                <div class="list-card">
+                    <h4>Últimos Depósitos</h4>
+                    <ul id="list-latest-deposits" class="mini-list"></ul>
+                </div>
+                <div class="list-card">
+                    <h4>Pedidos Recentes</h4>
+                    <ul id="list-recent-orders" class="mini-list"></ul>
+                </div>
+                <div class="list-card">
+                    <h4>Ganhos Recentes</h4>
+                    <ul id="list-recent-drops" class="mini-list"></ul>
+                </div>
+                <div class="list-card">
+                    <h4>Chats Suporte Abertos</h4>
+                    <ul id="list-open-chats" class="mini-list"></ul>
+                </div>
+            </section>
+
+
         </div>
     </div>
 
     <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
-    <script src="../../js/admin.js"></script>
+    <script defer src="../../js/admin.js"></script>
 </body>
 </html>
 

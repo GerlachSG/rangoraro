@@ -11,21 +11,23 @@
         <h2>Painel de Suporte</h2>
         <p>Faça login para acessar o painel de suporte</p>
         <button id="login-btn">
-            <img src="../assets/icons/google-icon.svg" alt="Google" style="width: 18px; margin-right: 8px; vertical-align: middle;">
+            <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/google.svg" alt="Google" style="width: 18px; margin-right: 8px; vertical-align: middle;">
             Login com Google
         </button>
     </div>
     <div id="support-dashboard">
         <div id="chat-list">
-            <div class="chat-list-content">
+            <div class="chat-list-header">
                 <h2>Conversas Ativas</h2>
+                <div class="activity-timer">
+                    <span class="timer-label">Tempo ativo:</span>
+                    <span id="activity-time" class="timer-value">00:00:00</span>
+                </div>
+            </div>
+            <div class="chat-list-content">
                 <!-- Chat items will be added here -->
             </div>
             <div class="chat-list-footer">
-                <button class="control-btn minimize-chat" id="minimize-chat" title="Minimizar chat atual">
-                    <span class="icon">▼</span>
-                    <span>Minimizar</span>
-                </button>
                 <button class="control-btn logout" id="logout-btn" title="Sair do painel">
                     <span class="icon">↪</span>
                     <span>Sair</span>
@@ -33,7 +35,7 @@
             </div>
         </div>
         <div id="welcome-screen">
-            <img src="../assets/icons/icon-logo.png" alt="Rango Raro Logo" class="logo">
+            <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo.svg" alt="Rango Raro Logo" class="logo">
             <h2>Bem-vindo ao Suporte Rango Raro</h2>
             <p>Selecione uma conversa para começar o atendimento</p>
         </div>
@@ -52,9 +54,6 @@
                             <span id="user-id"></span>
                         </div>
                     </div>
-                    <button class="control-btn close-chat" id="close-current-chat" title="Fechar chat atual">
-                        <span class="icon">✕</span>
-                    </button>
                 </div>
                 <div class="user-stats">
                     <div class="stat-item">
@@ -66,13 +65,18 @@
                         <span id="user-tickets" class="stat-value">0</span>
                     </div>
                     <div class="stat-item">
+                        <span class="stat-label">Pedidos Ativos</span>
+                        <span id="user-active-orders" class="stat-value">0</span>
+                    </div>
+                    <div class="stat-item">
                         <span class="stat-label">Membro desde</span>
                         <span id="user-created-at" class="stat-value">-</span>
                     </div>
                 </div>
                 <div class="chat-actions">
-                    <button id="user-history-btn" class="action-btn">Ver Histórico</button>
-                    <button id="close-chat-btn">Resolver Conversa</button>
+                    <button id="user-history-btn" class="action-btn">💳 Depósitos</button>
+                    <button id="user-orders-btn" class="action-btn">📦 Pedidos</button>
+                    <button id="close-chat-btn">✅ Resolver Conversa</button>
                 </div>
             </div>
             <div id="messages-area">
@@ -102,6 +106,36 @@
             <div class="modal-footer">
                 <button class="modal-btn cancel" id="modal-cancel">Cancelar</button>
                 <button class="modal-btn confirm" id="modal-confirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Histórico -->
+    <div id="history-modal" class="modal-overlay">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>💳 Histórico de Depósitos</h3>
+                <button class="close-modal" id="close-history-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="history-content" class="history-content">
+                    <div class="loading">Carregando...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Pedidos -->
+    <div id="orders-modal" class="modal-overlay">
+        <div class="modal-content large">
+            <div class="modal-header">
+                <h3>Pedidos do Usuário</h3>
+                <button class="close-modal" id="close-orders-modal">✕</button>
+            </div>
+            <div class="modal-body">
+                <div id="orders-content" class="orders-content">
+                    <div class="loading">Carregando...</div>
+                </div>
             </div>
         </div>
     </div>

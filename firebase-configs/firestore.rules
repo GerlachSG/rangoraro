@@ -1,0 +1,163 @@
+rules_version = '2';
+service cloud.firestore {
+  /* ==== Funções utilitárias ==== */
+  function isLogged() {
+    return request.auth != null;
+  }
+  function isAdmin() {
+    // Aceita qualquer uma das variantes de claim que possamos definir no backend
+    // Ex: customClaims = { admin: true } OU { role: 'admin' } OU { isAdmin: true }
+    return isLogged() && (
+      request.auth.token.admin == true ||
+      request.auth.token.role == 'admin' ||
+      request.auth.token.isAdmin == true
+    );
+  }
+  function isSupport() {
+    return isLogged() && request.auth.token.support == true;
+  }
+  function isEntregador() {
+    return isLogged() && (request.auth.token.role == 'entregador' || request.auth.token.entregador == true);
+  }
+  function isOwner(userId) {
+    return isLogged() && request.auth.uid == userId;
+  }
+
+  match /databases/{database}/documents {
+
+    /* ==================== PUBLIC / SEMI-PUBLIC CATALOGS ==================== */
+    match /itens/{itemId} { allow read: if true; allow write: if isAdmin(); }
+    match /pacotes/{pacoteId} { allow read: if true; allow write: if isAdmin(); }
+    // Ganhos recentes e trocas devem ser públicos para aparecer na homepage
+    match /ganhosRecentes/{ganhoId} { allow read: if true; allow write: if isAdmin(); }
+    match /ganhosTrocas/{ganhoId} { allow read: if true; allow write: if isAdmin(); }
+    match /referral_codes/{codeId} {
+      allow get: if isLogged();
+      allow list, write: if false; // impedir varreduras ou escrita direta
+    }
+    match /lanches/{lancheId} { allow read: if true; allow write: if isAdmin(); }
+    match /cidades/{cityId}/{documents=**} {
+      allow read: if isLogged();
+      allow write: if isAdmin();
+    }
+
+    /* ==================== TRANSAÇÕES FINANCEIRAS ==================== */
+    match /transactions/{transactionId} {
+      // criação só pelo próprio usuário (ex: depósito)
+      allow create: if isLogged() && request.resource.data.userId == request.auth.uid;
+      // admin e suporte podem consultar qualquer transação (necessário para dashboard e histórico)
+      // dono pode ler a própria (get). Consultas (queries) completas para admin e suporte.
+      allow get: if isAdmin() || isSupport() || isOwner(resource.data.userId);
+      allow list: if isAdmin() || isSupport();
+      allow update, delete: if isAdmin();
+    }
+
+    /* ==================== ADMIN REGISTRY ==================== */
+    match /admins/{userId} { allow read, write: if isAdmin(); }
+
+    /* ==================== PEDIDOS ATIVOS ==================== */
+    match /pedidos/{pedidoId} {
+      allow create: if isLogged() && request.resource.data.userId == request.auth.uid;
+      allow read, update: if isLogged() && (
+        resource.data.userId == request.auth.uid ||
+        isAdmin() ||
+        isSupport() ||
+        (isEntregador() && (
+          resource.data.status == 'pendente' ||
+          resource.data.entregadorId == request.auth.uid
+        ))
+      );
+      // Permitir que suporte e admin façam queries (list)
+      allow list: if isAdmin() || isSupport();
+      allow delete: if isLogged() && (
+        isAdmin() || isSupport() || (isEntregador() && resource.data.entregadorId == request.auth.uid)
+      );
+    }
+
+    /* ==================== PEDIDOS ENTREGUES (HISTÓRICO) ==================== */
+    match /pedidos-entregues/{docId} {
+      allow create: if isLogged() && (
+        isAdmin() || isSupport() || (isEntregador() && request.resource.data.entregadorId == request.auth.uid)
+      );
+      // admin/support pode consultar; entregador lê seus próprios; cliente lê o que é dele
+      allow read: if isLogged() && (
+        isAdmin() || isSupport() ||
+        (isEntregador() && resource.data.entregadorId == request.auth.uid) ||
+        resource.data.userId == request.auth.uid
+      );
+      allow update, delete: if isAdmin() || isSupport();
+    }
+
+    /* ==================== USERS ==================== */
+    match /users/{userId} {
+      allow create: if isOwner(userId);
+
+      // Admin e Suporte podem ler qualquer usuário; usuário comum só o próprio
+      allow read: if isAdmin() || isSupport() || isOwner(userId);
+
+      // Permite que o próprio usuário atualize seus dados (incluindo xp, level, etc)
+      allow update: if isOwner(userId);
+
+      // Subcoleção carrinho — admin/suporte precisa ler para análise; dono altera
+      match /carrinho/{itemId} {
+        allow read: if isOwner(userId) || isAdmin() || isSupport();
+        allow write, delete: if isOwner(userId);
+      }
+      match /address/{addressDoc} { 
+        allow read: if isOwner(userId) || isAdmin() || isSupport(); 
+        allow write: if isOwner(userId); 
+      }
+      match /pedidos/{pedidoId} { 
+        allow read: if isOwner(userId) || isAdmin() || isSupport(); 
+        allow create, update: if isOwner(userId); 
+      }
+      // Subcoleção de histórico de XP
+      match /xp_history/{historyId} {
+        allow read: if isOwner(userId) || isAdmin();
+        allow create: if isOwner(userId); // Permite criar entradas de histórico
+      }
+    }
+
+    /* ==================== SUPORTE ==================== */
+    match /support_chats/{chatId} {
+      allow create: if isLogged() && request.resource.data.userId == request.auth.uid;
+      // admin / suporte podem consultar todos; usuário somente o seu
+      allow read: if isLogged() && (
+        isAdmin() || isSupport() || resource.data.userId == request.auth.uid
+      );
+      allow update: if isLogged() && (
+        isAdmin() || isSupport() || resource.data.userId == request.auth.uid
+      );
+      match /messages/{messageId} {
+        allow read, create: if isLogged() && (
+          isAdmin() || isSupport() ||
+          get(/databases/$(database)/documents/support_chats/$(chatId)).data.userId == request.auth.uid
+        );
+      }
+    }
+
+    /* ==================== SAFE GLOBAL ACCESS FOR 'carrinho' SUBCOLLECTIONS ==================== */
+    // Garante que queries collectionGroup('carrinho') não quebrem caso exista algum carrinho
+    // em outra árvore de documentos (admin só leitura). Mantém owners já cobertos pelo bloco /users.
+    match /{anyPath=**}/carrinho/{itemId} {
+      allow read: if isAdmin();
+      // Escrita continua restrita somente via /users/{userId}/carrinho nas regras acima
+    }
+
+    /* ==================== HELP / OUTRAS ==================== */
+    match /help_collections/{doc=**} { allow read: if isLogged(); }
+
+    // Caso exista coleção de nível raiz "carrinho" (não planejado), garantir admin read.
+    match /carrinho/{itemId} { allow read: if isAdmin(); }
+  }
+}
+
+/* =============================================================
+   NOTAS:
+   - Queries do dashboard agora passam pois usamos `allow read` com isAdmin().
+   - Se quiser restaurar a possibilidade de qualquer usuário ler docs de outros usuários
+     (exibindo nomes publicamente), substitua o bloco USERS por OPÇÃO 1 (comentada).
+   - Para collectionGroup('carrinho'), esta regra já autoriza admin a ler.
+   - Single-field indexes são criados automaticamente para where >= timestamp.
+   - Caso Firestore peça índice composto (link na exceção), abra e crie.
+============================================================= */

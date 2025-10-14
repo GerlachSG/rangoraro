@@ -1,0 +1,237 @@
+{
+  "_description": "Schema do banco de dados do aplicativo RangoRaro, um app de delivery com elementos de gamificação.",
+  "admins": {
+    "_description": "Coleção que armazena os IDs dos usuários com privilégios de administrador. O ID de cada documento é o próprio userId do admin.",
+    "document_id": "userId (string)",
+    "fields": {
+      "email": "string"
+    }
+  },
+  "cidades": {
+    "_description": "Catálogo de cidades onde o serviço está disponível.",
+    "document_id": "nome_da_cidade (string, ex: 'sao_jose_dos_campos')",
+    "fields": {
+      "nome": "string (ex: 'São José dos Campos')"
+    }
+  },
+  "lojas": {
+    "_description": "Catálogo de todas as lojas físicas parceiras.",
+    "document_id": "id_da_loja (string, ex: 'burgerking_oriente')",
+    "fields": {
+      "endereco": "string",
+      "fastfoodId": "string (referência ao ID na coleção 'fastfoods')",
+      "nome": "string",
+      "horarios": {
+        "_type": "map",
+        "_description": "Mapa dos dias da semana (0-6) para os horários.",
+        "0": { "abre": "string (HH:mm)", "fecha": "string (HH:mm)" },
+        "1": { "abre": "string (HH:mm)", "fecha": "string (HH:mm)" },
+        "2": { "abre": "string (HH:mm)", "fecha": "string (HH:mm)" },
+        "3": { "abre": "string (HH:mm)", "fecha": "string (HH:mm)" },
+        "4": { "abre": "string (HH:mm)", "fecha": "string (HH:mm)" },
+        "5": { "abre": "string (HH:mm)", "fecha": "string (HH:mm)" },
+        "6": { "abre": "string (HH:mm)", "fecha": "string (HH:mm)" }
+      }
+    }
+  },
+  "fastfoods": {
+    "_description": "Catálogo das marcas (franquias) de fast-food.",
+    "document_id": "id_do_fastfood (string, ex: 'burgerking')",
+    "fields": {
+      "nome": "string"
+    }
+  },
+  "itens": {
+    "_description": "Catálogo mestre de todos os itens individuais que podem ser vendidos ou ganhos.",
+    "document_id": "id_do_item (string, ex: '1-bibs-donuts')",
+    "fields": {
+      "fastfood": "string (referência ao ID na coleção 'fastfoods')",
+      "imagemUrl": "string",
+      "nome": "string",
+      "valor": "number"
+    }
+  },
+  "pacotes": {
+    "_description": "Define os 'pacotes/loot boxes' que os usuários compram para obter itens aleatórios.",
+    "document_id": "id_do_pacote (string, ex: 'almossar')",
+    "fields": {
+      "imagemUrl": "string",
+      "nome": "string",
+      "preco": "number",
+      "itens": {
+        "_type": "array (of objects)",
+        "_description": "Lista de possíveis recompensas e suas chances.",
+        "object_structure": {
+          "itemId": "string (referência ao ID na coleção 'itens')",
+          "raridade": "string (comum, incomum, raro, epico, lendario)",
+          "chance": "number"
+        }
+      }
+    }
+  },
+  "pedidos": {
+    "_description": "Coleção para pedidos em andamento (status 'pendente', 'aceito', etc.).",
+    "document_id": "id_do_pedido (gerado automaticamente)",
+    "fields": {
+      "createdAt": "timestamp",
+      "status": "string",
+      "userId": "string (referência ao ID na coleção 'users')",
+      "userInfo": {
+        "_type": "map",
+        "_description": "Snapshot dos dados do usuário no momento do pedido.",
+        "displayName": "string",
+        "endereco": "string",
+        "enderecoAdd": "string",
+        "horarioDoPedido": "string"
+      },
+      "itensPedido": {
+        "_type": "array (of objects)",
+        "object_structure": {
+          "nomeDoItem": "string",
+          "imagemUrl": "string",
+          "nomeLoja": "string",
+          "enderecoLoja": "string",
+          "fechaLoja": "string",
+          "valor": "number",
+          "opcoes": "array (of strings)"
+        }
+      },
+      "valorViagem": "number"
+    }
+  },
+  "pedidos-entregues": {
+    "_description": "Arquivo de pedidos que foram concluídos com sucesso.",
+    "document_id": "id_do_pedido (gerado automaticamente)",
+    "fields": {
+      "createdAt": "timestamp",
+      "entregadorId": "string",
+      "entregadorEmail": "string",
+      "horaAceito": "timestamp",
+      "horaEntrega": "timestamp",
+      "status": "string (geralmente 'entregue')",
+      "userId": "string",
+      "userInfo": "map (mesma estrutura de 'pedidos')",
+      "itensPedido": "array (mesma estrutura de 'pedidos')",
+      "valorViagem": "number"
+    }
+  },
+  "users": {
+    "_description": "Coleção central que armazena os dados de todos os usuários.",
+    "document_id": "userId (gerado pelo Firebase Auth)",
+    "fields": {
+      "balance": "number",
+      "createdAt": "timestamp",
+      "displayName": "string",
+      "email": "string",
+      "photoURL": "string",
+      "raffleTickets": "number",
+      "role": "string (ex: 'cliente', 'entregador', 'admin')",
+      "status": "string (para entregadores, ex: 'aguardando-ordem')"
+    },
+    "_subcollections": {
+      "address": {
+        "_description": "Endereços salvos pelo usuário.",
+        "document_id": "id_do_endereco (ex: 'endereco-1')",
+        "fields": {
+          "rua": "string",
+          "numero": "number",
+          "bairro": "string",
+          "cidade": "string",
+          "estado": "string",
+          "cep": "string",
+          "complemento": "string",
+          "referencia": "string"
+        }
+      },
+      "carrinho": {
+        "_description": "Itens no carrinho de compras do usuário.",
+        "document_id": "id_do_item_no_carrinho (gerado automaticamente)",
+        "fields": {
+          "itemId": "string (referência ao ID na coleção 'itens')",
+          "name": "string",
+          "image": "string",
+          "price": "number",
+          "fastfood": "string",
+          "addedAt": "timestamp"
+        }
+      }
+    }
+  },
+  "ganhosRecentes": {
+    "_description": "Feed global de itens que os usuários ganharam (provavelmente de pacotes).",
+    "document_id": "id_do_ganho (gerado automaticamente)",
+    "fields": {
+      "itemId": "string",
+      "itemImagem": "string",
+      "itemNome": "string",
+      "itemPreco": "number",
+      "itemRaridade": "string",
+      "timestamp": "timestamp",
+      "userId": "string",
+      "userNome": "string",
+      "userFoto": "string"
+    }
+  },
+  "ganhosTrocas": {
+    "_description": "Feed global de itens que os usuários ganharam através de um sistema de trocas.",
+    "document_id": "id_da_troca (gerado automaticamente)",
+    "fields": {
+      "itemId": "string",
+      "itemImagem": "string",
+      "itemNome": "string",
+      "multiplicador": "string",
+      "timestamp": "timestamp",
+      "userId": "string",
+      "userNome": "string",
+      "userFoto": "string",
+      "valorPago": "number"
+    }
+  },
+  "transactions": {
+    "_description": "Log de todas as transações financeiras (depósitos, etc.).",
+    "document_id": "id_da_transacao (gerado automaticamente)",
+    "fields": {
+      "amount": "number",
+      "bonusAmount": "number",
+      "finalAmount": "number",
+      "referralCode": "string",
+      "status": "string (ex: 'completed')",
+      "timestamp": "timestamp",
+      "type": "string (ex: 'deposit')",
+      "userId": "string",
+      "userName": "string",
+      "userPhoto": "string"
+    }
+  },
+  "referral_codes": {
+    "_description": "Códigos de referência para bônus de depósito.",
+    "document_id": "codigo (string, ex: 'TUBA')",
+    "fields": {
+      "bonus_percent": "number",
+      "is_active": "boolean"
+    }
+  },
+  "support_chats": {
+    "_description": "Armazena metadados de cada conversa de suporte.",
+    "document_id": "id_do_chat (gerado automaticamente)",
+    "fields": {
+      "lastMessage": "string",
+      "lastUpdated": "timestamp",
+      "status": "string (ex: 'open', 'closed')",
+      "userId": "string",
+      "userName": "string"
+    },
+    "_subcollections": {
+      "messages": {
+        "_description": "As mensagens de um chat específico.",
+        "document_id": "id_da_mensagem (gerado automaticamente)",
+        "fields": {
+          "senderId": "string (pode ser userId ou 'system')",
+          "text": "string",
+          "timestamp": "timestamp",
+          "type": "string (ex: 'user', 'system-closed')"
+        }
+      }
+    }
+  }
+}
