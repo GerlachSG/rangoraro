@@ -503,13 +503,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         if (lastOpeningTxRef) {
                             try {
                                 const wonItem = itemFinalRevelado || itemVencedorRoleta || null;
-                                await lastOpeningTxRef.update({
+                                const updateData = {
                                     status: 'completed',
-                                    wonItemId: wonItem ? wonItem.id : null,
-                                    wonItemName: wonItem ? (wonItem.nome || wonItem.name) : null,
-                                    wonItemValue: wonItem ? (wonItem.valor || wonItem.price) : null,
                                     completedAt: firebase.firestore.FieldValue.serverTimestamp()
-                                });
+                                };
+                                
+                                // Adicionar campos do item ganho apenas se existirem
+                                if (wonItem) {
+                                    if (wonItem.id) updateData.wonItemId = wonItem.id;
+                                    if (wonItem.nome || wonItem.name) updateData.wonItemName = wonItem.nome || wonItem.name;
+                                    if (wonItem.valor || wonItem.price) updateData.wonItemValue = wonItem.valor || wonItem.price;
+                                }
+                                
+                                await lastOpeningTxRef.update(updateData);
 
                                 // ✨ ADICIONA XP APÓS ABRIR PACOTE
                                 if (!isDemo && window.XPSystem && auth.currentUser) {

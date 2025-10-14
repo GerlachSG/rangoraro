@@ -49,7 +49,9 @@ service cloud.firestore {
       // dono pode ler a própria (get). Consultas (queries) completas para admin e suporte.
       allow get: if isAdmin() || isSupport() || isOwner(resource.data.userId);
       allow list: if isAdmin() || isSupport();
-      allow update, delete: if isAdmin();
+      // Permite que o usuário atualize suas próprias transações (ex: marcar como completed após abertura)
+      allow update: if isAdmin() || (isLogged() && resource.data.userId == request.auth.uid);
+      allow delete: if isAdmin();
     }
 
     /* ==================== ADMIN REGISTRY ==================== */
@@ -96,7 +98,7 @@ service cloud.firestore {
       allow read: if isAdmin() || isSupport() || isOwner(userId);
 
       // Permite que o próprio usuário atualize seus dados (incluindo xp, level, etc)
-      allow update: if isOwner(userId);
+      allow update: if isOwner(userId) || isAdmin() || isSupport();
 
       // Subcoleção carrinho — admin/suporte precisa ler para análise; dono altera
       match /carrinho/{itemId} {
@@ -114,7 +116,8 @@ service cloud.firestore {
       // Subcoleção de histórico de XP
       match /xp_history/{historyId} {
         allow read: if isOwner(userId) || isAdmin();
-        allow create: if isOwner(userId); // Permite criar entradas de histórico
+        allow create: if isOwner(userId) || isAdmin(); // Permite criar entradas de histórico
+        allow write: if isOwner(userId) || isAdmin(); // Permite escrever no histórico
       }
     }
 
