@@ -144,7 +144,14 @@ function createTradeCard(trade) {
     
     // Adiciona evento de click para redirecionar à página de trocas com o item e multiplicador
     card.addEventListener('click', () => {
-        window.location.href = `trocas.html?item=${trade.itemId}&mult=${trade.multiplicador}`;
+        const targetUrl = `trocas.html?item=${trade.itemId}&mult=${trade.multiplicador}`;
+        // Se já estiver na página de trocas, força reload para aplicar novos parâmetros
+        if (window.location.pathname.includes('trocas.html')) {
+            window.location.href = targetUrl;
+            window.location.reload();
+        } else {
+            window.location.href = targetUrl;
+        }
     });
 
     return card;

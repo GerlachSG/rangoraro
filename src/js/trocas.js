@@ -90,17 +90,19 @@ document.addEventListener('DOMContentLoaded', function () {
         if (itemIdFromUrl) {
             const itemToSelect = allSnacks.find(snack => snack.id === itemIdFromUrl);
             if (itemToSelect) {
-                selectSnack(itemToSelect);
                 if (multiplierFromUrl) {
                     const mult = parseFloat(multiplierFromUrl);
                     const percent = (1 / mult) * 100;
                     if (percent >= MIN_PERCENT && percent <= MAX_PERCENT) {
                         sweepAngle = (percent / 100) * 360;
-                        updateRouletteUI();
-                        updateChanceDisplays();
                     }
                 }
+                selectSnack(itemToSelect);
+                updateRouletteUI();
+                updateChanceDisplays();
             }
+            // Limpa os parâmetros da URL após usar
+            window.history.replaceState({}, document.title, window.location.pathname);
         }
     }
 
