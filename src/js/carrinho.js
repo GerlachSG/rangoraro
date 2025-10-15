@@ -1684,9 +1684,11 @@ async function verifyItem(item, cityId, userCoords) {
 
         const thirtyMinutesBeforeClosing = new Date(closingTime.getTime() - 30 * 60 * 1000);
 
-        if (now > thirtyMinutesBeforeClosing) {
-            return { success: false, reason: `A loja (${closestStore.nome}) fecha às ${storeOpenResult.closingTime}. Pedidos devem ser feitos até 30 min antes.` };
-        }
+        // COMENTAR ESTA LINHA PARA DESABILITAR A VERIFICAÇÃO DE 30 MINUTOS
+        
+        //if (now > thirtyMinutesBeforeClosing) {
+        //    return { success: false, reason: `A loja (${closestStore.nome}) fecha às ${storeOpenResult.closingTime}. Pedidos devem ser feitos até 30 min antes.` };
+        //}
 
         // 4. Sucesso! Retorna os dados para o pedido final
         return {

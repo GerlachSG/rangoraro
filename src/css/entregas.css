@@ -413,6 +413,112 @@ body {
     gap: 10px;
 }
 
+/* Agrupamento por loja */
+.store-card {
+    background-color: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.03);
+    border-radius: 10px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.store-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--cor-borda);
+}
+
+.store-title {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+}
+
+.store-name {
+    font-size: 1rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+.store-items-count {
+    font-size: 0.85rem;
+    min-width: 50px;
+    color: var(--cor-texto-secundario);
+}
+
+.store-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 8px 4px 0 4px;
+}
+
+.store-footer {
+    padding: 10px 6px 6px 6px;
+    border-top: 1px solid var(--cor-borda);
+    display: flex;
+    justify-content: flex-end;
+}
+
+.store-footer-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.btn-generate-route {
+    background-color: var(--cor-azul);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-store-complete {
+    background-color: var(--cor-verde);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: none;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.btn-store-complete:disabled,
+.btn.btn-concluir:disabled,
+.btn-generate-route:disabled {
+    background-color: var(--cor-cinza-claro);
+    cursor: not-allowed;
+}
+
+.btn-store-completed {
+    background-color: var(--cor-verde);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px;
+    width: 40px;
+    height: 36px;
+    border-radius: 6px;
+    color: white;
+    font-size: 1rem;
+}
+
+.btn-store-completed i {
+    font-style: normal;
+}
+
+/* Esconder botão de gerar rota no item individual - o footer do grupo terá o botão */
+.item-action .btn-produzir { display: none; }
+
+/* Mostrar apenas o botão 'Concluir' pequeno nos itens individuais */
+.item-action .btn-concluir { padding: 6px 10px; min-width: 80px; }
+
 .item-row {
     display: flex;
     justify-content: space-between;
