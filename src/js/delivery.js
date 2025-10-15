@@ -41,6 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const deliveryViewTemplate = document.getElementById('delivery-view-template');
     const deliveryItemTemplate = document.getElementById('delivery-item-template');
     const authCodeDisplayTemplate = document.getElementById('auth-code-display-template');
+    const storeGroupTemplate = document.getElementById('store-group-template');
 
     // Estado da aplicação
     let currentEntregador = null;
@@ -252,54 +253,153 @@ document.addEventListener("DOMContentLoaded", () => {
             } else {
                 // ETAPA DE COLETA DOS ITENS
                 locationOverlay.style.display = 'none';
-                const firstUnfinishedItemIndex = orderToShow.itensPedido.findIndex(item => item.status !== 'pronto');
 
+                // 1. Obter uma lista ordenada e única de nomes de lojas
+                const orderedStoreNames = [];
+                const storeSet = new Set();
+                orderToShow.itensPedido.forEach(item => {
+                    const storeName = item.nomeLoja || 'Sem Loja';
+                    if (!storeSet.has(storeName)) {
+                        storeSet.add(storeName);
+                        orderedStoreNames.push(storeName);
+                    }
+                });
+
+                // 2. Agrupar todos os itens pela loja
+                const groups = {};
                 orderToShow.itensPedido.forEach((item, index) => {
-                    if (index > firstUnfinishedItemIndex && firstUnfinishedItemIndex !== -1) return;
-                    const itemRow = deliveryItemTemplate.content.cloneNode(true);
-                    itemRow.querySelector(".item-image").src = item.imagemUrl;
-                    itemRow.querySelector(".item-name").textContent = item.nomeDoItem;
-                    itemRow.querySelector(".item-store").textContent = `${item.nomeLoja} (fecha ${item.fechaLoja})`;
-                    const itemAction = itemRow.querySelector(".item-action");
-                    const itemStatus = item.status || "pendente";
-                    let btn;
-                    switch (itemStatus) {
-                        case "pendente":
-                            btn = document.createElement("button");
-                            btn.className = "btn btn-produzir";
-                            btn.textContent = "Gerar Rota";
-                            btn.onclick = function() {
-                                this.textContent = 'Aguarde...'; this.disabled = true;
-                                const origin = lastStoreAddress || `${entregadorCoords.latitude},${entregadorCoords.longitude}`;
-                                const destination = `${item.nomeLoja}, ${userInfo.endereco.split(',').slice(-2).join(',')}`;
-                                openGoogleMapsRoute(origin, destination);
-                                updateItemStatus(orderToShow.id, index, "produzindo");
-                            };
-                            break;
-                        case "produzindo":
-                            btn = document.createElement("button");
-                            btn.className = "btn btn-concluir";
-                            btn.textContent = "Coletado";
-                            btn.onclick = () => {
-                                lastStoreAddress = `${item.nomeLoja}, ${userInfo.endereco.split(',').slice(-2).join(',')}`;
-                                updateItemStatus(orderToShow.id, index, "pronto");
-                            };
-                            break;
-                        case "pronto":
+                    const key = item.nomeLoja || 'Sem Loja';
+                    if (!groups[key]) groups[key] = [];
+                    groups[key].push({ item, index });
+                });
+
+                // 3. CORREÇÃO: Encontrar a primeira loja que NÃO está 100% concluída
+                let firstIncompleteStoreIndex = -1;
+                for (let i = 0; i < orderedStoreNames.length; i++) {
+                    const storeName = orderedStoreNames[i];
+                    const itemsInStore = groups[storeName].map(g => g.item);
+                    const isStoreComplete = itemsInStore.every(item => item.status === 'pronto');
+                    if (!isStoreComplete) {
+                        firstIncompleteStoreIndex = i;
+                        break; 
+                    }
+                }
+
+                // 4. Determinar até qual loja devemos renderizar
+                const sliceEndIndex = firstIncompleteStoreIndex !== -1 ? firstIncompleteStoreIndex + 1 : orderedStoreNames.length;
+                const storesToRender = orderedStoreNames.slice(0, sliceEndIndex);
+                
+                // 5. Renderizar as lojas (concluídas + a ativa)
+                storesToRender.forEach(storeName => {
+                    const group = groups[storeName];
+                    const areAllItemsInGroupComplete = group.every(({ item }) => item.status === 'pronto');
+
+                    // LÓGICA PARA ITEM ÚNICO (NÃO AGRUPADO)
+                    if (group.length === 1) {
+                        const { item, index } = group[0];
+                        const itemRow = deliveryItemTemplate.content.cloneNode(true);
+                        itemRow.querySelector(".item-image").src = item.imagemUrl;
+                        itemRow.querySelector(".item-name").textContent = item.nomeDoItem;
+                        itemRow.querySelector(".item-store").textContent = `${item.nomeLoja} (fecha ${item.fechaLoja})`;
+                        const itemAction = itemRow.querySelector(".item-action");
+                        const itemStatus = item.status || "pendente";
+
+                        if (itemStatus === 'pronto') {
                             const done = document.createElement("button");
                             done.className = "btn btn-done";
                             done.innerHTML = '<i class="fa fa-check" aria-hidden="true"></i>';
-                            done.disabled = true; btn = done;
-                            break;
+                            done.disabled = true;
+                            itemAction.appendChild(done);
+                        } else {
+                             const btnContainer = document.createElement("div");
+                             btnContainer.className = "store-footer-actions";
+
+                             const btnGenerate = document.createElement("button");
+                             btnGenerate.className = 'btn btn-generate-route';
+                             btnGenerate.textContent = "Gerar Rota";
+                             btnGenerate.addEventListener('click', () => {
+                                 const origin = lastStoreAddress || `${entregadorCoords.latitude},${entregadorCoords.longitude}`;
+                                 const destination = `${item.nomeLoja}, ${userInfo.endereco.split(',').slice(-2).join(',')}`;
+                                 openGoogleMapsRoute(origin, destination);
+                                 updateItemStatus(orderToShow.id, index, 'produzindo');
+                             });
+
+                             const btnConcluir = document.createElement("button");
+                             btnConcluir.className = 'btn btn-store-complete';
+                             btnConcluir.textContent = "Concluir";
+                             btnConcluir.disabled = itemStatus !== 'produzindo';
+                             btnConcluir.addEventListener('click', () => {
+                                 lastStoreAddress = `${item.nomeLoja}, ${userInfo.endereco.split(',').slice(-2).join(',')}`;
+                                 updateItemStatus(orderToShow.id, index, "pronto");
+                             });
+
+                             if (itemStatus === 'produzindo') {
+                                 btnContainer.appendChild(btnConcluir);
+                             } else {
+                                 btnContainer.appendChild(btnGenerate);
+                             }
+                             itemAction.appendChild(btnContainer);
+                        }
+                        itemListContainer.appendChild(itemRow);
+                        return;
                     }
-                    if (btn) itemAction.appendChild(btn);
-                    if (index === firstUnfinishedItemIndex) {
-                        itemRow.querySelector('.item-row').classList.add('item-enter-anim');
+
+                    // LÓGICA PARA GRUPO DE ITENS
+                    const storeNode = storeGroupTemplate.content.cloneNode(true);
+                    storeNode.querySelector('.store-name').textContent = storeName;
+                    storeNode.querySelector('.store-items-count').textContent = `${group.length} item${group.length > 1 ? 's' : ''}`;
+                    const storeItemsContainer = storeNode.querySelector('.store-items');
+                    
+                    group.forEach(({ item, index }) => {
+                        const itemRow = deliveryItemTemplate.content.cloneNode(true);
+                        itemRow.querySelector(".item-image").src = item.imagemUrl;
+                        itemRow.querySelector(".item-name").textContent = item.nomeDoItem;
+                        const itemAction = itemRow.querySelector(".item-action");
+                        
+                        if (item.status === 'pronto') {
+                            const done = document.createElement("button");
+                            done.className = "btn btn-done";
+                            done.innerHTML = '<i class="fa fa-check" aria-hidden="true"></i>';
+                            done.disabled = true;
+                            itemAction.appendChild(done);
+                        } else {
+                            const btn = document.createElement("button");
+                            btn.className = "btn btn-concluir";
+                            btn.textContent = "Concluir";
+                            btn.disabled = item.status !== 'produzindo';
+                            btn.addEventListener('click', () => {
+                                lastStoreAddress = `${item.nomeLoja}, ${userInfo.endereco.split(',').slice(-2).join(',')}`;
+                                updateItemStatus(orderToShow.id, index, "pronto");
+                            });
+                            itemAction.appendChild(btn);
+                        }
+                        storeItemsContainer.appendChild(itemRow);
+                    });
+                    
+                    const storeFooter = storeNode.querySelector('.store-footer');
+                    if (areAllItemsInGroupComplete) {
+                        storeFooter.style.display = 'none';
+                    } else {
+                        const btnGenerate = storeFooter.querySelector('.btn-generate-route');
+                        const isRouteGenerated = group.some(g => g.item.status === 'produzindo');
+                        btnGenerate.disabled = isRouteGenerated;
+
+                        btnGenerate.addEventListener('click', () => {
+                            const origin = lastStoreAddress || `${entregadorCoords.latitude},${entregadorCoords.longitude}`;
+                            const destination = `${storeName}, ${userInfo.endereco.split(',').slice(-2).join(',')}`;
+                            openGoogleMapsRoute(origin, destination);
+                            
+                            updateGroupStatusToProduzindo(orderToShow.id, storeName);
+                        });
+                        
+                        storeFooter.querySelector('.btn-store-complete').style.display = 'none';
                     }
-                    itemListContainer.appendChild(itemRow);
+
+                    itemListContainer.appendChild(storeNode);
                 });
 
-                if (firstUnfinishedItemIndex === -1) {
+                const allItemsComplete = firstIncompleteStoreIndex === -1;
+                if (allItemsComplete) {
                     const routeToCustomerBtn = document.createElement("button");
                     routeToCustomerBtn.className = "btn btn-main-deliver";
                     routeToCustomerBtn.textContent = "Gerar Rota até Cliente";
@@ -408,6 +508,25 @@ document.addEventListener("DOMContentLoaded", () => {
                 t.update(orderRef, { itensPedido: itens });
             });
         } catch (error) { console.error("Erro ao atualizar status do item:", error); }
+    }
+    
+    async function updateGroupStatusToProduzindo(orderId, storeName) {
+        const orderRef = db.collection("pedidos").doc(orderId);
+        try {
+            await db.runTransaction(async (t) => {
+                const doc = await t.get(orderRef);
+                const order = doc.data();
+                const itens = order.itensPedido.map(item => {
+                    if (item.nomeLoja === storeName && (item.status || 'pendente') === 'pendente') {
+                        return { ...item, status: 'produzindo' };
+                    }
+                    return item;
+                });
+                t.update(orderRef, { itensPedido: itens });
+            });
+        } catch (error) {
+            console.error("Erro ao atualizar status do grupo:", error);
+        }
     }
 
     async function generateAndSetAuthCode(orderId) {
