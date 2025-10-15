@@ -233,3 +233,15 @@
 [data-rarity="raro"]::after { --glow-color: #0070dd; }
 [data-rarity="incomum"]::after { --glow-color: #1eff00; }
 [data-rarity="comum"]::after { --glow-color: #a0a0a0; }
+
+/* Mobile - Esconde completamente a seção de recentes */
+@media (max-width: 768px) {
+    .recentes {
+        display: none !important;
+    }
+    
+    /* Main content ocupa 100% da largura quando recentes está escondido */
+    .main-content {
+        width: 100% !important;
+    }
+}

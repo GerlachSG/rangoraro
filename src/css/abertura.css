@@ -382,3 +382,67 @@
 [data-rarity="raro"] .rarity-glow { --glow-color: #0070dd; }
 [data-rarity="incomum"] .rarity-glow { --glow-color: #1eff00; }
 [data-rarity="comum"] .rarity-glow { --glow-color: #a0a0a0; }
+
+/* Mobile Styles */
+@media (max-width: 480px) {
+    .main-container {
+        margin-top: 56px !important;
+    }
+
+    .main-content {
+        width: 100% !important;
+        padding: 1rem !important;
+    }
+
+    /* Ajustes específicos da página de abertura */
+    .roulette-area {
+        height: 200px;
+        margin-left: -1rem;
+        margin-right: -1rem;
+    }
+
+    .items-track {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .item-box {
+        width: 150px;
+        height: 150px;
+    }
+
+    .item-image {
+        width: 80px;
+        height: 80px;
+    }
+
+    .controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .side-buttons {
+        position: static;
+        transform: none;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-open {
+        width: 100%;
+    }
+
+    .box-info {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .products {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .product-card {
+        width: 100%;
+    }
+}

@@ -229,10 +229,14 @@
 
 /* Responsividade */
 @media (max-width: 768px) {
-    .xp-notification {
-        right: 10px;
-        left: 10px;
-        top: 70px;
+    /* Esconde TODOS os elementos de XP no mobile */
+    .xp-notification,
+    .xp-float-header,
+    .xp-bar-container,
+    .level-badge,
+    .xp-info,
+    .xp-icon {
+        display: none !important;
     }
     
     .level-up-modal {

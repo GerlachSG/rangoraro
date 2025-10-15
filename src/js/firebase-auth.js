@@ -133,6 +133,20 @@ function updateUIForLoggedOutUser() {
 
     if (loginBtn) loginBtn.onclick = () => showAuthModal(true);
     if (registerBtn) registerBtn.onclick = () => showAuthModal(false);
+    
+    // No mobile, faz o botão depositar abrir o modal de login
+    const balanceDiv = document.querySelector('.header-right .balance');
+    if (balanceDiv) {
+        balanceDiv.innerHTML = `<button class="btn-deposit">Depositar</button>`;
+        const depositBtn = balanceDiv.querySelector('.btn-deposit');
+        if (depositBtn) {
+            depositBtn.onclick = () => {
+                if (typeof showAuthModal === 'function') {
+                    showAuthModal(true);
+                }
+            };
+        }
+    }
 }
 
 // Funções de controle do modal de autenticação

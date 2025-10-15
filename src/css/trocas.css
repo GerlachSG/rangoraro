@@ -572,5 +572,90 @@ input[type=number]:focus {
         grid-template-columns: 1fr; 
     }
 }
+
+/* Mobile Styles */
+@media (max-width: 480px) {
+    .main-container {
+        margin-top: 56px;
+    }
+
+    .main-content {
+        width: 100%;
+        padding: 1rem;
+    }
+
+    /* Header ajustes completos */
+    .header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 56px;
+        padding: 0 1rem;
+        background: #251D1D !important;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .nav-center {
+        display: none !important;
+    }
+
+    .header-buttons {
+        display: none !important;
+    }
+
+    .profile-pic {
+        display: none !important;
+    }
+
+    .mobile-actions-wrapper {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    .header-right {
+        display: flex !important;
+        gap: 0.4rem;
+        align-items: center;
+    }
+
+    .header-right .cart {
+        width: 40px;
+        height: 40px;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .header-right .cart::before {
+        content: "\f07a";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 1.2rem;
+    }
+
+    .header-right .cart span {
+        display: none;
+    }
+
+    .cart-badge {
+        display: none !important;
+    }
+
+    .header-right .balance {
+        display: flex !important;
+    }
+
+    .mobile-menu-toggle {
+        display: flex !important;
+    }
+}
+
 /* RESPONSIVIDADE MOBILE
    Oculta navegação central e simplifica layout para telas pequenas */

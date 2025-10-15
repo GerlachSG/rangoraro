@@ -393,9 +393,10 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (window.XPSystem) {
                     const xpGanho = XPSystem.calculateXP('troca', spinCost);
                     XPSystem.addXP(user.uid, xpGanho, `Troca realizada (R$ ${spinCost.toFixed(2)})`).then(result => {
-                        if (result) {
-                            XPSystem.showXPNotification(xpGanho, 'Troca realizada');
-                        }
+                        // Notificação de XP desabilitada
+                        // if (result) {
+                        //     XPSystem.showXPNotification(xpGanho, 'Troca realizada');
+                        // }
                     }).catch(err => console.error('Erro ao adicionar XP:', err));
                 }
 

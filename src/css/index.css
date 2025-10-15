@@ -480,23 +480,65 @@
 }
 
 @media (max-width: 480px) {
-    .header {
-        left: 0;
-        width: 100%;
-    }
-    
-    .nav-center {
+    /* Esconde a sidebar de recentes */
+    .recentes {
         display: none;
     }
     
+    /* Main container - ajusta margin-top para header menor */
+    .main-container {
+        margin-top: 56px;
+    }
+    
+    /* Main content ocupa largura total */
+    .main-content {
+        width: 100%;
+        padding: 1rem;
+    }
+    
+    /* Header ajustes - FUNDO ESCURO VISÍVEL */
+    .header {
+        left: 0;
+        width: 100%;
+        padding: 0 1rem;
+        background: #251D1D !important;
+        z-index: 9999;
+    }
+    
+    .header::after {
+        display: block;
+    }
+    
+    /* Esconde navegação central */
+    .nav-center {
+        display: none !important;
+    }
+    
+    /* Esconde botões de login/registro e área logada */
+    .header-buttons,
+    .header-right {
+        display: none !important;
+    }
+    
+    /* Pacotes: 2x2 (mostra só 4) */
     .grade-pacotes {
         grid-template-columns: repeat(2, 1fr);
     }
     
+    .grade-pacotes .pacote-wrapper:nth-child(n+5) {
+        display: none;
+    }
+    
+    /* Trocas: 2x2 (mostra só 4) */
     .grade-trocas {
         grid-template-columns: repeat(2, minmax(140px, 1fr));
     }
     
+    .grade-trocas .troca-card:nth-child(n+5) {
+        display: none;
+    }
+    
+    /* Cards de destaque em coluna */
     .secao-destaques {
         flex-direction: column;
         height: auto;
@@ -504,7 +546,43 @@
     }
     
     .cartao-destaque {
-        height: 14vh;
+        height: 120px;
+        min-height: 120px;
+        max-height: 120px;
+    }
+    
+    /* Tutorial em coluna (um embaixo do outro) */
+    .tutorial-container {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .tutorial-column {
+        width: 100%;
+    }
+    
+    /* Cabeçalhos de seção - centraliza tudo no mobile */
+    .cabecalho-secao {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 1rem;
+        margin-bottom: 1rem;
+    }
+    
+    .cabecalho-secao h2 {
+        font-size: 1.2rem;
+        text-align: center;
+        width: 100%;
+    }
+    
+    /* Botões "Ver Pacotes" e "Fazer Trocas" */
+    .botao-secundario {
+        width: 100%;
+        text-align: center;
+        white-space: normal;
+        word-wrap: break-word;
+        padding: 12px 20px;
     }
 }
 

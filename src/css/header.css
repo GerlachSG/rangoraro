@@ -1226,3 +1226,462 @@ body.logged-in .header-right {
 .delivery-modal-hidden {
     display: none;
 }
+
+/* ========================================= */
+/* MENU MOBILE (HAMBÚRGUER) */
+/* ========================================= */
+
+.mobile-menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
+    margin-left: auto;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    width: 40px;
+    height: 40px;
+    position: relative;
+}
+
+.mobile-auth-buttons {
+    display: none;
+    gap: 0.4rem;
+    align-items: center;
+}
+
+.mobile-actions-wrapper {
+    display: none;
+}
+
+.mobile-auth-buttons .mobile-login-btn,
+.mobile-auth-buttons .mobile-register-btn {
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    height: 40px;
+    white-space: nowrap;
+    border-radius: 8px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mobile-auth-buttons .mobile-login-btn {
+    background: transparent;
+    border: 1px solid var(--cor-borda);
+    color: var(--cor-texto-principal);
+}
+
+.mobile-auth-buttons .mobile-login-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: var(--cor-texto-principal);
+}
+
+.mobile-auth-buttons .mobile-register-btn {
+    background: var(--cor-destaque);
+    border: none;
+    color: #fff;
+}
+
+.mobile-auth-buttons .mobile-register-btn:hover {
+    background: #d02a2a;
+}
+
+.mobile-menu-toggle span {
+    display: block;
+    width: 25px;
+    height: 3px;
+    background: var(--cor-texto-principal);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    border-radius: 2px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Posicionamento inicial das barras */
+.mobile-menu-toggle span:nth-child(1) {
+    top: 10px;
+}
+
+.mobile-menu-toggle span:nth-child(2) {
+    top: 18.5px;
+}
+
+.mobile-menu-toggle span:nth-child(3) {
+    top: 27px;
+}
+
+/* Animação para virar X - todas se juntam no centro e giram */
+.mobile-menu-toggle.active span:nth-child(1) {
+    top: 18.5px;
+    transform: translateX(-50%) rotate(45deg);
+}
+
+.mobile-menu-toggle.active span:nth-child(2) {
+    opacity: 0;
+    transform: translateX(-50%) scale(0);
+}
+
+.mobile-menu-toggle.active span:nth-child(3) {
+    top: 18.5px;
+    transform: translateX(-50%) rotate(-45deg);
+}
+
+.mobile-sidebar {
+    position: fixed;
+    top: 56px;
+    right: -100%;
+    width: 100%;
+    height: calc(100vh - 56px);
+    background: var(--cor-fundo);
+    box-shadow: -2px 0 10px rgba(0,0,0,0.3);
+    z-index: 9998;
+    transition: right 0.3s ease;
+    overflow-y: auto;
+    padding: 2rem 0;
+}
+
+.mobile-sidebar.active {
+    right: 0;
+}
+
+.mobile-sidebar-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 1.5rem 1.5rem;
+    border-bottom: 1px solid var(--cor-borda);
+    gap: 1rem;
+}
+
+.mobile-profile-pic {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background-size: cover;
+    background-position: center;
+    border: 2px solid var(--cor-destaque);
+    background-color: #2b2222;
+}
+
+.mobile-user-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--cor-texto-principal);
+    text-align: center;
+}
+
+.mobile-balance {
+    background: #4299E1;
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1rem;
+}
+
+/* Botões de Login/Registro no mobile */
+.mobile-sidebar-header .btn-outline,
+.mobile-sidebar-header .btn-primary {
+    width: 100%;
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.mobile-sidebar-header .btn-outline {
+    background: transparent;
+    border: 1px solid #555;
+}
+
+.mobile-sidebar-header .btn-outline:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.mobile-sidebar-header .btn-primary {
+    background: var(--cor-destaque);
+    border: none;
+}
+
+.mobile-sidebar-header .btn-primary:hover {
+    background: #d02a2a;
+}
+
+.mobile-action-btn {
+    background: transparent !important;
+    border: 1px solid var(--cor-destaque) !important;
+    color: var(--cor-destaque) !important;
+}
+
+.mobile-action-btn:hover {
+    background: var(--cor-destaque) !important;
+    color: #fff !important;
+}
+
+.mobile-action-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.mobile-action-buttons button {
+    background: transparent;
+    border: 1px solid var(--cor-destaque);
+    color: var(--cor-destaque);
+    padding: 10px 16px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+}
+
+.mobile-action-buttons button:hover {
+    background: var(--cor-destaque);
+    color: #fff;
+}
+
+.mobile-sidebar-nav {
+    padding: 1.5rem 0;
+    flex: 1;
+}
+
+.mobile-nav {
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-nav-item {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+    color: var(--cor-texto-principal);
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 700;
+    transition: background 0.2s;
+}
+
+.mobile-nav-item:hover {
+    background: rgba(255,255,255,0.05);
+}
+
+.mobile-nav-item img {
+    width: 24px;
+    height: 24px;
+}
+
+.mobile-sidebar-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--cor-borda);
+}
+
+#mobile-logout-btn {
+    width: 100%;
+    padding: 12px 20px;
+    background: transparent;
+    border: 1px solid #ff5555;
+    color: #ff5555;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+#mobile-logout-btn:hover {
+    background: #ff5555;
+    color: #fff;
+}
+
+.mobile-sidebar-overlay {
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 56px);
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9997;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.mobile-sidebar-overlay.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+/* Media query para mobile */
+
+.mobile-sidebar-overlay {
+    display: none;
+    position: fixed;
+    top: 56px;
+    left: 0;
+    width: 100%;
+    height: calc(100vh - 56px);
+    background: rgba(0,0,0,0.5);
+    z-index: 9997;
+}
+
+.mobile-sidebar-overlay.active {
+    display: block;
+}
+
+@media (max-width: 480px) {
+    /* Menu hamburger SEMPRE visível */
+    .mobile-menu-toggle {
+        display: flex !important;
+        flex-direction: column;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    /* Botões de login/registrar - mostrados quando deslogado */
+    .mobile-auth-buttons {
+        display: flex;
+    }
+    
+    .header {
+        background: var(--cor-fundo) !important;
+        border-bottom: 1px solid var(--cor-borda);
+        height: 56px;
+        padding: 0 1rem;
+        left: 0;
+        width: 100%;
+        justify-content: space-between;
+        position: fixed;
+        top: 0;
+        z-index: 10000;
+    }
+    
+    .header::after {
+        top: 56px;
+    }
+    
+    /* Logo menor e compacta */
+    .logo {
+        font-size: 0.95rem;
+        gap: 0.5rem;
+    }
+    
+    .logo img {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .logo span {
+        font-size: 0.95rem;
+    }
+    
+    /* Esconde navegação central e botões desktop */
+    .nav-center,
+    .header-buttons {
+        display: none !important;
+    }
+    
+    /* Wrapper que agrupa botões mobile à direita */
+    .mobile-actions-wrapper {
+        display: flex;
+        gap: 0.4rem;
+        align-items: center;
+        margin-left: auto;
+    }
+    
+    /* Header-right no mobile - SEMPRE VISÍVEL */
+    .header-right {
+        display: flex !important;
+        gap: 0.4rem;
+        align-items: center;
+    }
+    
+    /* Botões de login/registrar - mostrados quando deslogado */
+    .mobile-auth-buttons {
+        display: flex;
+        gap: 0.4rem;
+    }
+    
+    /* Carrinho - só ícone, SEM badge */
+    .header-right .cart {
+        padding: 0;
+        min-width: auto;
+        width: 40px;
+        height: 40px;
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        font-size: 0;
+        background: transparent;
+        border: 1px solid var(--cor-borda);
+        gap: 0;
+    }
+    
+    .header-right .cart::before {
+        content: "\f07a";
+        font-family: "Font Awesome 6 Free";
+        font-weight: 900;
+        font-size: 1.1rem;
+        color: var(--cor-texto-principal);
+    }
+    
+    /* Esconde o badge do carrinho no mobile */
+    .header-right .cart .cart-badge {
+        display: none !important;
+    }
+    
+    /* Profile-pic escondido no mobile */
+    .header-right .profile-pic {
+        display: none !important;
+    }
+    
+    /* Balance SEMPRE VISÍVEL no mobile */
+    .header-right .balance {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        height: 40px;
+        white-space: nowrap;
+        background: var(--cor-destaque);
+        border: none;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    
+    /* Botão depositar quando aparece dentro do balance */
+    .header-right .balance .btn-deposit,
+    .header-right .btn-deposit {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        height: 40px;
+        white-space: nowrap;
+        background: var(--cor-destaque);
+        border: none;
+        color: #fff;
+        border-radius: 8px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+    
+    /* Esconde elementos de XP no mobile */
+    .xp-float-header,
+    .xp-bar-container,
+    .level-badge {
+        display: none !important;
+    }
+}

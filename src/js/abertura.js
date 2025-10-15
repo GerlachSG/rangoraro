@@ -535,9 +535,10 @@ document.addEventListener('DOMContentLoaded', () => {
                                     const xpGanho = XPSystem.calculateXP('pacote', price);
                                     const result = await XPSystem.addXP(auth.currentUser.uid, xpGanho, `Abriu pacote (R$ ${price.toFixed(2)})`);
                                     
-                                    if (result) {
-                                        XPSystem.showXPNotification(xpGanho, 'Pacote aberto');
-                                    }
+                                    // Notificação de XP desabilitada
+                                    // if (result) {
+                                    //     XPSystem.showXPNotification(xpGanho, 'Pacote aberto');
+                                    // }
                                 }
 
                             } catch (err) {

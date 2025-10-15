@@ -12,6 +12,7 @@
     <link rel="stylesheet" href="../css/header.css">
     <link rel="stylesheet" href="../css/xp-system.css">
     <link rel="stylesheet" href="../css/xp-system.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
@@ -60,7 +61,54 @@
             <div class="balance">R$ 0,00</div>
             <div class="profile-pic"></div>
         </div>
+
+        <!-- Mobile Actions Wrapper -->
+        <div class="mobile-actions-wrapper">
+            <div class="mobile-auth-buttons">
+                <button class="mobile-login-btn">Login</button>
+                <button class="mobile-register-btn">Registrar</button>
+            </div>
+            <button class="mobile-menu-toggle">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
     </header>
+
+    <!-- Mobile Sidebar -->
+    <div class="mobile-sidebar">
+        <div class="mobile-sidebar-header">
+            <div class="mobile-profile-pic"></div>
+            <span class="mobile-user-name">Usuário</span>
+            <div class="mobile-action-buttons">
+                <button id="mobile-address-btn">Alterar Endereço</button>
+                <button id="mobile-orders-btn">Meus Pedidos</button>
+            </div>
+        </div>
+        <nav class="mobile-nav">
+            <a href="pacotes.html" class="mobile-nav-item">
+                <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/pacote.svg" alt="Pacotes">
+                <span>Pacotes</span>
+            </a>
+            <a href="trocas.html" class="mobile-nav-item">
+                <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/trocas.svg" alt="Trocas">
+                <span>Trocas</span>
+            </a>
+            <a href="rifa.html" class="mobile-nav-item">
+                <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/eventos.svg" alt="Eventos">
+                <span>Eventos</span>
+            </a>
+            <a href="premios.html" class="mobile-nav-item">
+                <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/premios.svg" alt="Prêmios">
+                <span>Prêmios</span>
+            </a>
+        </nav>
+        <div class="mobile-sidebar-footer">
+            <button id="mobile-logout-btn">Sair</button>
+        </div>
+    </div>
+    <div class="mobile-sidebar-overlay"></div>
 
     <!-- MODAL DE AUTENTICAÇÃO -->
     <div class="auth-modal-overlay">
@@ -170,5 +218,6 @@
     <script src="../js/lib/canvas-confetti.min.js"></script>
     <script src="../js/trocas-recentes.js"></script>
     <script src="../js/trocas.js"></script>
+    <script src="../js/mobile-menu.js"></script>
 </body>
 </html>
