@@ -11,28 +11,30 @@
 .recentes::before {
     content: 'Aberturas recentes';
     position: absolute;
-    top: 1.2rem;
+    top: 1.35rem;
     left: 0;
     font-size: 0.95rem;
     font-weight: 600;
     color: #fff;
     opacity: 0.8;
     padding-right: 1.2rem;
+    line-height: 1;
 }
 
 /* Bolinha vermelha pulsando (live indicator) */
 .recentes::after {
     content: '';
     position: absolute;
-    top: 1.5rem;
+    top: 1.35rem;
     left: 9.2rem;
-    width: 0.45rem;
-    height: 0.45rem;
+    width: 0.5rem;
+    height: 0.5rem;
     background: #ff0000;
     border-radius: 50%;
-    box-shadow: 0 0 8px rgba(255, 0, 0, 0.8);
+    box-shadow: 0 0 12px rgba(255, 0, 0, 1);
     animation: pulse-live 2s ease-out infinite;
     z-index: 2;
+    margin-top: 3px;
 }
 
 @keyframes pulse-live {
