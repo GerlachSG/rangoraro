@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }).filter(item => item !== null);
 
             pacoteAtual = {
+                id: pacoteId, // Adiciona o ID do pacote
                 ...pacoteData,
                 qtdItens: itensDoPacote.length,
                 itens: itensDoPacote
@@ -323,13 +324,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!isDemo) {
                     // Registra o ganho no sistema de recentes
                     if (typeof registrarGanho === 'function') {
-                        registrarGanho({
-                            id: itemFinal.id,
-                            name: itemFinal.nome,
-                            price: itemFinal.valor,
-                            image: itemFinal.imagemUrl,
-                            rarity: itemFinal.raridade
-                        });
+                        const packageInfo = pacoteAtual ? {
+                            id: pacoteAtual.id,
+                            nome: pacoteAtual.nome,
+                            imagem: pacoteAtual.imagemUrl, // Campo correto é imagemUrl
+                            preco: pacoteAtual.preco
+                        } : null;
+                        
+                        console.log('🎁 Registrando ganho com pacote:', packageInfo); // DEBUG
+                        
+                        registrarGanho(
+                            {
+                                id: itemFinal.id,
+                                name: itemFinal.nome,
+                                price: itemFinal.valor,
+                                image: itemFinal.imagemUrl,
+                                rarity: itemFinal.raridade
+                            },
+                            packageInfo
+                        );
                     }
 
                     // Também adiciona ao carrinho do usuário (compatível com a função usada em trocas.js)

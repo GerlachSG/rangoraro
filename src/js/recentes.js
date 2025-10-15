@@ -12,7 +12,7 @@ function initRecentes() {
     }
 }
 
-async function registrarGanho(item) {
+async function registrarGanho(item, packageInfo) {
     try {
         const registerPackageWin = firebase.functions().httpsCallable('registerPackageWin');
         const currentUser = auth.currentUser;
@@ -23,11 +23,21 @@ async function registrarGanho(item) {
             itemNome: item.name,
             itemPreco: item.price,
             itemImagem: item.image,
-            itemRaridade: item.rarity || 'comum'
+            itemRaridade: item.rarity || 'comum',
+            // Informações do pacote
+            pacoteId: packageInfo?.id || null,
+            pacoteNome: packageInfo?.nome || null,
+            pacoteImagem: packageInfo?.imagem || null,
+            pacotePreco: packageInfo?.preco || null
         };
+        
+        console.log('📦 Enviando para Cloud Function:', ganhoData); // DEBUG
+        
         await registerPackageWin(ganhoData);
+        
+        console.log('✅ Ganho registrado com sucesso!'); // DEBUG
     } catch (error) {
-        console.error('Erro ao chamar registerPackageWin:', error);
+        console.error('❌ Erro ao chamar registerPackageWin:', error);
     }
 }
 
@@ -86,13 +96,39 @@ function createRecentCard(ganho) {
     card.className = 'recentes-card';
     card.setAttribute('data-ganho-id', ganho.id);
     card.setAttribute('data-rarity', ganho.itemRaridade || 'comum');
+    
+    console.log('Criando card com ganho:', ganho); // DEBUG
+    
+    // Se tiver informações do pacote, adiciona como data attributes e torna clicável
+    if (ganho.pacoteId) {
+        console.log('Pacote encontrado:', ganho.pacoteId, ganho.pacoteImagem); // DEBUG
+        card.setAttribute('data-package-id', ganho.pacoteId);
+        card.style.cursor = 'pointer';
+        
+        // Define a imagem do pacote como CSS variable para o hover funcionar
+        if (ganho.pacoteImagem) {
+            card.style.setProperty('--package-bg-image', `url(${ganho.pacoteImagem})`);
+            card.setAttribute('data-has-package-image', 'true');
+            console.log('CSS variable definida:', card.style.getPropertyValue('--package-bg-image')); // DEBUG
+        }
+        
+        // Adiciona evento de click para redirecionar ao pacote específico
+        card.addEventListener('click', () => {
+            window.location.href = `abertura.html?pacote=${ganho.pacoteId}`;
+        });
+    } else {
+        console.log('Sem pacoteId para este ganho'); // DEBUG
+    }
+    
     const precoFormatado = `<span class="preco-pacote">R$ ${(ganho.itemPreco || 0).toFixed(2).replace('.', ',')}</span>`;
     const userPhoto = ganho.userFoto || 'https://static.vecteezy.com/system/resources/previews/009/292/244/non_2x/default-avatar-icon-of-social-media-user-vector.jpg';
+    
     card.innerHTML = `
         <div class="recentes-image"><img src="${ganho.itemImagem}" alt="${ganho.itemNome}" /></div>
         <div class="recentes-info"><p>${ganho.itemNome}</p>${precoFormatado}</div>
         <div class="recentes-avatar"><img src="${userPhoto}" alt="Avatar de ${ganho.userNome}" /></div>
     `;
+    
     return card;
 }
 

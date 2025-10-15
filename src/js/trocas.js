@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', function () {
     let isDraggingSlider = false;
     let dragTarget = null;
 
+    // --- LEITURA DE PARÂMETROS DA URL ---
+    const urlParams = new URLSearchParams(window.location.search);
+    const itemIdFromUrl = urlParams.get('item');
+    const multiplierFromUrl = urlParams.get('mult');
+
     // --- CONSTANTES ---
     const MIN_PERCENT = 5;
     const MAX_PERCENT = 80;
@@ -80,6 +85,23 @@ document.addEventListener('DOMContentLoaded', function () {
         updateRouletteUI();
         updateChanceDisplays();
         updateResultSliderUI();
+
+        // Auto-selecionar item e multiplicador se vieram da URL
+        if (itemIdFromUrl) {
+            const itemToSelect = allSnacks.find(snack => snack.id === itemIdFromUrl);
+            if (itemToSelect) {
+                selectSnack(itemToSelect);
+                if (multiplierFromUrl) {
+                    const mult = parseFloat(multiplierFromUrl);
+                    const percent = (1 / mult) * 100;
+                    if (percent >= MIN_PERCENT && percent <= MAX_PERCENT) {
+                        sweepAngle = (percent / 100) * 360;
+                        updateRouletteUI();
+                        updateChanceDisplays();
+                    }
+                }
+            }
+        }
     }
 
     function addEventListeners() {

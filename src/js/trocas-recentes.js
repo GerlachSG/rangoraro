@@ -120,6 +120,9 @@ function createTradeCard(trade) {
     const card = document.createElement('div');
     card.className = 'troca-card';
     card.setAttribute('data-trade-id', trade.id);
+    card.setAttribute('data-item-id', trade.itemId);
+    card.setAttribute('data-multiplier', trade.multiplicador);
+    card.style.cursor = 'pointer';
     
     const precoFormatado = `R$ ${trade.valorPago.toFixed(2).replace('.', ',')}`;
 
@@ -138,6 +141,11 @@ function createTradeCard(trade) {
         </div>
         <div class="troca-price">${precoFormatado}</div>
     `;
+    
+    // Adiciona evento de click para redirecionar à página de trocas com o item e multiplicador
+    card.addEventListener('click', () => {
+        window.location.href = `trocas.html?item=${trade.itemId}&mult=${trade.multiplicador}`;
+    });
 
     return card;
 }

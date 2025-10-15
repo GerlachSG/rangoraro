@@ -10,15 +10,14 @@
 
 .recentes-card {
     width: 100%;
-    height: 11rem;
+    height: 12.5rem;
     margin-bottom: 6%;
     background: #2B2222;
     border-radius: 10px;
     display: flex;
     flex-direction: column;
-    justify-content: flex-start;
+    justify-content: center;
     padding: 0.5rem;
-    cursor: pointer;
     transition: transform 0.4s ease-out, opacity 0.3s ease-out;
     position: relative;
     overflow: hidden;
@@ -29,8 +28,88 @@
     transform: translateX(-5px);
 }
 
+/* Brilho de fundo baseado na raridade */
+.recentes-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 1;
+    border-radius: 10px;
+    z-index: 1;
+    pointer-events: none;
+}
+
+.recentes-card[data-rarity="comum"]::before {
+    background: radial-gradient(circle, rgba(169, 169, 169, 0.3) 1%, transparent 60%);
+}
+
+.recentes-card[data-rarity="incomum"]::before {
+    background: radial-gradient(circle, rgba(30, 255, 0, 0.3) 1%, transparent 60%);
+}
+
+.recentes-card[data-rarity="raro"]::before {
+    background: radial-gradient(circle, rgba(0, 112, 255, 0.3) 1%, transparent 60%);
+}
+
+.recentes-card[data-rarity="epico"]::before {
+    background: radial-gradient(circle, rgba(163, 53, 238, 0.3) 1%, transparent 60%);
+}
+
+.recentes-card[data-rarity="lendario"]::before {
+    background: radial-gradient(circle, rgba(255, 128, 0, 0.3) 1%, transparent 60%);
+}
+
+.recentes-card[data-has-package-image]::after {
+    content: '';
+    position: absolute;
+    bottom: -20%;
+    left: 50%;
+    transform: translateX(-50%) translateY(100%);
+    width: 130%;
+    height: 130%;
+    background-image: var(--package-bg-image);
+    background-size: contain;
+    background-position: center center;
+    background-repeat: no-repeat;
+    opacity: 1;
+    transition: transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    z-index: 5;
+    pointer-events: none;
+    border-radius: 0; 
+}
+
+.recentes-card[data-has-package-image]:hover::after {
+    transform: translateX(-50%) translateY(0);
+}
+
+.recentes-card[data-has-package-image] {
+    cursor: pointer;
+}
+
+/* Esconde completamente item, título e avatar no hover */
+.recentes-card[data-has-package-image] .recentes-image,
+.recentes-card[data-has-package-image] .recentes-info {
+    position: relative;
+    z-index: 2;
+    transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.recentes-card[data-has-package-image] .recentes-avatar {
+    transition: opacity 0.3s ease, transform 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.recentes-card[data-has-package-image]:hover .recentes-image,
+.recentes-card[data-has-package-image]:hover .recentes-info,
+.recentes-card[data-has-package-image]:hover .recentes-avatar {
+    opacity: 0;
+    transform: translateY(100%);
+}
+
 .recentes-image {
-    height: 70%;
+    height: 60%;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -83,7 +162,7 @@
     height: 1.7rem;
     border-radius: 50%;
     overflow: hidden;
-    z-index: 1;
+    z-index: 3;
 }
 
 .recentes-avatar img {
