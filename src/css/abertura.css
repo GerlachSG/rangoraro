@@ -432,11 +432,6 @@
         width: 100%;
     }
 
-    .box-info {
-        flex-direction: column;
-        text-align: center;
-    }
-
     .products {
         grid-template-columns: repeat(2, 1fr);
         gap: 15px;

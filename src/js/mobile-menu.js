@@ -145,7 +145,32 @@ document.addEventListener('DOMContentLoaded', () => {
             const isActive = mobileSidebar.classList.contains('active');
             
             if (!isActive) {
-                // Abre o menu
+                // Fecha apenas os outros menus (não o mobile menu)
+                // Fecha todos os profile menus
+                document.querySelectorAll('.profile-menu').forEach(menu => {
+                    menu.classList.remove('is-active');
+                });
+                
+                // Fecha o widget de suporte se estiver aberto
+                const supportWidget = document.getElementById('rango-chat-widget-container');
+                if (supportWidget && supportWidget.classList.contains('open')) {
+                    supportWidget.classList.remove('open');
+                }
+                
+                // Fecha o modal de carrinho se estiver aberto
+                const cartModal = document.querySelector('.cart-modal-overlay');
+                if (cartModal && cartModal.style.display === 'flex') {
+                    cartModal.style.display = 'none';
+                    document.body.classList.remove('modal-open');
+                }
+                
+                // Fecha o modal de depósito se estiver aberto
+                const depositModal = document.getElementById('deposit-modal-overlay');
+                if (depositModal && depositModal.style.display === 'flex') {
+                    depositModal.style.display = 'none';
+                }
+                
+                // Abre o menu mobile
                 mobileSidebar.classList.add('active');
                 sidebarOverlay.classList.add('active');
                 menuToggle.classList.add('active');

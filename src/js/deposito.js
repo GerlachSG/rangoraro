@@ -9,6 +9,11 @@ function debounce(func, delay) {
 }
 
 function openDepositModal() {
+    // Fecha outros menus antes de abrir o depósito
+    if (typeof closeAllMenus === 'function') {
+        closeAllMenus();
+    }
+    
     const modal = document.getElementById('deposit-modal-overlay');
     if (modal) modal.style.display = 'flex';
 }

@@ -22,6 +22,47 @@ function unsubscribeMyOrdersListeners() {
     myOrdersListeners = [];
 }
 
+/**
+ * Fecha todos os menus dropdown e o menu mobile
+ */
+function closeAllMenus() {
+    // Fecha todos os profile menus
+    document.querySelectorAll('.profile-menu').forEach(menu => {
+        menu.classList.remove('is-active');
+    });
+    
+    // Fecha o menu mobile se estiver aberto
+    const mobileSidebar = document.querySelector('.mobile-sidebar');
+    const sidebarOverlay = document.querySelector('.mobile-sidebar-overlay');
+    const menuToggle = document.querySelector('.mobile-menu-toggle');
+    
+    if (mobileSidebar && mobileSidebar.classList.contains('active')) {
+        mobileSidebar.classList.remove('active');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+        if (menuToggle) menuToggle.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+    
+    // Fecha o widget de suporte se estiver aberto
+    const supportWidget = document.getElementById('rango-chat-widget-container');
+    if (supportWidget && supportWidget.classList.contains('open')) {
+        supportWidget.classList.remove('open');
+    }
+    
+    // Fecha o modal de carrinho se estiver aberto
+    const cartModal = document.querySelector('.cart-modal-overlay');
+    if (cartModal && cartModal.style.display === 'flex') {
+        cartModal.style.display = 'none';
+        document.body.classList.remove('modal-open');
+    }
+    
+    // Fecha o modal de depósito se estiver aberto
+    const depositModal = document.getElementById('deposit-modal-overlay');
+    if (depositModal && depositModal.style.display === 'flex') {
+        depositModal.style.display = 'none';
+    }
+}
+
 function initializeProfileMenu(user) {
     const profilePic = document.querySelector('.header-right .profile-pic');
     if (!profilePic || document.querySelector('.profile-menu')) return;
@@ -42,7 +83,16 @@ function initializeProfileMenu(user) {
     document.getElementById('change-address-btn').addEventListener('click', e => { e.preventDefault(); profileContainer.classList.remove('is-active'); openAddressManagementModal(user); });
     document.getElementById('my-orders-btn').addEventListener('click', e => { e.preventDefault(); profileContainer.classList.remove('is-active'); openMyOrdersModal(user); });
     document.getElementById('logout-btn-dropdown').addEventListener('click', e => { e.preventDefault(); handleLogout(); });
-    profilePic.addEventListener('click', e => { e.stopPropagation(); profileContainer.classList.toggle('is-active'); });
+    
+    profilePic.addEventListener('click', e => { 
+        e.stopPropagation(); 
+        const wasActive = profileContainer.classList.contains('is-active');
+        closeAllMenus();
+        if (!wasActive) {
+            profileContainer.classList.add('is-active');
+        }
+    });
+    
     document.addEventListener('click', e => { if (!profileContainer.contains(e.target)) profileContainer.classList.remove('is-active'); });
 }
 

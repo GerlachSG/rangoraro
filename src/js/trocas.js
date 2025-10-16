@@ -1,4 +1,65 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // --- REORGANIZA LAYOUT PARA MOBILE ---
+    let mobileLayoutApplied = false;
+    const originalParents = new Map();
+
+    function reorganizeMobileLayout() {
+        if (window.innerWidth <= 480 && !mobileLayoutApplied) {
+            const panels = document.querySelector('.panels');
+            const roulettePanel = document.querySelector('.roulette-panel');
+            const previewPanel = document.querySelector('.preview-panel');
+            const rouletteButtons = document.querySelector('.roulette-buttons');
+            const previewImage = document.querySelector('.preview-image');
+            const rouletteContainer = document.querySelector('.roulette-container');
+
+            if (panels && rouletteButtons && previewPanel && previewImage && rouletteContainer) {
+                // Salva os pais originais
+                if (!originalParents.has('image')) {
+                    originalParents.set('image', previewImage.parentNode);
+                }
+                if (!originalParents.has('buttons')) {
+                    originalParents.set('buttons', rouletteButtons.parentNode);
+                }
+
+                // Move a imagem para dentro do container da roleta
+                if (!rouletteContainer.contains(previewImage)) {
+                    rouletteContainer.appendChild(previewImage);
+                }
+                
+                // Move os botões para DENTRO do preview panel (no final)
+                if (!previewPanel.contains(rouletteButtons)) {
+                    previewPanel.appendChild(rouletteButtons);
+                }
+
+                mobileLayoutApplied = true;
+            }
+        } else if (window.innerWidth > 480 && mobileLayoutApplied) {
+            // Restaura layout desktop
+            const previewImage = document.querySelector('.preview-image');
+            const rouletteButtons = document.querySelector('.roulette-buttons');
+
+            if (previewImage && originalParents.has('image')) {
+                const originalImageParent = originalParents.get('image');
+                if (originalImageParent && !originalImageParent.contains(previewImage)) {
+                    originalImageParent.appendChild(previewImage);
+                }
+            }
+
+            if (rouletteButtons && originalParents.has('buttons')) {
+                const originalButtonsParent = originalParents.get('buttons');
+                if (originalButtonsParent && !originalButtonsParent.contains(rouletteButtons)) {
+                    originalButtonsParent.appendChild(rouletteButtons);
+                }
+            }
+
+            mobileLayoutApplied = false;
+        }
+    }
+
+    // Executa no carregamento e no resize
+    reorganizeMobileLayout();
+    window.addEventListener('resize', reorganizeMobileLayout);
+
     // --- ESTADO DA APLICAÇÃO ---
     let allSnacks = [];
     let filteredSnacks = [];

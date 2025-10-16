@@ -346,6 +346,66 @@ hr {
         width: 100%;
         position: static;
     }
+
+    .about-text{
+        flex-direction: column;
+        gap:10px;
+    }
+
+    .card-container{
+        flex-direction: column;
+        width: 100%;
+        gap:15px;
+    }
+
+    .about-card{
+        width: 100%;
+        padding: 12px;
+    }
+
+    .about-card.diariamente p{
+        font-size: 14px;
+    }
+    
+    /* Ajustes para a seção de informações da rifa */
+    .rifa-information {
+        padding: 20px 10px;
+    }
+    
+    .ticket img {
+        height: 150px;
+    }
+    
+    .ticket-main {
+        width: 90%;
+        height: auto;
+        padding: 15px;
+    }
+    
+    .ticket-main-content {
+        padding: 20px 15px;
+        gap: 20px;
+    }
+    
+    .rifa-title {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .rifa-title h1 {
+        width: 100%;
+        margin: 0;
+        font-size: 18px;
+    }
+    
+    hr {
+        width: 100%;
+    }
+    
+    .timer-paragraph {
+        padding: 10px 15px;
+        font-size: 14px;
+    }
 }
 
 /* Mobile Styles */
@@ -357,10 +417,235 @@ hr {
     .main-content {
         width: 100%;
         padding: 1rem;
+        gap: 2vh;
     }
 
     .recentes {
         display: none;
+    }
+
+    /* Ajustes específicos para mobile */
+    .rifa-information {
+        flex-direction: row; /* Mantém em linha para mostrar os tickets */
+        padding: 15px 5px;
+        background: #2B2222; /* Mantém o fundo */
+    }
+    
+    .ticket.esquerda,
+    .ticket.direita {
+        display: block; /* Mostra os tickets laterais */
+    }
+    
+    .ticket img {
+        height: 120px; /* Reduz um pouco o tamanho */
+    }
+    
+    .ticket.direita {
+        transform: translateX(-1px);
+    }
+
+    .ticket.esquerda {
+        transform: translateX(1px);
+    }
+    
+    .ticket-main {
+        width: 100%;
+        height: auto;
+        min-height: 120px; /* Acompanha a altura dos SVGs */
+        padding: 8px;
+        background: #251D1D;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .ticket-main-content {
+        padding: 12px;
+        gap: 12px;
+        border: solid 2px #555; /* Mantém o border */
+        border-radius: 15px; /* Mantém o border-radius */
+        width: 100%; /* Ocupa toda a largura disponível */
+    }
+    
+    .rifa-title {
+        flex-direction: row; /* Mantém em linha */
+        align-items: center;
+        width: 100%;
+    }
+    
+    .rifa-title h1 {
+        width: 100%; /* Título ocupa 100% */
+        margin: 0 8px; /* Margem menor */
+        font-size: 13px;
+        line-height: 1.3;
+        text-align: center;
+    }
+    
+    hr {
+        width: 15%; /* Linhas menores mas visíveis */
+        height: 2px;
+        border: none;
+        background-color: #555;
+        flex-shrink: 0; /* Não encolhe */
+    }
+    
+    .timer-paragraph {
+        padding: 6px 10px;
+        font-size: 14px;
+        width: 100%;
+        box-sizing: border-box;
+        text-align: center;
+        white-space: nowrap;
+    }
+    
+    /* Ajustes para a seção "Sobre" */
+    .rifa-about {
+        padding: 20px 15px;
+        gap: 25px;
+    }
+    
+    /* Esconde as quebras de linha no mobile */
+    .rifa-about br {
+        display: none;
+    }
+    
+    .about-text {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .about-text h2,
+    .about-title p {
+        font-size: 16px;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .about-sub-title {
+        font-size: 13px;
+        line-height: 1.6;
+    }
+    
+    .about-sub-title p {
+        margin: 0;
+        color: #adadad;
+    }
+    
+    .card-container {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .about-card {
+        width: 100%;
+        height: auto;
+        min-height: 90px;
+        padding: 20px 15px;
+        background-size: cover;
+        background-position: center;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+    }
+    
+    .about-card p {
+        font-size: 14px !important;
+        font-weight: 600;
+        line-height: 1.4;
+        text-align: right;
+        max-width: 65%;
+        margin: 0;
+    }
+    
+    /* Ajustes para a tabela */
+    .tb-rifa {
+        font-size: 12px;
+    }
+    
+    .tb-rifa th,
+    .tb-rifa td {
+        padding: 12px 8px;
+    }
+    
+    .tb-rifa thead th {
+        font-size: 11px;
+    }
+    
+    .tb-rifa tbody td {
+        font-size: 13px;
+    }
+    
+    /* Ajusta larguras das colunas para mobile */
+    .hash {
+        width: 5%;
+        font-size: 11px;
+    }
+    
+    .ganhadores {
+        width: 40%;
+    }
+    
+    .tickets {
+        width: 25%;
+    }
+    
+    .premio {
+        width: 30%;
+    }
+    
+    /* Ajustes para seção de tickets do usuário */
+    .user-tickets-section {
+        padding: 12px 15px;
+        flex-direction: row; /* Mantém em linha */
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        background: #2B2222; /* Mantém o fundo original */
+        border-radius: 15px;
+        border: 1px solid #3a3a3a;
+    }
+    
+    .user-info {
+        width: auto; /* Largura automática */
+        justify-content: flex-start;
+        gap: 10px;
+        max-width: 60%; /* Limita para não ocupar tudo */
+    }
+    
+    .user-info img {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        border: 2px solid var(--cor-destaque);
+        flex-shrink: 0; /* Impede que a imagem encolha */
+    }
+    
+    .user-info span {
+        font-size: 14px;
+        font-weight: 600;
+        color: #fff;
+        white-space: nowrap; /* Não quebra linha */
+        overflow: hidden; /* Esconde o que passar */
+        text-overflow: ellipsis; /* Adiciona os 3 pontinhos */
+        max-width: 16ch; /* Aproximadamente 16 caracteres */
+    }
+    
+    .tickets-info {
+        width: auto; /* Largura automática */
+        justify-content: flex-end;
+        padding-left: 0; /* Remove o padding */
+        gap: 8px;
+    }
+    
+    .tickets-info span {
+        font-size: 12px;
+        color: #888;
+    }
+    
+    .tickets-info strong {
+        font-size: 16px;
+        font-weight: 700;
+        color: #fff;
     }
 
     /* Header ajustes completos */

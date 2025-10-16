@@ -577,6 +577,7 @@ input[type=number]:focus {
 @media (max-width: 480px) {
     .main-container {
         margin-top: 56px;
+        padding-top: 3vh;
     }
 
     .main-content {
@@ -654,6 +655,191 @@ input[type=number]:focus {
 
     .mobile-menu-toggle {
         display: flex !important;
+    }
+
+    /* LAYOUT MOBILE - Card único com tudo dentro */
+    .panels {
+        display: flex;
+        flex-direction: column;
+        background-color: #2b2226;
+        border-radius: 8px;
+        padding: 20px 15px 15px 15px;
+        height: auto;
+        margin-bottom: 20px;
+    }
+
+    /* Painel da roleta - primeiro */
+    .roulette-panel {
+        display: block;
+        text-align: center;
+        padding: 0;
+        margin-bottom: 0px;
+        order: 1;
+    }
+
+    /* Painel de preview - segundo */
+    .preview-panel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        padding: 0;
+        margin-bottom: 15px;
+        text-align: center;
+        order: 2;
+    }
+
+    /* Os botões ficam dentro do preview-panel via JS */
+    .preview-panel .roulette-buttons {
+        order: 10;
+        margin-top: 10px;
+    }
+
+    .preview-info {
+        order: 2;
+    }
+
+    .preview-text {
+        order: 1;
+    }
+
+    /* Painel de preço - terceiro (embaixo) */
+    .chance-panel {
+        display: block !important;
+        order: 3;
+        padding: 15px 0 0 0;
+        margin-top: 20px;
+        border-top: 1px solid #3c3136;
+    }
+
+    .chance-panel label {
+        display: block;
+        text-align: left;
+    }
+
+    .chance-panel .result-slider-container {
+        width: 100%;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .chance-panel .result-slider-container label {
+        text-align: left;
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        margin-bottom: 8px;
+    }
+
+    .chance-panel .slider-track {
+        width: 100%;
+        margin: 0;
+    }
+
+    .chance-panel .price-input-group {
+        width: 100%;
+    }
+
+    .chance-panel .shortcut-buttons {
+        width: 100%;
+    }
+
+    .chance-panel #reset-btn {
+        width: 100%;
+    }
+
+    /* Container da roleta - agora contém a imagem */
+    .roulette-container {
+        width: 200px;
+        height: 200px;
+        margin: 35px auto 20px auto;
+        position: relative;
+    }
+
+    /* Porcentagem acima do círculo */
+    .roulette-container #roulette-percent {
+        position: absolute;
+        top: -35px;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 1.4em;
+        font-weight: 700;
+        pointer-events: none;
+    }
+
+    /* Imagem dentro do círculo (movida via JS) */
+    .roulette-container .preview-image {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 120px;
+        height: 120px;
+        background-color: transparent;
+        border: none;
+        z-index: 5;
+        margin: 0;
+    }
+
+    /* SVG e elementos da roleta */
+    .roulette-svg {
+        width: 100%;
+        height: 100%;
+    }
+
+    .roulette-handle,
+    .roulette-arrow {
+        position: absolute;
+    }
+
+    /* Nome do produto */
+    .preview-panel .preview-text {
+        font-size: 1em;
+        width: 100%;
+        margin: 0;
+        order: 1;
+    }
+
+    /* Container de preço e multiplicador */
+    .preview-panel .preview-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+        width: 100%;
+        order: 2;
+    }
+
+    .preview-panel .preview-info .price {
+        color: #aaa;
+        font-weight: 600;
+        font-size: 0.95em;
+    }
+
+    .preview-panel .preview-info .multiplier {
+        color: #d6cb27;
+        font-weight: 700;
+        font-size: 1.3em;
+    }
+
+    /* Botões (movidos via JS para depois do preview) */
+    .roulette-buttons {
+        display: flex !important;
+        flex-direction: column;
+        gap: 10px;
+        width: 100%;
+        max-width: 100%;
+        order: 10 !important;
+        margin-top: 10px;
+    }
+
+    .roulette-buttons #select-range,
+    .roulette-buttons #demo-btn {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 14px;
+        font-size: 1rem;
+        flex: none;
     }
 }
 

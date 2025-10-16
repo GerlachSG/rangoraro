@@ -371,6 +371,11 @@ function updateBadge() {
 }
 
 function openCart() {
+    // Fecha outros menus antes de abrir o carrinho
+    if (typeof closeAllMenus === 'function') {
+        closeAllMenus();
+    }
+    
     const overlay = document.querySelector('.cart-modal-overlay');
     if (overlay) {
         overlay.style.display = 'flex';
