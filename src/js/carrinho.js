@@ -435,11 +435,514 @@ async function sellSelectedItems() {
 
 function withdrawFunds() {
     if (selectedItems.size === 0) return;
+    
+    // Garante que o modal de saque existe
+    ensureWithdrawModal();
+    
+    // Limpa campos anteriores
+    document.getElementById('withdraw-pix-key').value = '';
+    document.getElementById('withdraw-pix-type').value = '';
+    
+    // Calcula o valor total selecionado
+    const selectedValue = cartItems
+        .filter(item => selectedItems.has(item.docId))
+        .reduce((sum, item) => {
+            const price = (typeof item.price === 'number') ? item.price : 0;
+            return sum + price;
+        }, 0);
+    
+    document.querySelector('.withdraw-total-value').textContent = `R$ ${selectedValue.toFixed(2).replace('.', ',')}`;
+    
+    // Abre o modal
+    openModal('.withdraw-modal-overlay');
 }
 
 
 
 let _currentDeliveryContext = null; // { user, selectedItems, enderecoRef, addressData }
+
+// Função para criar o modal de saque PIX
+let _withdrawModalInjected = false;
+function ensureWithdrawModal() {
+    if (_withdrawModalInjected) return;
+
+    const html = `
+    <div class="cart-modal-overlay withdraw-modal-overlay delivery-modal-hidden">
+        <div class="delivery-modal">
+            <div class="delivery-header">
+                <h3>Sacar Saldo</h3>
+                <button class="withdraw-close">&times;</button>
+            </div>
+            <div class="delivery-body">
+                <div class="withdraw-info">
+                    <p>Valor a sacar</p>
+                    <span class="withdraw-total-value">R$ 0,00</span>
+                </div>
+                <label for="withdraw-pix-type">Tipo de Chave PIX
+                    <select id="withdraw-pix-type" class="withdraw-pix-type">
+                        <option value="">Selecione o tipo de chave...</option>
+                        <option value="cpf">CPF</option>
+                        <option value="telefone">Telefone</option>
+                        <option value="email">E-mail</option>
+                    </select>
+                </label>
+                <label for="withdraw-pix-key">Chave PIX
+                    <input id="withdraw-pix-key" type="text" class="withdraw-pix-key" placeholder="Digite sua chave PIX">
+                    <span class="pix-validation-message"></span>
+                </label>
+            </div>
+            <div class="delivery-actions">
+                <button class="btn btn-secondary withdraw-cancel">Cancelar</button>
+                <button class="btn btn-primary withdraw-confirm">Confirmar Saque</button>
+            </div>
+        </div>
+    </div>
+    `;
+
+    document.body.insertAdjacentHTML('beforeend', html);
+
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes shimmer-border {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .withdraw-modal-overlay .delivery-header {
+            position: relative;
+            padding: 15px 20px;
+        }
+        
+        .withdraw-modal-overlay .delivery-header .withdraw-close {
+            background: none;
+            border: none;
+            color: var(--cor-texto-secundario);
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .withdraw-modal-overlay .delivery-body {
+            padding: 15px 20px;
+        }
+        
+        .withdraw-modal-overlay .delivery-actions {
+            padding: 15px 20px;
+        }
+        
+        .withdraw-info {
+            width: 100%;
+            background: var(--cor-fundo-secundario);
+            padding: 10px 16px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .withdraw-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 8px;
+            padding: 2px;
+            background: linear-gradient(90deg, #FFD700, #FFA500, #FFD700, #FFA500);
+            background-size: 300% 100%;
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            animation: shimmer-border 3s linear infinite;
+            pointer-events: none;
+        }
+        
+        .withdraw-info p {
+            margin: 0;
+            color: #FFD700;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+        
+        .withdraw-total-value {
+            color: #FFD700;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.6);
+        }
+        .withdraw-pix-type, .withdraw-pix-key {
+            width: 100%;
+            padding: 12px 14px;
+            background-color: var(--cor-fundo-secundario);
+            border: 2px solid var(--cor-borda);
+            border-radius: 8px;
+            color: var(--cor-texto-principal);
+            font-size: 1rem;
+            margin-top: 6px;
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+        .withdraw-pix-type:focus, .withdraw-pix-key:focus {
+            outline: none;
+            border-color: var(--cor-destaque);
+            background-color: #2a2a2a;
+        }
+        .withdraw-pix-key.valid {
+            border-color: #4CAF50;
+        }
+        .withdraw-pix-key.invalid {
+            border-color: #E53E3E;
+        }
+        .pix-validation-message {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.85rem;
+            min-height: 18px;
+        }
+        .pix-validation-message.valid {
+            color: #4CAF50;
+        }
+        .pix-validation-message.invalid {
+            color: #E53E3E;
+        }
+        .delivery-body label {
+            display: block;
+            margin-bottom: 15px;
+            color: var(--cor-texto-secundario);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+    `;
+    document.head.appendChild(style);
+
+    // Conecta os botões
+    document.querySelector('.withdraw-close').addEventListener('click', () => closeModal('.withdraw-modal-overlay'));
+    document.querySelector('.withdraw-cancel').addEventListener('click', () => closeModal('.withdraw-modal-overlay'));
+    document.querySelector('.withdraw-confirm').addEventListener('click', confirmWithdraw);
+    
+    const overlay = document.querySelector('.withdraw-modal-overlay');
+    if (overlay) {
+        overlay.addEventListener('click', e => {
+            if (e.target === overlay) closeModal('.withdraw-modal-overlay');
+        });
+    }
+
+    // Validação em tempo real
+    const pixTypeSelect = document.getElementById('withdraw-pix-type');
+    const pixKeyInput = document.getElementById('withdraw-pix-key');
+    
+    pixTypeSelect.addEventListener('change', () => {
+        pixKeyInput.value = '';
+        pixKeyInput.placeholder = getPlaceholderForPixType(pixTypeSelect.value);
+        updateWithdrawButtonState();
+    });
+
+    pixKeyInput.addEventListener('input', (e) => {
+        const pixType = pixTypeSelect.value;
+        if (pixType === 'telefone') {
+            // Para telefone, previne a duplicação do +55
+            const cursorPos = e.target.selectionStart;
+            const oldValue = e.target.value;
+            formatAndValidatePixKey(pixType, e.target);
+            // Restaura a posição do cursor
+            if (cursorPos <= 4) {
+                e.target.setSelectionRange(4, 4);
+            }
+        } else {
+            formatAndValidatePixKey(pixType, e.target);
+        }
+        updateWithdrawButtonState();
+    });
+
+    // Previne que o usuário delete o +55 no telefone
+    pixKeyInput.addEventListener('keydown', (e) => {
+        if (pixTypeSelect.value === 'telefone') {
+            const cursorPos = e.target.selectionStart;
+            // Se tentar deletar antes do +55, previne
+            if ((e.key === 'Backspace' && cursorPos <= 4) || (e.key === 'Delete' && cursorPos < 4)) {
+                e.preventDefault();
+            }
+        }
+    });
+
+    _withdrawModalInjected = true;
+}
+
+function getPlaceholderForPixType(type) {
+    const placeholders = {
+        'cpf': '000.000.000-00',
+        'telefone': '+55 (00) 00000-0000',
+        'email': 'seu@email.com'
+    };
+    return placeholders[type] || 'Digite sua chave PIX';
+}
+
+function formatAndValidatePixKey(pixType, input) {
+    const validationMsg = document.querySelector('.pix-validation-message');
+    let value = input.value;
+    let isValid = false;
+    let message = '';
+
+    if (!pixType) {
+        validationMsg.textContent = '';
+        validationMsg.className = 'pix-validation-message';
+        input.classList.remove('valid', 'invalid');
+        return;
+    }
+
+    switch(pixType) {
+        case 'cpf':
+            // Remove tudo exceto números
+            value = value.replace(/\D/g, '');
+            
+            // Limita a 11 dígitos
+            if (value.length > 11) value = value.slice(0, 11);
+            
+            // Formata: 000.000.000-00
+            if (value.length > 9) {
+                value = value.replace(/(\d{3})(\d{3})(\d{3})(\d{0,2})/, '$1.$2.$3-$4');
+            } else if (value.length > 6) {
+                value = value.replace(/(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+            } else if (value.length > 3) {
+                value = value.replace(/(\d{3})(\d{0,3})/, '$1.$2');
+            }
+            
+            input.value = value;
+            
+            // Valida CPF
+            const cpfDigits = value.replace(/\D/g, '');
+            if (cpfDigits.length === 11) {
+                isValid = validateCPF(cpfDigits);
+                message = isValid ? '✓ CPF válido' : '✗ CPF inválido';
+            } else if (cpfDigits.length > 0) {
+                message = 'Digite os 11 dígitos do CPF';
+            }
+            break;
+
+        case 'telefone':
+            // Remove tudo exceto números e ignora o prefixo do país (55) se presente
+            let digitsOnly = value.replace(/\D/g, '').replace(/^55/, '');
+            
+            // Limita a 11 dígitos
+            if (digitsOnly.length > 11) digitsOnly = digitsOnly.slice(0, 11);
+            
+            // Formata: +55 (00) 00000-0000
+            let formatted = '';
+            if (digitsOnly.length === 0) {
+                formatted = '+55 ';
+            } else if (digitsOnly.length <= 2) {
+                formatted = `+55 (${digitsOnly}`;
+            } else if (digitsOnly.length <= 7) {
+                formatted = `+55 (${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2)}`;
+            } else {
+                formatted = `+55 (${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 7)}-${digitsOnly.slice(7)}`;
+            }
+            
+            input.value = formatted;
+            
+            // Valida telefone
+            if (digitsOnly.length === 11) {
+                const ddd = parseInt(digitsOnly.slice(0, 2));
+                const firstDigit = digitsOnly.charAt(2);
+                isValid = ddd >= 11 && ddd <= 99 && (firstDigit === '9' || firstDigit === '8' || firstDigit === '7');
+                message = isValid ? '✓ Telefone válido' : '✗ Telefone inválido';
+            } else if (digitsOnly.length > 0) {
+                message = 'Digite o DDD e o número completo';
+            }
+            break;
+
+        case 'email':
+            input.value = value.toLowerCase();
+            
+            // Valida email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (value.length > 0) {
+                isValid = emailRegex.test(value);
+                if (isValid) {
+                    message = '✓ E-mail válido';
+                } else if (value.includes('@')) {
+                    message = '✗ E-mail inválido';
+                } else {
+                    message = 'Digite um e-mail válido';
+                }
+            }
+            break;
+    }
+
+    // Atualiza UI
+    validationMsg.textContent = message;
+    if (isValid) {
+        validationMsg.className = 'pix-validation-message valid';
+        input.classList.add('valid');
+        input.classList.remove('invalid');
+    } else if (message.includes('✗')) {
+        validationMsg.className = 'pix-validation-message invalid';
+        input.classList.add('invalid');
+        input.classList.remove('valid');
+    } else {
+        validationMsg.className = 'pix-validation-message';
+        input.classList.remove('valid', 'invalid');
+    }
+}
+
+function validateCPF(cpf) {
+    // Remove caracteres não numéricos
+    cpf = cpf.replace(/\D/g, '');
+    
+    // Verifica se tem 11 dígitos
+    if (cpf.length !== 11) return false;
+    
+    // Verifica se todos os dígitos são iguais
+    if (/^(\d)\1{10}$/.test(cpf)) return false;
+    
+    // Valida primeiro dígito verificador
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        sum += parseInt(cpf.charAt(i)) * (10 - i);
+    }
+    let digit = 11 - (sum % 11);
+    if (digit >= 10) digit = 0;
+    if (digit !== parseInt(cpf.charAt(9))) return false;
+    
+    // Valida segundo dígito verificador
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+        sum += parseInt(cpf.charAt(i)) * (11 - i);
+    }
+    digit = 11 - (sum % 11);
+    if (digit >= 10) digit = 0;
+    if (digit !== parseInt(cpf.charAt(10))) return false;
+    
+    return true;
+}
+
+function updateWithdrawButtonState() {
+    const confirmBtn = document.querySelector('.withdraw-confirm');
+    if (!confirmBtn) return;
+
+    const pixType = document.getElementById('withdraw-pix-type')?.value || '';
+    const pixKeyInput = document.getElementById('withdraw-pix-key');
+    const pixKey = pixKeyInput?.value.trim() || '';
+
+    let isValid = false;
+
+    if (pixType && pixKey) {
+        switch(pixType) {
+            case 'cpf':
+                const cpfDigits = pixKey.replace(/\D/g, '');
+                isValid = cpfDigits.length === 11 && validateCPF(cpfDigits);
+                break;
+            case 'telefone':
+                // Remove o +55 do início, se o usuário colou com o código do país
+                const phoneDigits = pixKey.replace(/\D/g, '').replace(/^55/, '');
+                isValid = phoneDigits.length === 11;
+                break;
+            case 'email':
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                isValid = emailRegex.test(pixKey);
+                break;
+        }
+    }
+
+    if (isValid) {
+        confirmBtn.disabled = false;
+        confirmBtn.style.opacity = '1';
+        confirmBtn.style.cursor = 'pointer';
+        confirmBtn.style.backgroundColor = '';
+    } else {
+        confirmBtn.disabled = true;
+        confirmBtn.style.opacity = '0.6';
+        confirmBtn.style.cursor = 'not-allowed';
+        confirmBtn.style.backgroundColor = '#8ca1b7';
+    }
+}
+
+async function confirmWithdraw() {
+    const user = auth.currentUser;
+    if (!user || selectedItems.size === 0) return;
+
+    const pixType = document.getElementById('withdraw-pix-type')?.value;
+
+    if (!pixType) {
+        alert('Por favor, selecione o tipo de chave PIX.');
+        return;
+    }
+
+    const itemsToWithdraw = cartItems.filter(item => selectedItems.has(item.docId));
+    const totalValue = itemsToWithdraw.reduce((sum, item) => sum + item.price, 0);
+
+    try {
+        showLoadingModal('Processando saque...');
+
+        // Registra a transação no Firebase (APENAS demonstração - sem dados da chave)
+        const transacaoRef = await db.collection('transacoes').add({
+            userId: user.uid,
+            userEmail: user.email,
+            userDisplayName: user.displayName || user.email,
+            tipo: 'saque',
+            valor: totalValue,
+            pixType: pixType,
+            itens: itemsToWithdraw.map(item => ({
+                nome: item.name,
+                valor: item.price,
+                imagem: item.image
+            })),
+            status: 'pendente',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+
+        // Remove os itens do carrinho
+        const batch = db.batch();
+        itemsToWithdraw.forEach(item => {
+            const docRef = db.collection('users').doc(user.uid).collection('carrinho').doc(item.docId);
+            batch.delete(docRef);
+        });
+        await batch.commit();
+
+        selectedItems.clear();
+
+        // Envia email de confirmação de saque
+        if (typeof sendWithdrawConfirmationEmail === 'function') {
+            const withdrawData = {
+                id: transacaoRef.id,
+                valor: totalValue,
+                pixType: pixType,
+                itens: itemsToWithdraw.map(item => ({
+                    nome: item.name,
+                    valor: item.price,
+                    imagem: item.image
+                }))
+            };
+            
+            await sendWithdrawConfirmationEmail(
+                withdrawData,
+                user.email,
+                user.displayName || user.email
+            );
+        }
+
+        showSuccessAndHideModal('Saque solicitado com sucesso!');
+        closeModal('.withdraw-modal-overlay');
+
+        try {
+            if (window.confetti) {
+                confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
+            }
+        } catch (e) { /* ignore */ }
+
+    } catch (error) {
+        hideLoadingModal();
+        console.error('Erro ao processar saque:', error);
+        alert('Ocorreu um erro ao processar o saque. Tente novamente.');
+    }
+}
 
 // Função principal que inicia o fluxo de entrega.
 async function requestDelivery() {
