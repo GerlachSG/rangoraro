@@ -75,38 +75,65 @@ async function sendWithdrawConfirmationEmail(withdrawData, recipientEmail, recip
             throw new Error("Usuário não autenticado");
         }
 
-        // Pega o token de autenticação
-        const idToken = await user.getIdToken();
-        
-        // Chama a Cloud Function para saque
-        const functionUrl = "https://us-central1-rangoraro-app.cloudfunctions.net/sendWithdrawEmailV2";
-        
-        const response = await fetch(functionUrl, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${idToken}`
-            },
-            body: JSON.stringify({
-                data: {
-                    transactionId: withdrawData.id,
-                    recipientEmail: recipientEmail,
-                    recipientName: recipientName,
-                    valor: withdrawData.valor,
-                    pixType: withdrawData.pixType,
-                    itens: withdrawData.itens
-                }
-            })
+        // Salva os dados do saque para envio de email (fallback caso a Cloud Function não esteja disponível)
+        const emailQueueRef = db.collection('email_queue').doc();
+        await emailQueueRef.set({
+            type: 'withdraw_confirmation',
+            transactionId: withdrawData.id,
+            recipientEmail: recipientEmail,
+            recipientName: recipientName,
+            valor: withdrawData.valor,
+            pixType: withdrawData.pixType,
+            itens: withdrawData.itens,
+            userId: user.uid,
+            status: 'pending',
+            createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            attempts: 0
         });
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || "Erro ao enviar email");
-        }
+        console.log('📝 Saque registrado para envio de email (ID:', emailQueueRef.id, ')');
 
-        const result = await response.json();
-        console.log('✅ Email de saque enviado com sucesso!', result);
-        return true;
+        // Tenta enviar via Cloud Function (opcional - não bloqueia se falhar)
+        try {
+            const idToken = await user.getIdToken();
+            const functionUrl = "https://us-central1-rangoraro-app.cloudfunctions.net/sendWithdrawEmailV2";
+            
+            const response = await fetch(functionUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${idToken}`
+                },
+                body: JSON.stringify({
+                    data: {
+                        transactionId: withdrawData.id,
+                        recipientEmail: recipientEmail,
+                        recipientName: recipientName,
+                        valor: withdrawData.valor,
+                        pixType: withdrawData.pixType,
+                        itens: withdrawData.itens
+                    }
+                })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('✅ Email de saque enviado com sucesso via Cloud Function!', result);
+                
+                // Marca como enviado na fila
+                await emailQueueRef.update({ 
+                    status: 'sent', 
+                    sentAt: firebase.firestore.FieldValue.serverTimestamp() 
+                });
+                return true;
+            } else {
+                throw new Error('Cloud Function retornou erro');
+            }
+        } catch (fetchError) {
+            console.warn('⚠️ Cloud Function indisponível, email será processado posteriormente:', fetchError.message);
+            // Email ficará na fila para processamento posterior
+            return true; // Retorna true porque o saque foi registrado com sucesso
+        }
 
     } catch (error) {
         console.error('❌ Erro ao enviar email de confirmação de saque:', error);
