@@ -14,22 +14,41 @@ async function sendDeliveryConfirmationEmail(orderData, recipientEmail, recipien
         console.log('📦 Pedido:', orderData.id);
         console.log('👤 Destinatário:', recipientEmail);
 
-        // Chama a Cloud Function que envia o email de forma segura
-        const sendEmail = firebase.functions().httpsCallable('sendDeliveryEmail');
+        const user = firebase.auth().currentUser;
         
-        const result = await sendEmail({
-            orderId: orderData.id,
-            recipientEmail: recipientEmail,
-            recipientName: recipientName
+        if (!user) {
+            throw new Error("Usuário não autenticado");
+        }
+
+        // Pega o token de autenticação
+        const idToken = await user.getIdToken();
+        
+        // Chama a Cloud Function com fetch
+        const functionUrl = "https://us-central1-rangoraro-app.cloudfunctions.net/sendDeliveryEmailV2";
+        
+        const response = await fetch(functionUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${idToken}`
+            },
+            body: JSON.stringify({
+                data: {
+                    orderId: orderData.id,
+                    recipientEmail: recipientEmail,
+                    recipientName: recipientName
+                }
+            })
         });
 
-        if (result.data.success) {
-            console.log('✅ Email enviado com sucesso!', result.data);
-            return true;
-        } else {
-            console.error('❌ Erro ao enviar email:', result.data);
-            return false;
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || "Erro ao enviar email");
         }
+
+        const result = await response.json();
+        console.log('✅ Email enviado com sucesso!', result);
+        return true;
 
     } catch (error) {
         console.error('❌ Erro ao enviar email de confirmação:', error);
