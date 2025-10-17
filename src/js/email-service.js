@@ -23,8 +23,8 @@ async function sendDeliveryConfirmationEmail(orderData, recipientEmail, recipien
         // Pega o token de autenticação
         const idToken = await user.getIdToken();
         
-        // Chama a Cloud Function com fetch
-        const functionUrl = "https://us-central1-rangoraro-app.cloudfunctions.net/sendDeliveryEmailV2";
+    // Chama a Cloud Function (V2 - com suporte explícito a CORS preflight)
+    const functionUrl = "https://us-central1-rangoraro-app.cloudfunctions.net/sendDeliveryEmailV2";
         
         const response = await fetch(functionUrl, {
             method: "POST",
