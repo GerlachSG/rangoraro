@@ -46,6 +46,8 @@ document.addEventListener("DOMContentLoaded", () => {
     // KPI Elements
     const el = (id) => document.getElementById(id);
     const KPI = {
+        totalUsers: el('kpi-total-users'),
+        totalUsersSub: el('kpi-total-users-sub'),
         newUsers: el('kpi-new-users'),
         newUsersSub: el('kpi-new-users-sub'),
         activeUsers: el('kpi-active-users'),
@@ -103,6 +105,27 @@ document.addEventListener("DOMContentLoaded", () => {
     function clearUnsubs() {
         if (unsubscribeDashboardListener) { unsubscribeDashboardListener(); unsubscribeDashboardListener = null; }
         while (unsubscribers.length) { try { unsubscribers.pop()(); } catch(e) {} }
+    }
+
+    // Função para atualizar card de entregas
+    function updateDeliveryCard(count, avgRating, ratingCount) {
+        const totalDeliveriesEl = document.getElementById('total-deliveries');
+        const avgRatingValueEl = document.getElementById('avg-rating-value');
+        const avgRatingSubEl = document.getElementById('avg-rating-sub');
+        const deliveriesSubEl = document.getElementById('kpi-deliveries-sub');
+        
+        if(totalDeliveriesEl) totalDeliveriesEl.textContent = count;
+        if(deliveriesSubEl) deliveriesSubEl.textContent = 'no período';
+        
+        if(avgRatingValueEl) {
+            if(ratingCount > 0) {
+                avgRatingValueEl.textContent = avgRating.toFixed(1) + ' ⭐';
+                if(avgRatingSubEl) avgRatingSubEl.textContent = ratingCount + ' avaliações';
+            } else {
+                avgRatingValueEl.textContent = '0.0 ⭐';
+                if(avgRatingSubEl) avgRatingSubEl.textContent = 'sem avaliações';
+            }
+        }
     }
 
     // Util helpers
@@ -244,6 +267,9 @@ document.addEventListener("DOMContentLoaded", () => {
             let totalBalance=0; let count=0; snap.forEach(d=>{ const u=d.data(); totalBalance += (u.balance||0); count++; });
             if(KPI.totalBalance) KPI.totalBalance.textContent = formatBRL(totalBalance);
             if(KPI.totalBalanceSub) KPI.totalBalanceSub.textContent = 'Média ' + formatBRL(count? totalBalance/count:0);
+            // Total de usuários (independente do filtro de período)
+            if(KPI.totalUsers) KPI.totalUsers.textContent = count;
+            if(KPI.totalUsersSub) KPI.totalUsersSub.textContent = 'cadastrados';
         });
         unsubscribers.push(unsubAll);
 
@@ -307,8 +333,12 @@ document.addEventListener("DOMContentLoaded", () => {
             console.log('Total de documentos:', snap.size);
             console.log('Período desde:', new Date(startDate.seconds * 1000));
             let totalDur=0, count=0; let totalTravelPayout=0; let deliveryCostPeriod=0; 
+            
+            // Buscar avaliações para calcular média
+            const orderIds = [];
             snap.forEach(d=>{ 
                 const o=d.data();
+                orderIds.push(d.id);
                 console.log('Doc:', d.id, 'horaEntrega:', o.horaEntrega?.toDate(), 'valorViagem:', o.userInfo?.valorViagem);
                 
                 if(o.horaAceito?.toMillis && o.horaEntrega?.toMillis){ 
@@ -340,6 +370,31 @@ document.addEventListener("DOMContentLoaded", () => {
             
             // Atualiza valores globais
             totalDeliveryCost = deliveryCostPeriod;
+            
+            // Busca avaliações e calcula média
+            if(orderIds.length > 0) {
+                let totalRating = 0;
+                let ratingCount = 0;
+                
+                // Busca todas as avaliações dos pedidos do período
+                orderIds.forEach(orderId => {
+                    db.collection('avaliacoes').doc(orderId).get().then(doc => {
+                        if(doc.exists) {
+                            const rating = doc.data().rating;
+                            if(rating) {
+                                totalRating += rating;
+                                ratingCount++;
+                            }
+                        }
+                        
+                        // Atualiza UI quando terminar de buscar
+                        const avgRating = ratingCount > 0 ? (totalRating / ratingCount) : 0;
+                        updateDeliveryCard(count, avgRating, ratingCount);
+                    });
+                });
+            } else {
+                updateDeliveryCard(count, 0, 0);
+            }
             
             // Atualiza KPIs
             if(KPI.deliveryTime) KPI.deliveryTime.textContent = durationHMM(count? totalDur/count:0);
@@ -510,6 +565,175 @@ document.addEventListener("DOMContentLoaded", () => {
             if(expanded){ bd.panel.hidden = true; } else { bd.panel.hidden = false; }
         });
     }
+
+    // ========== RATING MODAL LOGIC ==========
+    const ratingModal = document.getElementById('rating-modal');
+    const ratingModalClose = document.getElementById('rating-modal-close');
+    const deliveryRatingCard = document.getElementById('delivery-rating-card');
+    const supportRatingCard = document.getElementById('support-rating-card');
+    
+    let allRatings = [];
+    let currentFilter = 'all';
+    let currentRatingType = 'delivery';
+
+    // Open modal
+    function openRatingModal(type) {
+        currentRatingType = type;
+        const title = type === 'delivery' ? 'Avaliações de Entregas' : 'Avaliações de Suporte';
+        document.getElementById('rating-modal-title').textContent = title;
+        ratingModal.style.display = 'block';
+        loadRatings(type);
+    }
+
+    // Close modal
+    function closeRatingModal() {
+        ratingModal.style.display = 'none';
+        allRatings = [];
+        currentFilter = 'all';
+    }
+
+    // Load ratings from Firestore
+    async function loadRatings(type) {
+        try {
+            const collection = type === 'delivery' ? 'avaliacoes' : 'support_chats';
+            const snapshot = await db.collection(collection).get();
+            
+            allRatings = [];
+            const ratingCounts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0};
+            let totalRating = 0;
+            
+            snapshot.forEach(doc => {
+                const data = doc.data();
+                let rating, comment, timestamp, orderId;
+                
+                if(type === 'delivery') {
+                    rating = data.rating;
+                    comment = data.comentario;
+                    timestamp = data.timestamp;
+                    orderId = doc.id;
+                } else {
+                    rating = data.rating;
+                    comment = data.lastMessage || 'Sem comentário';
+                    timestamp = data.lastUpdated;
+                    orderId = doc.id;
+                }
+                
+                if(rating && rating >= 1 && rating <= 5) {
+                    allRatings.push({
+                        rating,
+                        comment: comment || 'Sem comentário',
+                        timestamp,
+                        orderId
+                    });
+                    ratingCounts[rating]++;
+                    totalRating += rating;
+                }
+            });
+            
+            // Sort by most recent
+            allRatings.sort((a, b) => {
+                const aTime = a.timestamp?.toMillis?.() || 0;
+                const bTime = b.timestamp?.toMillis?.() || 0;
+                return bTime - aTime;
+            });
+            
+            // Update summary
+            const total = allRatings.length;
+            const avgRating = total > 0 ? (totalRating / total) : 0;
+            
+            document.getElementById('rating-avg-number').textContent = avgRating.toFixed(1);
+            document.getElementById('rating-avg-stars').textContent = '⭐'.repeat(Math.round(avgRating));
+            document.getElementById('rating-avg-total').textContent = `${total} avaliações`;
+            
+            // Update breakdown bars
+            for(let i = 1; i <= 5; i++) {
+                const count = ratingCounts[i];
+                const percentage = total > 0 ? (count / total * 100) : 0;
+                document.getElementById(`bar-${i}`).style.width = percentage + '%';
+                document.getElementById(`count-${i}`).textContent = count;
+            }
+            
+            // Display ratings
+            displayRatings(allRatings);
+            
+        } catch(error) {
+            console.error('Erro ao carregar avaliações:', error);
+            document.getElementById('rating-list').innerHTML = '<div class="rating-empty">Erro ao carregar avaliações</div>';
+        }
+    }
+
+    // Display ratings in list
+    function displayRatings(ratings) {
+        const ratingList = document.getElementById('rating-list');
+        
+        if(ratings.length === 0) {
+            ratingList.innerHTML = '<div class="rating-empty">Nenhuma avaliação encontrada</div>';
+            return;
+        }
+        
+        ratingList.innerHTML = ratings.map(r => {
+            const date = r.timestamp?.toDate?.() || new Date();
+            const dateStr = date.toLocaleDateString('pt-BR', {day: '2-digit', month: 'short', year: 'numeric'});
+            const stars = '⭐'.repeat(r.rating);
+            
+            return `
+                <div class="rating-item">
+                    <div class="rating-item-header">
+                        <div class="rating-item-stars">${stars}</div>
+                        <div class="rating-item-date">${dateStr}</div>
+                    </div>
+                    <div class="rating-item-comment">${r.comment}</div>
+                    <div class="rating-item-order">Pedido: ${r.orderId.substring(0, 8)}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    // Filter ratings
+    function filterRatings(filterValue) {
+        currentFilter = filterValue;
+        
+        // Update active button
+        document.querySelectorAll('.rating-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+            if(btn.dataset.filter === filterValue) {
+                btn.classList.add('active');
+            }
+        });
+        
+        // Filter and display
+        const filtered = filterValue === 'all' 
+            ? allRatings 
+            : allRatings.filter(r => r.rating === parseInt(filterValue));
+        
+        displayRatings(filtered);
+    }
+
+    // Event listeners
+    if(deliveryRatingCard) {
+        deliveryRatingCard.addEventListener('click', () => openRatingModal('delivery'));
+    }
+    
+    if(supportRatingCard) {
+        supportRatingCard.addEventListener('click', () => openRatingModal('support'));
+    }
+    
+    if(ratingModalClose) {
+        ratingModalClose.addEventListener('click', closeRatingModal);
+    }
+    
+    if(ratingModal) {
+        ratingModal.addEventListener('click', (e) => {
+            if(e.target === ratingModal) closeRatingModal();
+        });
+    }
+    
+    // Filter button listeners
+    document.querySelectorAll('.rating-filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            filterRatings(btn.dataset.filter);
+        });
+    });
 });
 
 /*

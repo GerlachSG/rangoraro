@@ -115,6 +115,7 @@
             <section class="kpi-groups" id="kpi-grid">
                 <div class="kpi-group" id="grp-users">
                     <h4 class="kpi-group-title">Usuários</h4>
+                    <div class="kpi-card"><span class="kpi-label">Total Usuários</span><span class="kpi-value" id="kpi-total-users">-</span><span class="kpi-sub" id="kpi-total-users-sub">—</span></div>
                     <div class="kpi-card"><span class="kpi-label">Novos Usuários</span><span class="kpi-value" id="kpi-new-users">-</span><span class="kpi-sub" id="kpi-new-users-sub">—</span></div>
                     <div class="kpi-card"><span class="kpi-label">Usuários Ativos</span><span class="kpi-value" id="kpi-active-users">-</span><span class="kpi-sub" id="kpi-active-users-sub">—</span></div>
                     <div class="kpi-card balance-card"><span class="kpi-label">Saldo Total Usuários</span><span class="kpi-value" id="kpi-total-balance">R$ 0,00</span><span class="kpi-sub" id="kpi-total-balance-sub">—</span></div>
@@ -129,12 +130,22 @@
                     <div class="kpi-card"><span class="kpi-label">Pedidos Abertos</span><span class="kpi-value" id="kpi-open-orders">-</span><span class="kpi-sub" id="kpi-open-orders-sub">—</span></div>
                     <div class="kpi-card"><span class="kpi-label">Tempo Médio Entrega</span><span class="kpi-value" id="kpi-delivery-time">--:--</span><span class="kpi-sub" id="kpi-delivery-time-sub">—</span></div>
                     <div class="kpi-card"><span class="kpi-label">Pago a Entregadores</span><span class="kpi-value" id="kpi-payout-entregadores">R$ 0,00</span><span class="kpi-sub" id="kpi-payout-entregadores-sub">—</span></div>
+                    <div class="kpi-card"><span class="kpi-label">Total Entregas</span><span class="kpi-value" id="total-deliveries">0</span><span class="kpi-sub" id="kpi-deliveries-sub">—</span></div>
+                    <div class="kpi-card clickable" id="delivery-rating-card" data-rating-type="delivery">
+                        <span class="kpi-label">Avaliação Média Entregadores</span>
+                        <span class="kpi-value" id="avg-rating-value">0.0 ⭐</span>
+                        <span class="kpi-sub" id="avg-rating-sub">—</span>
+                    </div>
                 </div>
                 <div class="kpi-group" id="grp-support">
                     <h4 class="kpi-group-title">Suporte</h4>
                     <div class="kpi-card"><span class="kpi-label">Chats Abertos</span><span class="kpi-value" id="kpi-open-chats">-</span><span class="kpi-sub" id="kpi-open-chats-sub">—</span></div>
                     <div class="kpi-card"><span class="kpi-label">Tempo Médio Resposta</span><span class="kpi-value" id="kpi-support-time">--:--</span><span class="kpi-sub" id="kpi-support-time-sub">—</span></div>
-                    <div class="kpi-card"><span class="kpi-label">Avaliação Média</span><span class="kpi-value" id="kpi-support-rating">-</span><span class="kpi-sub" id="kpi-support-rating-sub">—</span></div>
+                    <div class="kpi-card clickable" id="support-rating-card" data-rating-type="support">
+                        <span class="kpi-label">Avaliação Média</span>
+                        <span class="kpi-value" id="kpi-support-rating">0.0 ⭐</span>
+                        <span class="kpi-sub" id="kpi-support-rating-sub">—</span>
+                    </div>
                 </div>
             </section>
 
@@ -171,6 +182,61 @@
             </section>
 
 
+        </div>
+    </div>
+
+    <!-- Rating Details Modal -->
+    <div id="rating-modal" class="rating-modal">
+        <div class="rating-modal-content">
+            <div class="rating-modal-header">
+                <h3 id="rating-modal-title">Avaliações de Entregas</h3>
+                <button class="rating-close" id="rating-modal-close">×</button>
+            </div>
+            <div class="rating-summary">
+                <div class="rating-avg">
+                    <div class="rating-avg-number" id="rating-avg-number">0.0</div>
+                    <div class="rating-avg-stars" id="rating-avg-stars">☆☆☆☆☆</div>
+                    <div class="rating-avg-total" id="rating-avg-total">0 avaliações</div>
+                </div>
+                <div class="rating-breakdown">
+                    <div class="rating-bar-row">
+                        <div class="rating-bar-label">5 ⭐</div>
+                        <div class="rating-bar-track"><div class="rating-bar-fill" id="bar-5" style="width: 0%"></div></div>
+                        <div class="rating-bar-count" id="count-5">0</div>
+                    </div>
+                    <div class="rating-bar-row">
+                        <div class="rating-bar-label">4 ⭐</div>
+                        <div class="rating-bar-track"><div class="rating-bar-fill" id="bar-4" style="width: 0%"></div></div>
+                        <div class="rating-bar-count" id="count-4">0</div>
+                    </div>
+                    <div class="rating-bar-row">
+                        <div class="rating-bar-label">3 ⭐</div>
+                        <div class="rating-bar-track"><div class="rating-bar-fill" id="bar-3" style="width: 0%"></div></div>
+                        <div class="rating-bar-count" id="count-3">0</div>
+                    </div>
+                    <div class="rating-bar-row">
+                        <div class="rating-bar-label">2 ⭐</div>
+                        <div class="rating-bar-track"><div class="rating-bar-fill" id="bar-2" style="width: 0%"></div></div>
+                        <div class="rating-bar-count" id="count-2">0</div>
+                    </div>
+                    <div class="rating-bar-row">
+                        <div class="rating-bar-label">1 ⭐</div>
+                        <div class="rating-bar-track"><div class="rating-bar-fill" id="bar-1" style="width: 0%"></div></div>
+                        <div class="rating-bar-count" id="count-1">0</div>
+                    </div>
+                </div>
+            </div>
+            <div class="rating-filters">
+                <button class="rating-filter-btn active" data-filter="all">Todas</button>
+                <button class="rating-filter-btn" data-filter="5">5 Estrelas</button>
+                <button class="rating-filter-btn" data-filter="4">4 Estrelas</button>
+                <button class="rating-filter-btn" data-filter="3">3 Estrelas</button>
+                <button class="rating-filter-btn" data-filter="2">2 Estrelas</button>
+                <button class="rating-filter-btn" data-filter="1">1 Estrela</button>
+            </div>
+            <div class="rating-list" id="rating-list">
+                <div class="rating-empty">Carregando avaliações...</div>
+            </div>
         </div>
     </div>
 

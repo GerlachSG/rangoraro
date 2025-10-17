@@ -159,7 +159,7 @@ body {
 }
 
 .cart-header h2 { margin: 0; font-size: 1.2rem; color: var(--cor-texto-principal); }
-.cart-close { background: none; border: none; font-size: 1.25rem; cursor: pointer; color: var(--cor-texto-secundario); }
+.cart-close { background: none; border: none; color: var(--cor-texto-secundario); font-size: 1.5rem; cursor: pointer; }
 
 .cart-actions { display: flex; flex-direction: column; gap: 10px; }
 .cart-second-actions {width: 100%; display: flex; flex-direction: line; gap: 10px}
@@ -484,13 +484,7 @@ body {
     color: var(--cor-texto-principal);
 }
 
-.cart-close {
-    background: none;
-    border: none;
-    color: var(--cor-texto-secundario);
-    font-size: 1.5rem;
-    cursor: pointer;
-}
+.cart-close { background: none; border: none; color: var(--cor-texto-secundario); font-size: 1.5rem; cursor: pointer; }
 
 .cart-summary {
     padding: 20px;
@@ -595,7 +589,7 @@ body {
 .delivery-header h3 { margin: 0; font-size: 1.5rem; color: var(--cor-texto-principal); }
 .delivery-close { background: none; border: none; color: var(--cor-texto-secundario); font-size: 1.5rem; cursor: pointer; }
 
-.delivery-body { padding: 16px 20px; display:flex; gap:12px; align-items:center; flex-wrap:wrap; overflow:auto; flex: 1 1 auto; }
+.delivery-body { padding: 16px 20px; display:flex; flex-direction: column;  overflow:auto; flex: 1 1 auto; }
 .delivery-body label { display:flex; flex-direction:column; font-size:0.9rem; color:var(--cor-texto-secundario); }
 .delivery-body input[type="text"], .delivery-body select { 
     background: var(--cor-fundo-secundario); 
@@ -642,7 +636,7 @@ body {
     padding: 10px;
     border: 1px solid var(--cor-borda);
     border-radius: 8px;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     background-color: var(--cor-fundo-secundario);
     min-height: 40%;
 }
