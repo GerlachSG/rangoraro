@@ -68,6 +68,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Lists
     const LISTS = {
         latestDeposits: el('list-latest-deposits'),
+        latestWithdrawals: el('list-latest-withdrawals'),
         recentOrders: el('list-recent-orders'),
         recentDrops: el('list-recent-drops'),
         openChats: el('list-open-chats')
@@ -246,8 +247,29 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Saques em listener separado (não mistura com depósitos / open_package)
         withdrawalsUnsub = qWithdrawals.onSnapshot(snap=>{
-            let withdrawals=0; snap.forEach(d=>{ const t=d.data(); if(['withdraw','saque'].includes((t.type||'').toLowerCase())) withdrawals += (t.finalAmount||t.amount||0); });
-            __lastWithdrawalsValue = withdrawals; if(totalWithdrawalsCard) totalWithdrawalsCard.textContent = formatBRL(withdrawals); if(bd.withdrawals) bd.withdrawals.textContent = '- ' + formatBRL(withdrawals); recomputeProfit();
+            let withdrawals=0; 
+            const withdrawalsList = [];
+            snap.forEach(d=>{ 
+                const t=d.data(); 
+                if(['withdraw','saque'].includes((t.type||'').toLowerCase())) {
+                    withdrawals += (t.finalAmount||t.amount||0);
+                    withdrawalsList.push(t);
+                }
+            });
+            
+            // Ordena por timestamp (mais recentes primeiro)
+            withdrawalsList.sort((a,b)=> (b.timestamp?.toMillis?.()||0)-(a.timestamp?.toMillis?.()||0));
+            
+            // Popula a lista de últimos saques
+            pushList(LISTS.latestWithdrawals, withdrawalsList.slice(0,6), t=>`<span>${t.userName||'Usuário'}</span><span class='meta'>${formatBRL(t.finalAmount||t.amount||0)}</span>`);
+            
+            __lastWithdrawalsValue = withdrawals; 
+            if(totalWithdrawalsCard) totalWithdrawalsCard.textContent = formatBRL(withdrawals); 
+            if(bd.withdrawals) bd.withdrawals.textContent = '- ' + formatBRL(withdrawals); 
+            
+            console.log(`💰 Total de saques no período: ${formatBRL(withdrawals)} (${withdrawalsList.length} transações)`);
+            
+            recomputeProfit();
         });
         unsubscribers.push(()=>{ if(withdrawalsUnsub) withdrawalsUnsub(); });
     }

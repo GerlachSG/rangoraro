@@ -881,21 +881,22 @@ async function confirmWithdraw() {
     try {
         showLoadingModal('Processando saque...');
 
-        // Registra a transação no Firebase (APENAS demonstração - sem dados da chave)
-        const transacaoRef = await db.collection('transacoes').add({
+        // Registra a transação no Firebase como type='withdraw' para aparecer no admin
+        const transacaoRef = await db.collection('transactions').add({
             userId: user.uid,
+            userName: user.displayName || user.email,
             userEmail: user.email,
-            userDisplayName: user.displayName || user.email,
-            tipo: 'saque',
-            valor: totalValue,
+            type: 'withdraw',
+            amount: totalValue,
+            finalAmount: totalValue,
             pixType: pixType,
             itens: itemsToWithdraw.map(item => ({
                 nome: item.name,
                 valor: item.price,
                 imagem: item.image
             })),
-            status: 'pendente',
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            status: 'pending',
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
         // Remove os itens do carrinho
@@ -909,6 +910,7 @@ async function confirmWithdraw() {
         selectedItems.clear();
 
         // Envia email de confirmação de saque
+        console.log('📧 Tentando enviar email de saque...');
         if (typeof sendWithdrawConfirmationEmail === 'function') {
             const withdrawData = {
                 id: transacaoRef.id,
@@ -921,11 +923,24 @@ async function confirmWithdraw() {
                 }))
             };
             
-            await sendWithdrawConfirmationEmail(
-                withdrawData,
-                user.email,
-                user.displayName || user.email
-            );
+            try {
+                const emailSent = await sendWithdrawConfirmationEmail(
+                    withdrawData,
+                    user.email,
+                    user.displayName || user.email
+                );
+                
+                if (emailSent) {
+                    console.log('✅ Email de saque enviado com sucesso!');
+                } else {
+                    console.warn('⚠️ Email de saque não foi enviado');
+                }
+            } catch (emailError) {
+                console.error('❌ Erro ao enviar email de saque:', emailError);
+                // Não bloqueia o saque se o email falhar
+            }
+        } else {
+            console.error('❌ Função sendWithdrawConfirmationEmail não está disponível');
         }
 
         showSuccessAndHideModal('Saque solicitado com sucesso!');
