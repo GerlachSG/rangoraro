@@ -1582,8 +1582,10 @@ async function createDeliveryOrder(pedidoOriginal, successfulItems) {
 
         const deliveryOrderPayload = {
             userId: user.uid,
+            userEmail: user.email, // Email do usuário para envio de confirmação
             userInfo: {
                 displayName: usuario.displayName,
+                email: user.email, // Email também no userInfo
                 endereco: mainAddress,
                 enderecoAdd: enderecoAdd,
                 valorViagem: valorViagem,

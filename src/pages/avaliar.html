@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Avaliar Entrega - RangoRaro</title>
+    <link rel="icon" href="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo-aba.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --cor-primaria: #d4af37;
+            --cor-secundaria: #f4e4a6;
+            --cor-fundo: #000000;
+            --cor-fundo-secundario: #1a1a1a;
+            --cor-texto: #ffffff;
+            --cor-texto-secundario: #999999;
+            --cor-borda: #333;
+            --cor-verde: #d4af37;
+        }
+
+        body {
+            font-family: 'Jost', sans-serif;
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            color: var(--cor-texto);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--cor-fundo-secundario);
+            border-radius: 0;
+            padding: 40px;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.5);
+            border: 1px solid var(--cor-primaria);
+            text-align: center;
+        }
+
+        .logo {
+            max-width: 150px;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: var(--cor-primaria);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            color: var(--cor-texto-secundario);
+            margin-bottom: 30px;
+            font-size: 1rem;
+        }
+
+        .rating-container {
+            margin: 40px 0;
+        }
+
+        .stars {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .star {
+            font-size: 3rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: #444;
+        }
+
+        .star:hover,
+        .star.active {
+            color: #FFD700;
+            transform: scale(1.2);
+        }
+
+        .comment-section {
+            margin: 30px 0;
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 120px;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid var(--cor-borda);
+            background: var(--cor-fundo);
+            color: var(--cor-texto);
+            font-family: 'Jost', sans-serif;
+            font-size: 1rem;
+            resize: vertical;
+            transition: border-color 0.3s;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: var(--cor-primaria);
+        }
+
+        .btn-submit {
+            background: linear-gradient(135deg, var(--cor-primaria) 0%, var(--cor-secundaria) 100%);
+            color: #000000;
+            border: none;
+            padding: 15px 50px;
+            border-radius: 0;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .btn-submit:hover {
+            background: #000000;
+            color: var(--cor-primaria);
+            border: 1px solid var(--cor-primaria);
+        }
+
+        .btn-submit:disabled {
+            background: #555;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-back {
+            display: inline-block;
+            background-color: transparent;
+            color: var(--cor-primaria);
+            border: 1px solid var(--cor-primaria);
+            padding: 12px 40px;
+            border-radius: 0;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            margin-top: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: all 0.3s ease;
+        }
+
+        .btn-back:hover {
+            background-color: var(--cor-primaria);
+            color: #000000;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .container {
+                padding: 25px 20px;
+            }
+
+            .logo {
+                max-width: 100px;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+                letter-spacing: 1px;
+            }
+
+            .subtitle {
+                font-size: 0.9rem;
+            }
+
+            .stars {
+                gap: 10px;
+            }
+
+            .star {
+                font-size: 2.2rem;
+            }
+
+            textarea {
+                min-height: 100px;
+                font-size: 0.9rem;
+            }
+
+            .btn-submit {
+                padding: 12px 35px;
+                font-size: 0.95rem;
+            }
+
+            .btn-back {
+                padding: 10px 30px;
+                font-size: 0.85rem;
+            }
+        }
+
+        .success-message {
+            display: none;
+            background: var(--cor-verde);
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .success-message.show {
+            display: block;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .error-message {
+            color: #ff4444;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .error-message.show {
+            display: block;
+        }
+
+        .rating-label {
+            color: var(--cor-texto-secundario);
+            font-size: 0.9rem;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo.svg" alt="RangoRaro" class="logo">
+        <h1>Avaliar Entrega</h1>
+        <p class="subtitle">Sua opinião nos ajuda a melhorar cada vez mais!</p>
+
+        <div class="rating-container">
+            <div class="stars" id="stars">
+                <span class="star" data-rating="1">⭐</span>
+                <span class="star" data-rating="2">⭐</span>
+                <span class="star" data-rating="3">⭐</span>
+                <span class="star" data-rating="4">⭐</span>
+                <span class="star" data-rating="5">⭐</span>
+            </div>
+            <p class="rating-label" id="rating-label">Selecione uma avaliação</p>
+        </div>
+
+        <div class="comment-section">
+            <textarea id="comment" placeholder="Deixe um comentário (opcional)..."></textarea>
+        </div>
+
+        <button class="btn-submit" id="submit-btn" disabled>Enviar Avaliação</button>
+
+        <div class="success-message" id="success-message">
+            <h3>✅ Obrigado por Avaliar!</h3>
+            <p>Agradecemos muito pelo seu feedback. Ele é muito importante para nós!</p>
+            <a href="index.html" class="btn-back">Voltar ao RangoRaro</a>
+        </div>
+
+        <div class="error-message" id="error-message">
+            Ocorreu um erro ao enviar sua avaliação. Por favor, tente novamente.
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.7/firebase-firestore-compat.js"></script>
+    <script>
+        // Configuração do Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA2vtEfyZ9y7JUVbjCHFoK2BpvbFVSE4yM",
+            authDomain: "rangoraro-app.firebaseapp.com",
+            projectId: "rangoraro-app",
+            storageBucket: "rangoraro-app.firebasestorage.app",
+            messagingSenderId: "828393845765",
+            appId: "1:828393845765:web:49323f020de4ffb6e2586c"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+
+        // Pega o ID do pedido da URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const orderId = urlParams.get('pedido');
+
+        let selectedRating = 0;
+        const stars = document.querySelectorAll('.star');
+        const submitBtn = document.getElementById('submit-btn');
+        const ratingLabel = document.getElementById('rating-label');
+        const commentTextarea = document.getElementById('comment');
+        const successMessage = document.getElementById('success-message');
+        const errorMessage = document.getElementById('error-message');
+
+        const ratingLabels = {
+            1: 'Muito Ruim 😞',
+            2: 'Ruim 😕',
+            3: 'Regular 😐',
+            4: 'Bom 😊',
+            5: 'Excelente! 🎉'
+        };
+
+        // Event listeners para as estrelas
+        stars.forEach(star => {
+            star.addEventListener('click', () => {
+                selectedRating = parseInt(star.dataset.rating);
+                updateStars();
+                submitBtn.disabled = false;
+            });
+
+            star.addEventListener('mouseenter', () => {
+                const rating = parseInt(star.dataset.rating);
+                highlightStars(rating);
+            });
+
+            star.addEventListener('mouseleave', () => {
+                updateStars();
+            });
+        });
+
+        function highlightStars(rating) {
+            stars.forEach(star => {
+                const starRating = parseInt(star.dataset.rating);
+                if (starRating <= rating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+            ratingLabel.textContent = ratingLabels[rating] || 'Selecione uma avaliação';
+        }
+
+        function updateStars() {
+            stars.forEach(star => {
+                const starRating = parseInt(star.dataset.rating);
+                if (starRating <= selectedRating) {
+                    star.classList.add('active');
+                } else {
+                    star.classList.remove('active');
+                }
+            });
+            if (selectedRating > 0) {
+                ratingLabel.textContent = ratingLabels[selectedRating];
+            } else {
+                ratingLabel.textContent = 'Selecione uma avaliação';
+            }
+        }
+
+        // Enviar avaliação
+        submitBtn.addEventListener('click', async () => {
+            if (selectedRating === 0) {
+                alert('Por favor, selecione uma avaliação.');
+                return;
+            }
+
+            if (!orderId) {
+                alert('ID do pedido não encontrado na URL.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Enviando...';
+
+            try {
+                // Salva a avaliação no Firebase
+                await db.collection('avaliacoes').doc(orderId).set({
+                    orderId: orderId,
+                    rating: selectedRating,
+                    comment: commentTextarea.value.trim(),
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    fonte: 'email'
+                });
+
+                // Mostra mensagem de sucesso
+                successMessage.classList.add('show');
+                document.querySelector('.rating-container').style.display = 'none';
+                document.querySelector('.comment-section').style.display = 'none';
+                submitBtn.style.display = 'none';
+
+            } catch (error) {
+                console.error('Erro ao enviar avaliação:', error);
+                errorMessage.classList.add('show');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Enviar Avaliação';
+            }
+        });
+
+        // Verifica se há um ID de pedido válido
+        if (!orderId) {
+            document.querySelector('.container').innerHTML = `
+                <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo.svg" alt="RangoRaro" class="logo">
+                <h1>Link inválido</h1>
+                <p class="subtitle">O ID do pedido não foi encontrado na URL.</p>
+                <a href="index.html" class="btn-submit" style="display: inline-block; text-decoration: none; margin-top: 20px;">Voltar para a Home</a>
+            `;
+        }
+    </script>
+</body>
+</html>

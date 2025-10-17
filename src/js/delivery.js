@@ -606,6 +606,24 @@ document.addEventListener("DOMContentLoaded", () => {
             batch.update(userRef, { status: "aguardando-ordem" });
             await batch.commit();
             passedOrderIds.clear();
+            
+            // Envia email de confirmação de entrega
+            if (typeof sendDeliveryConfirmationEmail === 'function' && order.userInfo) {
+                const recipientEmail = order.userInfo.email || order.userEmail;
+                const recipientName = order.userInfo.displayName || 'Cliente';
+                
+                if (recipientEmail) {
+                    console.log('Enviando email de confirmação para:', recipientEmail);
+                    const emailSent = await sendDeliveryConfirmationEmail(order, recipientEmail, recipientName);
+                    if (emailSent) {
+                        console.log('Email de confirmação enviado com sucesso!');
+                    } else {
+                        console.warn('Falha ao enviar email de confirmação.');
+                    }
+                } else {
+                    console.warn('Email do destinatário não encontrado. Email não enviado.');
+                }
+            }
         } catch (error) { console.error("Erro ao finalizar entrega:", error); alert("Não foi possível finalizar a entrega."); }
     }
 

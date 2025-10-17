@@ -193,16 +193,20 @@ function openMyOrdersModal(user) {
     document.getElementById('delivered-orders-view').innerHTML = '<div class="loading-spinner" style="margin: auto;"></div>';
 
     const inProgressUnsub = db.collection('pedidos').where('userId', '==', user.uid)
-        .orderBy('createdAt', 'desc')
         .onSnapshot(async (snapshot) => {
-            const inProgressOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const inProgressOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
             const entregadorIds = [...new Set(inProgressOrders.map(o => o.entregadorId).filter(id => id))];
             const entregadorLocations = {};
             if (entregadorIds.length > 0) {
-                const entregadoresDocs = await Promise.all(entregadorIds.map(id => db.collection('users').doc(id).get()));
-                entregadoresDocs.forEach(doc => {
-                    if (doc.exists) entregadorLocations[doc.id] = doc.data()['endereco-atual'] || 'Localização indisponível';
-                });
+                try {
+                    const entregadoresDocs = await Promise.all(entregadorIds.map(id => db.collection('users').doc(id).get()));
+                    entregadoresDocs.forEach(doc => {
+                        if (doc.exists) entregadorLocations[doc.id] = doc.data()['endereco-atual'] || 'Localização indisponível';
+                    });
+                } catch (error) {
+                    console.warn('Não foi possível carregar dados dos entregadores:', error);
+                }
             }
             renderOrderList(document.getElementById('inprogress-orders-view'), inProgressOrders, entregadorLocations, 'Você não tem pedidos em andamento.');
         }, error => {
@@ -210,9 +214,10 @@ function openMyOrdersModal(user) {
             document.getElementById('inprogress-orders-view').innerHTML = '<p class="placeholder-text">Erro ao carregar pedidos.</p>';
         });
 
-    const deliveredUnsub = db.collection('pedidos-entregues').where('userId', '==', user.uid).orderBy('horaEntrega', 'desc').limit(10)
+    const deliveredUnsub = db.collection('pedidos-entregues').where('userId', '==', user.uid).limit(10)
         .onSnapshot((snapshot) => {
-            const deliveredOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            const deliveredOrders = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+                .sort((a, b) => (b.horaEntrega?.toMillis() || 0) - (a.horaEntrega?.toMillis() || 0));
             renderOrderList(document.getElementById('delivered-orders-view'), deliveredOrders, {}, 'Você não tem pedidos entregues.');
         }, error => {
             console.error("Erro no listener de pedidos entregues:", error);

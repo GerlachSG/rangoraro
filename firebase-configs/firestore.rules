@@ -69,8 +69,8 @@ service cloud.firestore {
           resource.data.entregadorId == request.auth.uid
         ))
       );
-      // Permitir que suporte e admin façam queries (list)
-      allow list: if isAdmin() || isSupport();
+      // Permitir que usuários listem seus próprios pedidos, além de admin/suporte
+      allow list: if isLogged();
       allow delete: if isLogged() && (
         isAdmin() || isSupport() || (isEntregador() && resource.data.entregadorId == request.auth.uid)
       );
@@ -87,6 +87,8 @@ service cloud.firestore {
         (isEntregador() && resource.data.entregadorId == request.auth.uid) ||
         resource.data.userId == request.auth.uid
       );
+      // Permitir que usuários listem seus próprios pedidos entregues
+      allow list: if isLogged();
       allow update, delete: if isAdmin() || isSupport();
     }
 
@@ -94,8 +96,8 @@ service cloud.firestore {
     match /users/{userId} {
       allow create: if isOwner(userId);
 
-      // Admin e Suporte podem ler qualquer usuário; usuário comum só o próprio
-      allow read: if isAdmin() || isSupport() || isOwner(userId);
+      // Admin e Suporte podem ler qualquer usuário; usuário comum pode ler próprio e entregadores
+      allow read: if isAdmin() || isSupport() || isOwner(userId) || (isLogged() && get(/databases/$(database)/documents/users/$(userId)).data.role == 'entregador');
 
       // Permite que o próprio usuário atualize seus dados (incluindo xp, level, etc)
       allow update: if isOwner(userId) || isAdmin() || isSupport();
@@ -145,6 +147,16 @@ service cloud.firestore {
     match /{anyPath=**}/carrinho/{itemId} {
       allow read: if isAdmin();
       // Escrita continua restrita somente via /users/{userId}/carrinho nas regras acima
+    }
+
+    /* ==================== AVALIAÇÕES ==================== */
+    match /avaliacoes/{avaliacaoId} {
+      // Qualquer usuário logado pode criar avaliação
+      allow create: if isLogged();
+      // Admin e suporte podem ler todas as avaliações
+      allow read: if isAdmin() || isSupport();
+      // Admin pode atualizar/deletar
+      allow update, delete: if isAdmin();
     }
 
     /* ==================== HELP / OUTRAS ==================== */

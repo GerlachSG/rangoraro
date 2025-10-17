@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview do Email - RangoRaro</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 40px 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+        }
+        .preview-header {
+            max-width: 650px;
+            margin: 0 auto 30px;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%);
+            padding: 25px;
+            text-align: center;
+            border: 1px solid #d4af37;
+        }
+        .preview-header h1 {
+            color: #000;
+            margin: 0 0 10px 0;
+            font-weight: 300;
+            letter-spacing: 2px;
+            font-size: 20px;
+            text-transform: uppercase;
+        }
+        .preview-header p {
+            color: #333;
+            margin: 0;
+            font-size: 13px;
+            font-weight: 300;
+        }
+        /* Estilos do email luxuoso */
+        .email-container {
+            max-width: 650px;
+            margin: 0 auto;
+            background: linear-gradient(to bottom, #ffffff 0%, #fafafa 100%);
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: 0 25px 70px rgba(0,0,0,0.5);
+        }
+        .email-header {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 50%, #000000 100%);
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .logo {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 15px;
+            filter: brightness(0) invert(1) drop-shadow(0 0 15px rgba(212, 175, 55, 0.4));
+            position: relative;
+            z-index: 1;
+        }
+        .email-header h1 {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 50%, #d4af37 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+            font-size: 24px;
+            font-weight: 300;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+        }
+        .email-body {
+            padding: 30px 20px;
+            background: #ffffff;
+        }
+        .greeting {
+            font-size: 18px;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+        .greeting strong {
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 500;
+        }
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%);
+            color: #000;
+            padding: 6px 18px;
+            border-radius: 2px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-bottom: 35px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            box-shadow: 0 2px 10px rgba(212, 175, 55, 0.3);
+        }
+        .message {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 40px;
+            font-weight: 300;
+        }
+        .items-section {
+            background: #fafafa;
+            border-radius: 0;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-left: 3px solid #d4af37;
+        }
+        .items-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: #666;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+        .item {
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+            margin-bottom: 0;
+            background: transparent;
+            border-radius: 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .item:hover {
+            background: rgba(212, 175, 55, 0.02);
+        }
+        .item:last-child {
+            border-bottom: none;
+        }
+        .item-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 50%;
+            margin-right: 20px;
+            background-color: #fff;
+            border: 2px solid #e0e0e0;
+        }
+        .item-info {
+            flex: 1;
+        }
+        .item-name {
+            font-weight: 500;
+            color: #1a1a1a;
+            font-size: 15px;
+            margin-bottom: 5px;
+        }
+        .item-store {
+            font-size: 12px;
+            color: #999;
+            font-weight: 300;
+        }
+        .item-value {
+            font-size: 16px;
+            font-weight: 400;
+            color: #1a1a1a;
+            white-space: nowrap;
+        }
+        .summary-section {
+            background: linear-gradient(135deg, #000000 0%, #1a1a1a 100%);
+            border-radius: 0;
+            padding: 25px 20px;
+            margin-bottom: 30px;
+            color: white;
+        }
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: none;
+        }
+        .summary-row:first-child {
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+        .summary-row:last-child {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 2px solid #d4af37;
+        }
+        .summary-label {
+            font-size: 13px;
+            font-weight: 300;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: #999;
+        }
+        .summary-row:last-child .summary-label {
+            font-weight: 700;
+            color: #fff;
+        }
+        .summary-value {
+            font-size: 16px;
+            font-weight: 400;
+            color: #fff;
+        }
+        .summary-total {
+            font-size: 28px !important;
+            font-weight: 700 !important;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: 1px;
+        }
+        .delivery-free {
+            background: transparent;
+            color: #d4af37;
+            padding: 0;
+            border-radius: 0;
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #d4af37 0%, #f4e4a6 100%);
+            color: #000000 !important;
+            text-decoration: none;
+            padding: 16px 50px;
+            border-radius: 0;
+            font-weight: 500;
+            font-size: 13px;
+            text-align: center;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            transition: all 0.3s;
+            border: 1px solid #d4af37;
+        }
+        .cta-button:hover {
+            background: #000;
+            color: #d4af37 !important;
+        }
+        .cta-container {
+            text-align: center;
+            margin: 40px 0;
+        }
+        .email-footer {
+            background-color: #1a1a1a;
+            color: #999999;
+            padding: 30px 20px;
+            text-align: center;
+            font-size: 11px;
+            border-top: 2px solid #d4af37;
+        }
+        .email-footer p {
+            margin: 0;
+            font-weight: 300;
+            letter-spacing: 1px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="preview-header">
+        <h1>📧 Preview do Email de Confirmação de Entrega</h1>
+        <p>Este é um exemplo de como o email ficará para os clientes</p>
+    </div>
+
+    <div class="email-container">
+        <div class="email-header">
+            <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo.svg" alt="RangoRaro Logo" class="logo">
+            <h1>Pedido Entregue</h1>
+        </div>
+        
+        <div class="email-body">
+            <p class="greeting">Olá, <strong>João Silva</strong>!</p>
+            
+            <span class="badge">✓ Entrega Concluída</span>
+            
+            <p class="message">
+                Seu pedido foi entregue com sucesso! Esperamos que você aproveite sua refeição deliciosa. 
+                Sua opinião é muito importante para continuarmos melhorando nosso serviço.
+            </p>
+            
+            <div class="items-section">
+                <div class="items-title">Seus Itens</div>
+                
+                <div class="item">
+                    <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo-aba.svg" alt="Pizza Margherita" class="item-image">
+                    <div class="item-info">
+                        <div class="item-name">Pizza Margherita Grande</div>
+                        <div class="item-store">Pizzaria Bella</div>
+                    </div>
+                    <div class="item-value">R$ 45,00</div>
+                </div>
+                
+                <div class="item">
+                    <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo-aba.svg" alt="Refrigerante" class="item-image">
+                    <div class="item-info">
+                        <div class="item-name">Refrigerante 2L</div>
+                        <div class="item-store">Mercado Central</div>
+                    </div>
+                    <div class="item-value">R$ 12,50</div>
+                </div>
+                
+                <div class="item">
+                    <img src="https://cdn.jsdelivr.net/gh/eduardoamjunior/cdn-rangoraro@main/icon/logo-aba.svg" alt="Sobremesa" class="item-image">
+                    <div class="item-info">
+                        <div class="item-name">Brownie de Chocolate</div>
+                        <div class="item-store">Doceria Doce Mel</div>
+                    </div>
+                    <div class="item-value">R$ 10,00</div>
+                </div>
+            </div>
+            
+            <div class="summary-section">
+                <div class="summary-row">
+                    <span class="summary-label">Subtotal dos Itens</span>
+                    <span class="summary-value">R$ 67,50</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Taxa de Entrega</span>
+                    <span class="delivery-free">GRÁTIS</span>
+                </div>
+                <div class="summary-row">
+                    <span class="summary-label">Total</span>
+                    <span class="summary-total">R$ 67,50</span>
+                </div>
+            </div>
+            
+            <div class="cta-container">
+                <a href="#" class="cta-button">
+                    Avaliar o Serviço
+                </a>
+            </div>
+            
+            <p class="message">
+                Obrigado por escolher o RangoRaro. Estamos sempre trabalhando para elevar sua experiência.
+            </p>
+        </div>
+        
+        <div class="email-footer">
+            <p>&copy; 2025 RangoRaro. Todos os direitos reservados.</p>
+        </div>
+    </div>
+
+    <div class="preview-header" style="margin-top: 40px;">
+        <p><strong>💡 Dica:</strong> Este é apenas um preview. O email real será enviado via Brevo quando uma entrega for concluída.</p>
+    </div>
+</body>
+</html>
