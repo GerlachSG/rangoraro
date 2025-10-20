@@ -413,12 +413,6 @@ async function sellSelectedItems() {
         await batch.commit();
 
         selectedItems.clear();
-
-        try {
-            if (window.confetti) {
-                confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
-            }
-        } catch (e) { /* ignore */ }
         
         try {
             const balanceEl = document.querySelector('.header-right .balance');
@@ -879,6 +873,8 @@ async function confirmWithdraw() {
     const totalValue = itemsToWithdraw.reduce((sum, item) => sum + item.price, 0);
 
     try {
+        // Garante que o modal de loading existe antes de usá-lo
+        ensureDeliveryModals();
         showLoadingModal('Processando saque...');
 
         // Registra a transação no Firebase como type='withdraw' para aparecer no admin
@@ -910,7 +906,7 @@ async function confirmWithdraw() {
         selectedItems.clear();
 
         // Envia email de confirmação de saque
-        console.log('📧 Tentando enviar email de saque...');
+        
         if (typeof sendWithdrawConfirmationEmail === 'function') {
             const withdrawData = {
                 id: transacaoRef.id,
@@ -945,12 +941,6 @@ async function confirmWithdraw() {
 
         showSuccessAndHideModal('Saque solicitado com sucesso!');
         closeModal('.withdraw-modal-overlay');
-
-        try {
-            if (window.confetti) {
-                confetti({ particleCount: 80, spread: 80, origin: { y: 0.6 } });
-            }
-        } catch (e) { /* ignore */ }
 
     } catch (error) {
         hideLoadingModal();
@@ -1372,7 +1362,7 @@ function openAddressModal(user, selected, enderecoDocRef) {
 // Configura toda a validação e lógica de autocompletar do formulário de endereço.
 function setupAddressFormValidation() {
     // Tipos de logradouro comuns
-    const tiposLogradouro = ['Rua', 'Avenida', 'Travessa', 'Praça', 'Alameda', 'Estrada', 'Rodovia', 'Via', 'Largo', 'Vila', 'Conjunto', 'Quadra', 'Setor', 'Residencial', 'Parque', 'Jardim'];
+    const tiposLogradouro = ['Rua', 'Avenida', 'Travessa', 'Praça', 'Alameda', 'Estrada', 'Rodovia', 'Via', 'Largo', 'Vila', 'Conjunto', 'Quadra', 'Setor', 'Residencial'];
     function autocompleteTipoRua(rua) {
         rua = rua.trim();
         // Se já começa com um tipo, retorna como está
@@ -1893,7 +1883,7 @@ async function onOptionsConfirm() {
         usuario: {
             displayName: user.displayName || user.email,
             photoUrl: user.photoURL,
-            horario: now.toLocaleString(),
+            horario: now.toLocaleString('pt-BR', { hour: '2-digit', minute: '2-digit', hour12: false }),
             endereco: formattedAddress,
             cidade: addressData.cidade,
             complemento: addressData.complemento,
@@ -1980,15 +1970,9 @@ async function geocodeAddressesInParallel(addresses) {
 function calculateNearestNeighborRoute(waypoints) {
     if (waypoints.length === 0) return 0;
     
-    // LOG:
-    console.log("--- Calculando rota do Vizinho Mais Próximo ---");
-
     let unvisited = [...waypoints];
     let currentNode = unvisited.shift(); 
     let totalDistance = 0;
-
-    // LOG:
-    console.log(`📍 Ponto de partida: ${currentNode.address}`);
 
     while (unvisited.length > 0) {
         let nearestIndex = -1;
@@ -2004,16 +1988,9 @@ function calculateNearestNeighborRoute(waypoints) {
 
         if (nearestIndex > -1) {
             const nextNode = unvisited[nearestIndex];
-            // LOG:
-            console.log(`  -> Próximo trecho: De "${currentNode.address}" para "${nextNode.address}"`);
-            console.log(`     Distância do trecho: ${minDistance.toFixed(2)} km`);
-
             totalDistance += minDistance;
             currentNode = nextNode;
             unvisited.splice(nearestIndex, 1);
-
-            // LOG:
-            console.log(`     Distância acumulada: ${totalDistance.toFixed(2)} km`);
         } else {
             break;
         }

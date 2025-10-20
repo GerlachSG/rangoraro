@@ -267,8 +267,6 @@ document.addEventListener("DOMContentLoaded", () => {
             if(totalWithdrawalsCard) totalWithdrawalsCard.textContent = formatBRL(withdrawals); 
             if(bd.withdrawals) bd.withdrawals.textContent = '- ' + formatBRL(withdrawals); 
             
-            console.log(`💰 Total de saques no período: ${formatBRL(withdrawals)} (${withdrawalsList.length} transações)`);
-            
             recomputeProfit();
         });
         unsubscribers.push(()=>{ if(withdrawalsUnsub) withdrawalsUnsub(); });
@@ -351,9 +349,6 @@ document.addEventListener("DOMContentLoaded", () => {
         // entregues para tempo médio e custos - COM FILTRO DE DATA
         const qDelivered = db.collection('pedidos-entregues').where('horaEntrega','>=',startDate);
         const unsubD = qDelivered.onSnapshot(snap=>{
-            console.log('=== SNAPSHOT PEDIDOS ENTREGUES (FILTRADO) ===');
-            console.log('Total de documentos:', snap.size);
-            console.log('Período desde:', new Date(startDate.seconds * 1000));
             let totalDur=0, count=0; let totalTravelPayout=0; let deliveryCostPeriod=0; 
             
             // Buscar avaliações para calcular média
@@ -361,7 +356,6 @@ document.addEventListener("DOMContentLoaded", () => {
             snap.forEach(d=>{ 
                 const o=d.data();
                 orderIds.push(d.id);
-                console.log('Doc:', d.id, 'horaEntrega:', o.horaEntrega?.toDate(), 'valorViagem:', o.userInfo?.valorViagem);
                 
                 if(o.horaAceito?.toMillis && o.horaEntrega?.toMillis){ 
                     totalDur += (o.horaEntrega.toMillis()-o.horaAceito.toMillis()); 
@@ -373,7 +367,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 // PAGO A ENTREGADORES: valorViagem está dentro de userInfo!
                 const custoViagem = o.userInfo?.valorViagem || 0;
                 if(custoViagem > 0) {
-                    console.log('  ✅ Adicionando valorViagem:', custoViagem);
                 }
                 totalTravelPayout += custoViagem;
                 
@@ -384,11 +377,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 }
                 deliveryCostPeriod += (custoViagem + somaItens);
             });
-            
-            console.log('📊 Total Pago a Entregadores:', totalTravelPayout);
-            console.log('📊 Total Custos (Viagem+Itens):', deliveryCostPeriod);
-            console.log('📊 Pedidos no período:', count);
-            console.log('Total Custos (Viagem+Itens):', deliveryCostPeriod);
             
             // Atualiza valores globais
             totalDeliveryCost = deliveryCostPeriod;

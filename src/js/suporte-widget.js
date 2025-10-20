@@ -59,7 +59,7 @@ if (!window.RangoSupportWidget) {
                 querySnapshot.forEach(doc => { const c = doc.data(); html += `<div class="collection-item" data-id="${doc.id}" data-title="${c.title}"><div><strong>${c.title}</strong><small>${c.description}</small></div><span>❯</span></div>`; });
                 container.innerHTML = html + '</div>';
                 container.querySelectorAll('.collection-item').forEach(item => item.onclick = () => this.navigateTo('articles', { title: item.dataset.title, collectionId: item.dataset.id }));
-            } catch (e) { container.innerHTML = 'Erro ao carregar tópicos de ajuda.'; console.error(e); }
+            } catch (e) { container.innerHTML = 'Erro ao carregar tópicos de ajuda.'; }
         },
         renderArticlesView: async function(container, data) {
             try {
@@ -69,13 +69,13 @@ if (!window.RangoSupportWidget) {
                 snapshot.forEach(doc => html += `<div class="article-item" data-id="${doc.id}" data-title="${doc.data().title}">${doc.data().title}</div>`);
                 container.innerHTML = html + '</div>';
                 container.querySelectorAll('.article-item').forEach(item => item.onclick = () => this.navigateTo('article', { title: item.dataset.title, collectionId: data.collectionId, articleId: item.dataset.id }));
-            } catch (e) { container.innerHTML = 'Erro ao carregar artigos.'; console.error(e); }
+            } catch (e) { container.innerHTML = 'Erro ao carregar artigos.'; }
         },
         renderArticleView: async function(container, data) {
             try {
                 const doc = await db.collection('help_collections').doc(data.collectionId).collection('articles').doc(data.articleId).get();
                 container.innerHTML = doc.exists ? `<div class="article-content">${doc.data().content}</div>` : 'Artigo não encontrado.';
-            } catch (e) { container.innerHTML = 'Erro ao carregar artigo.'; console.error(e); }
+            } catch (e) { container.innerHTML = 'Erro ao carregar artigo.'; }
         },
         formatDate: function(timestamp) {
             if (!timestamp) return '';
@@ -179,11 +179,9 @@ if (!window.RangoSupportWidget) {
             } catch (e) {
                 // Se erro de permissão, tentar buscar via localStorage como fallback
                 if (e.code === 'permission-denied') {
-                    console.log('Usando fallback via localStorage');
                     this.renderMessagesViewFallback(container);
                 } else {
                     container.innerHTML = 'Ocorreu um erro ao carregar suas conversas.';
-                    console.error("Erro em renderMessagesView:", e);
                 }
             }
         },
@@ -439,6 +437,37 @@ if (!window.RangoSupportWidget) {
                                 inputArea.style.display = 'none';
                                 if (!hasRated) {
                                     ratingArea.style.display = 'block';
+                                    
+                                    // Re-configurar estrelas
+                                    stars.forEach(star => {
+                                        star.onclick = async () => {
+                                            if (hasRated) return;
+                                            const rating = parseInt(star.dataset.rating);
+                                            
+                                            stars.forEach((s, idx) => {
+                                                if (idx < rating) {
+                                                    s.textContent = '★';
+                                                    s.classList.add('filled');
+                                                }
+                                            });
+                                            
+                                            try {
+                                                await db.collection('support_chats').doc(data.chatId).update({
+                                                    rating: rating,
+                                                    ratedAt: firebase.firestore.FieldValue.serverTimestamp()
+                                                });
+                                                
+                                                hasRated = true;
+                                                document.getElementById('rating-feedback').style.display = 'block';
+                                                
+                                                setTimeout(() => {
+                                                    ratingArea.style.display = 'none';
+                                                }, 2000);
+                                            } catch (e) {
+                                                console.error('Erro ao salvar avaliação:', e);
+                                            }
+                                        };
+                                    });
                                 }
                             } else {
                                 msgDiv.className = `chat-message ${msg.senderId === this.currentUser.uid ? 'sent' : 'received'}`;

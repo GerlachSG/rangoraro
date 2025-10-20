@@ -54,7 +54,6 @@ const XPSystem = {
             const userDoc = await userRef.get();
             
             if (!userDoc.exists) {
-                console.error('Usuário não encontrado');
                 return null;
             }
 
@@ -86,8 +85,6 @@ const XPSystem = {
                 newLevel: levelData.level
             });
 
-            console.log(`✨ +${xpAmount} XP (${reason})`);
-
             return {
                 leveledUp,
                 oldLevel: currentLevel,
@@ -98,7 +95,6 @@ const XPSystem = {
             };
 
         } catch (error) {
-            console.error('Erro ao adicionar XP:', error);
             return null;
         }
     },

@@ -83,7 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
     auth.onAuthStateChanged((user) => {
         if (user) {
             user.getIdTokenResult(true).then((idTokenResult) => {
-                console.log('Claims do usuário:', idTokenResult.claims); // Log para debug
                 if (idTokenResult.claims.support) {
                     currentUser = user;
                     authScreen.style.display = 'none';
@@ -93,7 +92,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     startActivityTimer(); // Iniciar timer quando logar
                     loadOpenChats();
                 } else {
-                    console.error('Usuário não tem claim de suporte:', user.uid); // Log para debug
                     alert('Acesso negado. Apenas para a equipe de suporte.');
                     logout();
                 }

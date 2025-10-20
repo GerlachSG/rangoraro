@@ -10,9 +10,7 @@
  */
 async function sendDeliveryConfirmationEmail(orderData, recipientEmail, recipientName) {
     try {
-        console.log('📧 Enviando email via Firebase Function...');
-        console.log('📦 Pedido:', orderData.id);
-        console.log('👤 Destinatário:', recipientEmail);
+        
 
         const user = firebase.auth().currentUser;
         
@@ -47,7 +45,7 @@ async function sendDeliveryConfirmationEmail(orderData, recipientEmail, recipien
         }
 
         const result = await response.json();
-        console.log('✅ Email enviado com sucesso!', result);
+        
         return true;
 
     } catch (error) {
@@ -65,9 +63,7 @@ async function sendDeliveryConfirmationEmail(orderData, recipientEmail, recipien
  */
 async function sendWithdrawConfirmationEmail(withdrawData, recipientEmail, recipientName) {
     try {
-        console.log('💰 Enviando email de confirmação de saque...');
-        console.log('📧 Destinatário:', recipientEmail);
-        console.log('💵 Valor:', withdrawData.valor);
+        
 
         const user = firebase.auth().currentUser;
         
@@ -91,7 +87,7 @@ async function sendWithdrawConfirmationEmail(withdrawData, recipientEmail, recip
             attempts: 0
         });
 
-        console.log('📝 Saque registrado para envio de email (ID:', emailQueueRef.id, ')');
+
 
         // Tenta enviar via Cloud Function (opcional - não bloqueia se falhar)
         try {
@@ -118,7 +114,6 @@ async function sendWithdrawConfirmationEmail(withdrawData, recipientEmail, recip
 
             if (response.ok) {
                 const result = await response.json();
-                console.log('✅ Email de saque enviado com sucesso via Cloud Function!', result);
                 
                 // Marca como enviado na fila
                 await emailQueueRef.update({ 

@@ -79,7 +79,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clientSeedInputElement) {
         clientSeedInputElement.addEventListener('change', () => {
             clientSeed = clientSeedInputElement.value;
-            console.log("Semente do cliente atualizada. Uma nova semente do servidor será gerada para o próximo giro.");
             setupProvablyFair(); 
         });
     }
@@ -330,9 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             imagem: pacoteAtual.imagemUrl, // Campo correto é imagemUrl
                             preco: pacoteAtual.preco
                         } : null;
-                        
-                        console.log('🎁 Registrando ganho com pacote:', packageInfo); // DEBUG
-                        
+
                         registrarGanho(
                             {
                                 id: itemFinal.id,
@@ -442,7 +439,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     });
                 });
 
-                console.log(`Saldo debitado: R$ ${price} do usuário ${auth.currentUser.uid}`);
             } catch (err) {
                 if (err && err.message === 'INSUFFICIENT_BALANCE') {
                     console.warn('Saldo insuficiente para abrir o pacote');
