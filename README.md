@@ -3,8 +3,8 @@
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0F172A,50:312E81,100:E11D48&height=210&section=header&text=Eduardo%20Augusto%20Miranda%20Junior&fontSize=34&fontColor=ffffff&fontAlignY=38&desc=AI%20%26%20Software%20Developer%20%7C%20UI%2FUX%20%26%203D%20Designer&descSize=16&descAlignY=58&animation=fadeIn" width="100%" />
 
 <p>
-  <a href="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=A855F7&center=true&vCenter=true&width=680&lines=Construindo+produtos+na+intersec%C3%A7%C3%A3o+entre+IA%2C+C%C3%B3digo+e+Design;Agentes+de+IA+%E2%80%A2+Full-Stack+Web%2FMobile+%E2%80%A2+UI%2FUX+%26+3D;Do+prot%C3%B3tipo+no+Figma+%C3%A0+arquitetura+em+nuvem">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=A855F7&center=true&vCenter=true&width=680&lines=Construindo+produtos+na+intersec%C3%A7%C3%A3o+entre+IA%2C+C%C3%B3digo+e+Design;Agentes+de+IA+%E2%80%A2+Full-Stack+Web%2FMobile+%E2%80%A2+UI%2FUX+%26+3D;Do+prot%C3%B3tipo+no+Figma+%C3%A0+arquitetura+em+nuvem" alt="Typing SVG" />
+  <a href="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=A855F7&center=true&vCenter=true&width=680&lines=Construindo+produtos+na+intersec%C3%A7%C3%A3o+entre+IA%2C+C%C3%B3digo+e+Design;Agentes+de+IA+%E2%80%A2+Desenvolvimento+Web+%E2%80%A2+UI%2FUX+%26+3D;Do+prot%C3%B3tipo+no+Figma+%C3%A0+arquitetura+em+nuvem">
+    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=A855F7&center=true&vCenter=true&width=680&lines=Construindo+produtos+na+intersec%C3%A7%C3%A3o+entre+IA%2C+C%C3%B3digo+e+Design;Agentes+de+IA+%E2%80%A2+Desenvolvimento+Web+%E2%80%A2+UI%2FUX+%26+3D;Do+prot%C3%B3tipo+no+Figma+%C3%A0+arquitetura+em+nuvem" alt="Typing SVG" />
   </a>
 </p>
 
@@ -27,7 +27,7 @@
 <h2>Sobre Mim</h2>
 
 <blockquote>
-  Profissional multidisciplinar atuando na intersecção entre <strong>Inteligência Artificial</strong>, <strong>Desenvolvimento de Sistemas</strong> e <strong>Design (UI/UX e 3D)</strong> — especializado em traduzir requisitos técnicos em produtos completos, unindo performance de software e acabamento visual.
+  Profissional multidisciplinar atuando na intersecção entre <strong>Inteligência Artificial</strong>, <strong>Desenvolvimento Web</strong> e <strong>Design (UI/UX e 3D)</strong> — especializado em traduzir requisitos técnicos em produtos completos, unindo lógica, automação e acabamento visual.
 </blockquote>
 
 <table>
@@ -36,8 +36,8 @@
       <h4>Atuação &amp; Experiência</h4>
       <ul>
         <li><strong>AI Quality Analyst — Turing:</strong> Refinamento, avaliação lógica e fine-tuning de LLMs em português.</li>
-        <li><strong>Instrutor de Robótica — Instituto Alpha Lumen:</strong> Ensino de programação, eletrônica e sistemas embarcados.</li>
-        <li><strong>Dev &amp; Infraestrutura — SENAI:</strong> Desenvolvimento web e gestão de ambientes computacionais.</li>
+        <li><strong>Instrutor de Robótica — Instituto Alpha Lumen:</strong> Ensino de lógica de programação, eletrônica e robótica educacional.</li>
+        <li><strong>Dev &amp; Infraestrutura — SENAI:</strong> Desenvolvimento front-end (HTML/CSS) e gestão de ambientes computacionais.</li>
       </ul>
     </td>
     <td width="50%" valign="top">
@@ -80,7 +80,7 @@
         <img src="https://img.shields.io/badge/AI_Agents-18181B?style=flat-square&logo=openai&logoColor=white" alt="AI" />
         <br /><br />
         <a href="https://github.com/GerlachSG/lanne.ai">
-          <img src="https://img.shields.io/badge/Ver_Reposit%C3%B3rio-312E81?style=for-the-badge&logo=github&logoColor=white" alt="Repo Lanne" />
+          <img src="https://img.shields.io/badge/REPOSIT%C3%93RIO-312E81?style=for-the-badge&logo=github&logoColor=white" height="32" alt="Repo Lanne" />
         </a>
       </div>
     </td>
@@ -98,15 +98,15 @@
         <li>Design completo no Figma, animações 3D em CSS, Firebase Auth/Firestore e CDN.</li>
       </ul>
       <div align="center">
-        <img src="https://img.shields.io/badge/JavaScript-18181B?style=flat-square&logo=javascript&logoColor=F7DF1E" alt="JS" />
-        <img src="https://img.shields.io/badge/Firebase-18181B?style=flat-square&logo=firebase&logoColor=FFCA28" alt="Firebase" />
+        <img src="https://img.shields.io/badge/HTML5_%26_CSS3-18181B?style=flat-square&logo=html5&logoColor=E34F26" alt="HTML/CSS" />
+        <img src="https://img.shields.io/badge/Python-18181B?style=flat-square&logo=python&logoColor=3776AB" alt="Python" />
         <img src="https://img.shields.io/badge/Figma-18181B?style=flat-square&logo=figma&logoColor=F24E1E" alt="Figma" />
         <br /><br />
         <a href="https://github.com/GerlachSG/rangoraro">
-          <img src="https://img.shields.io/badge/C%C3%B3digo-18181B?style=for-the-badge&logo=github&logoColor=white" alt="Repo Rango Raro" />
+          <img src="https://img.shields.io/badge/REPOSIT%C3%93RIO-312E81?style=for-the-badge&logo=github&logoColor=white" height="32" alt="Repo Rango Raro" />
         </a>
         <a href="https://gerlachsg.github.io/rangoraro/src/pages/index">
-          <img src="https://img.shields.io/badge/Demo-FF5722?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Demo Rango Raro" />
+          <img src="https://img.shields.io/badge/DEMO_AO_VIVO-E11D48?style=for-the-badge&logo=googlechrome&logoColor=white" height="32" alt="Demo Rango Raro" />
         </a>
       </div>
     </td>
@@ -121,15 +121,15 @@
       </p>
       <ul>
         <li>Controle rigoroso de validade (FEFO) via leitura de código de barras e alertas automatizados.</li>
-        <li>Integração multi-agente com LLMs, n8n, bancos NoSQL e telemetria IoT.</li>
+        <li>Protótipo de interface no Figma, automação com n8n, LLMs e telemetria IoT.</li>
       </ul>
       <div align="center">
-        <img src="https://img.shields.io/badge/React_Native-18181B?style=flat-square&logo=react&logoColor=61DAFB" alt="React" />
+        <img src="https://img.shields.io/badge/Figma-18181B?style=flat-square&logo=figma&logoColor=F24E1E" alt="Figma" />
         <img src="https://img.shields.io/badge/Azure-18181B?style=flat-square&logo=microsoftazure&logoColor=0078D4" alt="Azure" />
         <img src="https://img.shields.io/badge/IoT_%26_n8n-18181B?style=flat-square&logo=n8n&logoColor=EA4B71" alt="IoT" />
         <br /><br />
         <a href="https://github.com/GerlachSG/GestaoEstoquePanificadora-IHM-IOT">
-          <img src="https://img.shields.io/badge/Ver_Reposit%C3%B3rio-0F172A?style=for-the-badge&logo=github&logoColor=white" alt="Repo GesPão" />
+          <img src="https://img.shields.io/badge/REPOSIT%C3%93RIO-312E81?style=for-the-badge&logo=github&logoColor=white" height="32" alt="Repo GesPão" />
         </a>
       </div>
     </td>
@@ -141,7 +141,7 @@
 <h2>Stack &amp; Ecossistema Técnico</h2>
 
 <div align="center">
-  <img src="https://skillicons.dev/icons?i=python,js,ts,react,nodejs,html,css,cpp,firebase,azure,gcp,aws,linux,git,figma,blender,unreal&perline=9" alt="Tech Stack" />
+  <img src="https://skillicons.dev/icons?i=python,html,css,java,firebase,azure,gcp,aws,linux,git,figma,blender,maya,unreal&perline=7" alt="Tech Stack" />
 </div>
 
 <br />
@@ -160,15 +160,15 @@
     </tr>
     <tr>
       <td><strong>Desenvolvimento</strong></td>
-      <td>JavaScript (ES6+), TypeScript, React / React Native (Expo), HTML5, CSS3, Node.js, C++ (Embarcados/IoT)</td>
+      <td>HTML5, CSS3, Python, Java (Base), Git &amp; GitHub</td>
     </tr>
     <tr>
-      <td><strong>Cloud &amp; Dados</strong></td>
-      <td>Firebase (Firestore &amp; Auth), Microsoft Azure (Cosmos DB, Functions), Google Cloud Platform, AWS</td>
+      <td><strong>Cloud &amp; Infraestrutura</strong></td>
+      <td>Firebase (Firestore &amp; Auth), Microsoft Azure (AI-901 &amp; AZ-900), Google Cloud Platform, AWS, Linux</td>
     </tr>
     <tr>
       <td><strong>Design &amp; 3D</strong></td>
-      <td>Figma (UI/UX &amp; Design Systems), Blender, Autodesk Maya, Substance 3D Painter, Unreal Engine</td>
+      <td>Figma (UI/UX &amp; Prototipação), Blender, Autodesk Maya, Substance 3D Painter, Unreal Engine</td>
     </tr>
   </tbody>
 </table>
