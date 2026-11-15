@@ -2,6 +2,11 @@
 
 <img src="https://capsule-render.vercel.app/api?type=waving&color=0:0F172A,50:312E81,100:E11D48&height=210&section=header&text=Eduardo%20Augusto%20Miranda%20Junior&fontSize=34&fontColor=ffffff&fontAlignY=38&desc=AI%20%26%20Software%20Developer%20%7C%20UI%2FUX%20%26%203D%20Designer&descSize=16&descAlignY=58&animation=fadeIn" width="100%" />
 
+<!-- LOGO PRINCIPAL NO TOPO (Substitua ./assets/logo-lanne.png pelo arquivo do seu logo) -->
+<img src="./assets/logo-lanne.png" alt="Logo" width="90" />
+
+<br />
+
 <p>
   <a href="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=A855F7&center=true&vCenter=true&width=680&lines=Construindo+produtos+na+intersec%C3%A7%C3%A3o+entre+IA%2C+C%C3%B3digo+e+Design;Agentes+de+IA+%E2%80%A2+Desenvolvimento+Web+%E2%80%A2+UI%2FUX+%26+3D;Do+prot%C3%B3tipo+no+Figma+%C3%A0+arquitetura+em+nuvem">
     <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=A855F7&center=true&vCenter=true&width=680&lines=Construindo+produtos+na+intersec%C3%A7%C3%A3o+entre+IA%2C+C%C3%B3digo+e+Design;Agentes+de+IA+%E2%80%A2+Desenvolvimento+Web+%E2%80%A2+UI%2FUX+%26+3D;Do+prot%C3%B3tipo+no+Figma+%C3%A0+arquitetura+em+nuvem" alt="Typing SVG" />
@@ -10,13 +15,13 @@
 
 <p>
   <a href="https://linkedin.com/in/eduardo-a-m-junior">
-    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn" />
+    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" height="32" alt="LinkedIn" />
   </a>
   <a href="mailto:eduardoaugustomirandajunior@gmail.com">
-    <img src="https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white" alt="Email" />
+    <img src="https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white" height="32" alt="Email" />
   </a>
   <a href="https://github.com/eduardoamjunior">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" alt="GitHub" />
+    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" height="32" alt="GitHub" />
   </a>
 </p>
 
@@ -141,7 +146,18 @@
 <h2>Stack &amp; Ecossistema Técnico</h2>
 
 <div align="center">
-  <img src="https://skillicons.dev/icons?i=python,html,css,java,firebase,azure,gcp,aws,linux,git,figma,blender,maya,unreal&perline=7" alt="Tech Stack" />
+  <!-- Linha 1: Programação -->
+  <p>
+    <img src="https://skillicons.dev/icons?i=python,html,css,java,git" alt="Programação" />
+  </p>
+  <!-- Linha 2: Cloud & Infraestrutura -->
+  <p>
+    <img src="https://skillicons.dev/icons?i=firebase,azure,gcp,aws,linux" alt="Cloud e Infra" />
+  </p>
+  <!-- Linha 3: Design & 3D -->
+  <p>
+    <img src="https://skillicons.dev/icons?i=figma,blender,unreal" alt="Design e 3D" />
+  </p>
 </div>
 
 <br />
@@ -168,7 +184,7 @@
     </tr>
     <tr>
       <td><strong>Design &amp; 3D</strong></td>
-      <td>Figma (UI/UX &amp; Prototipação), Blender, Autodesk Maya, Substance 3D Painter, Unreal Engine</td>
+      <td>Figma (UI/UX &amp; Design Systems), Blender, Autodesk Maya, Substance 3D Painter, Unreal Engine</td>
     </tr>
   </tbody>
 </table>
