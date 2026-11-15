@@ -72,6 +72,25 @@ Plataforma web de gamificação e delivery baseada em caixas probabilísticas de
 
 <h2>Demonstração</h2>
 
+<h3>Funcionabilidades do Cassino</h3>
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./gifs/Escolha-pacote.gif" alt="Escolhendo Pacotes" width="100%" />
+      <br />
+      <sub><strong>Escolha de Pacotes</strong></sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="./gifs/abertura.gif" alt="Abertura de Caixa" width="100%" />
+      <br />
+      <sub><strong>Abertura de Caixa e Roleta</strong> — Animação de sorteio e revelação de raridade</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="./gifs/Troca.gif" alt="Modo de Trocas" width="100%" />
+      <br />
+      <sub><strong>Utilizando o Modo de Trocas</strong></sub>
+    </td>
+    
 <table>
   <tr>
     <td width="50%" align="center">
