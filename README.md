@@ -1,213 +1,170 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0F172A,50:312E81,100:E11D48&height=210&section=header&text=Eduardo%20Augusto%20Miranda%20Junior&fontSize=34&fontColor=ffffff&fontAlignY=38&desc=AI%20%26%20Software%20Developer%20%7C%20UI%2FUX%20%26%203D%20Designer&descSize=16&descAlignY=58&animation=fadeIn" width="100%" />
+# RANGO RARO
 
-<!-- LOGO PRINCIPAL NO TOPO (Substitua ./assets/logo-lanne.png pelo arquivo do seu logo) -->
-<img src="./assets/logo-lanne.png" alt="Logo" width="90" />
+Plataforma web de gamificação e delivery baseada em caixas probabilísticas de alimentos, conversão de prêmios em saldo digital e resgate via PIX (Demonstrativo).
 
 <br />
 
-<p>
-  <a href="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=A855F7&center=true&vCenter=true&width=680&lines=Construindo+produtos+na+intersec%C3%A7%C3%A3o+entre+IA%2C+C%C3%B3digo+e+Design;Agentes+de+IA+%E2%80%A2+Desenvolvimento+Web+%E2%80%A2+UI%2FUX+%26+3D;Do+prot%C3%B3tipo+no+Figma+%C3%A0+arquitetura+em+nuvem">
-    <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&weight=600&size=18&pause=1000&color=A855F7&center=true&vCenter=true&width=680&lines=Construindo+produtos+na+intersec%C3%A7%C3%A3o+entre+IA%2C+C%C3%B3digo+e+Design;Agentes+de+IA+%E2%80%A2+Desenvolvimento+Web+%E2%80%A2+UI%2FUX+%26+3D;Do+prot%C3%B3tipo+no+Figma+%C3%A0+arquitetura+em+nuvem" alt="Typing SVG" />
-  </a>
-</p>
+<a href="https://gerlachsg.github.io/rangoraro/src/pages/index">
+  <img src="https://img.shields.io/badge/ACESSAR_APLICA%C3%87%C3%83O-FF5722?style=for-the-badge&logo=googlechrome&logoColor=white" alt="Acessar Aplicação" />
+</a>
 
-<p>
-  <a href="https://linkedin.com/in/eduardo-a-m-junior">
-    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white" height="32" alt="LinkedIn" />
-  </a>
-  <a href="mailto:eduardoaugustomirandajunior@gmail.com">
-    <img src="https://img.shields.io/badge/Email-EA4335?style=for-the-badge&logo=gmail&logoColor=white" height="32" alt="Email" />
-  </a>
-  <a href="https://github.com/eduardoamjunior">
-    <img src="https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white" height="32" alt="GitHub" />
-  </a>
-</p>
+<br /><br />
+
+<img src="https://img.shields.io/badge/JavaScript-ES6+-18181B?style=flat-square&logo=javascript&logoColor=F7DF1E" alt="JavaScript" />
+<img src="https://img.shields.io/badge/HTML5-E34F26?style=flat-square&logo=html5&logoColor=white" alt="HTML5" />
+<img src="https://img.shields.io/badge/CSS3-3D_Transforms-1572B6?style=flat-square&logo=css3&logoColor=white" alt="CSS3" />
+<img src="https://img.shields.io/badge/Firebase-Firestore_%26_Auth-18181B?style=flat-square&logo=firebase&logoColor=FFCA28" alt="Firebase" />
+<img src="https://img.shields.io/badge/Python-Drop_Rates-18181B?style=flat-square&logo=python&logoColor=3776AB" alt="Python" />
+
+<br /><br />
+
+<img src="./docs/gifs/hero-showcase.gif" alt="Demonstração principal do Rango Raro" width="100%" />
 
 </div>
 
-<br />
+<hr />
 
-<h2>Sobre Mim</h2>
-
-<blockquote>
-  Profissional multidisciplinar atuando na intersecção entre <strong>Inteligência Artificial</strong>, <strong>Desenvolvimento Web</strong> e <strong>Design (UI/UX e 3D)</strong> — especializado em traduzir requisitos técnicos em produtos completos, unindo lógica, automação e acabamento visual.
-</blockquote>
-
-<table>
-  <tr>
-    <td width="50%" valign="top">
-      <h4>Atuação &amp; Experiência</h4>
-      <ul>
-        <li><strong>AI Quality Analyst — Turing:</strong> Refinamento, avaliação lógica e fine-tuning de LLMs em português.</li>
-        <li><strong>Instrutor de Robótica — Instituto Alpha Lumen:</strong> Ensino de lógica de programação, eletrônica e robótica educacional.</li>
-        <li><strong>Dev &amp; Infraestrutura — SENAI:</strong> Desenvolvimento front-end (HTML/CSS) e gestão de ambientes computacionais.</li>
-      </ul>
-    </td>
-    <td width="50%" valign="top">
-      <h4>Formação &amp; Certificações</h4>
-      <ul>
-        <li><strong>Análise e Desenv. de Sistemas</strong> — SENAI Félix Guisard</li>
-        <li><strong>Técnico em Infraestrutura de Redes</strong> — SENAI Santos Dumont</li>
-        <li><strong>Cloud &amp; IA:</strong> Microsoft Azure (AI-901 &amp; AZ-900), AWS Cloud Foundations, Google Cloud (ML APIs &amp; Networking) e Inglês C1 Advanced.</li>
-      </ul>
-    </td>
-  </tr>
-</table>
-
-<br />
-
-<h2>MVPs em Destaque</h2>
-
-<p>
-  <em>Projetos desenvolvidos em parceria com <a href="https://github.com/gerlachsg">@gerlachsg</a> (Arquitetura Back-end &amp; Banco de Dados), com minha atuação liderando <strong>UI/UX Design, Front-end, Engenharia de IA e Prototipação</strong>.</em>
-</p>
-
-<table>
-  <tr>
-    <td width="33.3%" valign="top">
-      <div align="center">
-        <h3>Lanne.ai</h3>
-        <img src="./assets/lanne-preview.png" alt="Lanne.ai Preview" width="100%" />
-      </div>
-      <br />
-      <p>
-        <strong>Agente de IA especialista em suporte e diagnóstico Linux multi-distro direto no terminal.</strong>
-      </p>
-      <ul>
-        <li>Arquitetura baseada em raciocínio e ação (ReAct) para automação de troubleshooting, configuração e manutenção.</li>
-        <li><strong>Medalha de Ouro</strong> no TCC SENAI (2024), apresentado para +200 pessoas e banca técnica.</li>
-      </ul>
-      <div align="center">
-        <img src="https://img.shields.io/badge/Python-18181B?style=flat-square&logo=python&logoColor=3776AB" alt="Python" />
-        <img src="https://img.shields.io/badge/Linux-18181B?style=flat-square&logo=linux&logoColor=FCC624" alt="Linux" />
-        <img src="https://img.shields.io/badge/AI_Agents-18181B?style=flat-square&logo=openai&logoColor=white" alt="AI" />
-        <br /><br />
-        <a href="https://github.com/GerlachSG/lanne.ai">
-          <img src="https://img.shields.io/badge/REPOSIT%C3%93RIO-312E81?style=for-the-badge&logo=github&logoColor=white" height="32" alt="Repo Lanne" />
-        </a>
-      </div>
-    </td>
-    <td width="33.3%" valign="top">
-      <div align="center">
-        <h3>Rango Raro</h3>
-        <img src="./assets/rangoraro-preview.gif" alt="Rango Raro Preview" width="100%" />
-      </div>
-      <br />
-      <p>
-        <strong>Plataforma web de delivery gamificado com caixas probabilísticas e resgate via PIX.</strong>
-      </p>
-      <ul>
-        <li>Mecânica de <em>loot boxes</em> gastronômicas com conversão instantânea de itens em saldo digital.</li>
-        <li>Design completo no Figma, animações 3D em CSS, Firebase Auth/Firestore e CDN.</li>
-      </ul>
-      <div align="center">
-        <img src="https://img.shields.io/badge/HTML5_%26_CSS3-18181B?style=flat-square&logo=html5&logoColor=E34F26" alt="HTML/CSS" />
-        <img src="https://img.shields.io/badge/Python-18181B?style=flat-square&logo=python&logoColor=3776AB" alt="Python" />
-        <img src="https://img.shields.io/badge/Figma-18181B?style=flat-square&logo=figma&logoColor=F24E1E" alt="Figma" />
-        <br /><br />
-        <a href="https://github.com/GerlachSG/rangoraro">
-          <img src="https://img.shields.io/badge/REPOSIT%C3%93RIO-312E81?style=for-the-badge&logo=github&logoColor=white" height="32" alt="Repo Rango Raro" />
-        </a>
-        <a href="https://gerlachsg.github.io/rangoraro/src/pages/index">
-          <img src="https://img.shields.io/badge/DEMO_AO_VIVO-E11D48?style=for-the-badge&logo=googlechrome&logoColor=white" height="32" alt="Demo Rango Raro" />
-        </a>
-      </div>
-    </td>
-    <td width="33.3%" valign="top">
-      <div align="center">
-        <h3>GesPão (IHM &amp; IoT)</h3>
-        <img src="./assets/gespao-preview.gif" alt="GesPão Preview" width="100%" />
-      </div>
-      <br />
-      <p>
-        <strong>Gestão inteligente de estoque e produção para panificadoras com foco em redução de perdas.</strong>
-      </p>
-      <ul>
-        <li>Controle rigoroso de validade (FEFO) via leitura de código de barras e alertas automatizados.</li>
-        <li>Protótipo de interface no Figma, automação com n8n, LLMs e telemetria IoT.</li>
-      </ul>
-      <div align="center">
-        <img src="https://img.shields.io/badge/Figma-18181B?style=flat-square&logo=figma&logoColor=F24E1E" alt="Figma" />
-        <img src="https://img.shields.io/badge/Azure-18181B?style=flat-square&logo=microsoftazure&logoColor=0078D4" alt="Azure" />
-        <img src="https://img.shields.io/badge/IoT_%26_n8n-18181B?style=flat-square&logo=n8n&logoColor=EA4B71" alt="IoT" />
-        <br /><br />
-        <a href="https://github.com/GerlachSG/GestaoEstoquePanificadora-IHM-IOT">
-          <img src="https://img.shields.io/badge/REPOSIT%C3%93RIO-312E81?style=for-the-badge&logo=github&logoColor=white" height="32" alt="Repo GesPão" />
-        </a>
-      </div>
-    </td>
-  </tr>
-</table>
-
-<br />
-
-<h2>Stack &amp; Ecossistema Técnico</h2>
-
-<div align="center">
-  <!-- Linha 1: Programação -->
-  <p>
-    <img src="https://skillicons.dev/icons?i=python,html,css,java,git" alt="Programação" />
-  </p>
-  <!-- Linha 2: Cloud & Infraestrutura -->
-  <p>
-    <img src="https://skillicons.dev/icons?i=firebase,azure,gcp,aws,linux" alt="Cloud e Infra" />
-  </p>
-  <!-- Linha 3: Design & 3D -->
-  <p>
-    <img src="https://skillicons.dev/icons?i=figma,blender,unreal" alt="Design e 3D" />
-  </p>
-</div>
-
-<br />
+<h2>Créditos e Autoria</h2>
 
 <table>
   <thead>
     <tr>
-      <th align="left">Domínio</th>
-      <th align="left">Tecnologias e Ferramentas</th>
+      <th align="left">Desenvolvedor</th>
+      <th align="left">Perfil</th>
+      <th align="left">Responsabilidades</th>
     </tr>
   </thead>
   <tbody>
     <tr>
-      <td><strong>IA &amp; Automação</strong></td>
-      <td>Python, Engenharia de Prompts, Avaliação &amp; Fine-tuning de LLMs, Agentes (ReAct), Workflows n8n</td>
+      <td><strong>Eduardo Augusto Miranda Junior</strong></td>
+      <td><a href="https://github.com/eduardoamjunior">@eduardoamjunior</a></td>
+      <td>Arte original no Figma, UI/UX design e desenvolvimento da interface e mecânica visual do sistema de cassino</td>
     </tr>
     <tr>
-      <td><strong>Desenvolvimento</strong></td>
-      <td>HTML5, CSS3, Python, Java (Base), Git &amp; GitHub</td>
-    </tr>
-    <tr>
-      <td><strong>Cloud &amp; Infraestrutura</strong></td>
-      <td>Firebase (Firestore &amp; Auth), Microsoft Azure (AI-901 &amp; AZ-900), Google Cloud Platform, AWS, Linux</td>
-    </tr>
-    <tr>
-      <td><strong>Design &amp; 3D</strong></td>
-      <td>Figma (UI/UX &amp; Design Systems), Blender, Autodesk Maya, Substance 3D Painter, Unreal Engine</td>
+      <td><strong>Igor Costa Gerlach</strong></td>
+      <td><a href="https://github.com/gerlachsg">@gerlachsg</a></td>
+      <td>Lógica funcional do cassino, regras de sorteio e integração com o banco de dados</td>
     </tr>
   </tbody>
 </table>
 
-<br />
+<hr />
 
-<h2>Reconhecimentos &amp; Premiações</h2>
+<h2>Visão Geral</h2>
 
+<p>
+  O <strong>Rango Raro</strong> aplica mecânicas de <em>loot boxes</em> ao universo gastronômico. O usuário adquire caixas temáticas com diferentes faixas de risco e retorno, realiza a abertura animada na interface e recebe itens classificados por nível de raridade. Os itens obtidos podem ser convertidos diretamente em saldo na carteira da plataforma para solicitação de saque via PIX.
+</p>
+
+<h3>Principais Funcionalidades</h3>
+
+<ul>
+  <li><strong>Sistema de Caixas Probabilísticas:</strong> Sorteio ponderado por <em>drop rates</em> definidos por tier de raridade, com roleta horizontal animada e efeitos 3D (<em>tilt</em> e perspectiva CSS).</li>
+  <li><strong>Carteira Digital e Resgate PIX:</strong> Conversão instantânea dos itens sorteados em saldo e fluxo de solicitação de transferência via chave PIX.</li>
+  <li><strong>Autenticação e Persistência:</strong> Login integrado com Google via Firebase Authentication e sincronização em tempo real de inventário, histórico de aberturas e saldo no Cloud Firestore.</li>
+  <li><strong>Suporte Integrado:</strong> Widget flutuante embutido com FAQ dinâmico e chat de atendimento persistido no Firestore.</li>
+  <li><strong>Entrega Otimizada de Mídia:</strong> Ativos visuais das caixas e itens servidos via GitHub CDN para reduzir latência de carregamento.</li>
+</ul>
+
+<hr />
+
+<h2>Demonstração</h2>
+
+<h3>Funcionabilidades do Cassino</h3>
 <table>
   <tr>
-    <td width="50%" valign="top">
-      <strong>Medalha de Ouro — TCC SENAI "Santos Dumont" (2024)</strong>
+    <td width="50%" align="center">
+      <img src="./src/gifs/Escolha-pacote.gif" alt="Escolhendo Pacotes" width="100%" />
       <br />
-      <sub>Criação e pitch da <em>Lanne.ai</em> (IA especialista em Linux) para banca técnica e plateia de +200 pessoas.</sub>
+      <sub><strong>Escolha de Pacotes</strong></sub>
     </td>
-    <td width="50%" valign="top">
-      <strong>Excelência — Grand Prix SENAI de Inovação (2023)</strong>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./src/gifs/abertura.gif" alt="Abertura de Caixa" width="100%" />
       <br />
-      <sub>Desenvolvimento do protótipo <em>Aprende AI</em>, plataforma educacional adaptativa com geração automatizada de nivelamento.</sub>
+      <sub><strong>Abertura de Caixa e Roleta</strong> — Animação de sorteio e revelação de raridade</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./src/gifs/Troca.gif" alt="Modo de Trocas" width="100%" />
+      <br />
+      <sub><strong>Utilizando o Modo de Trocas</strong></sub>
+    </td>
+  </tr>
+    
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/gifs/abertura-caixa.gif" alt="Abertura de Caixa" width="100%" />
+      <br />
+      <sub><strong>Abertura de Caixa e Roleta</strong> — Animação de sorteio e revelação de raridade</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/gifs/carteira-pix.gif" alt="Carteira e Saque PIX" width="100%" />
+      <br />
+      <sub><strong>Carteira e Resgate</strong> — Conversão de itens em saldo e solicitação PIX</sub>
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./docs/gifs/inventario-historico.gif" alt="Inventário e Histórico" width="100%" />
+      <br />
+      <sub><strong>Inventário e Histórico</strong> — Registro persistente de drops por usuário</sub>
+    </td>
+    <td width="50%" align="center">
+      <img src="./docs/gifs/suporte-chat.gif" alt="Widget de Suporte" width="100%" />
+      <br />
+      <sub><strong>Central de Suporte</strong> — Chat em tempo real e FAQ integrado</sub>
     </td>
   </tr>
 </table>
 
-<br />
+<hr />
 
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0:E11D48,50:312E81,100:0F172A&height=110&section=footer" width="100%" />
+<h2>Arquitetura e Stack Tecnológica</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th align="left">Camada</th>
+      <th align="left">Tecnologia</th>
+      <th align="left">Responsabilidade</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Frontend</strong></td>
+      <td>HTML5, CSS3, JavaScript</td>
+      <td>Interface responsiva, animações 3D, lógica da roleta e widget de chat</td>
+    </tr>
+    <tr>
+      <td><strong>Backend / BaaS</strong></td>
+      <td>Firebase Firestore &amp; Auth</td>
+      <td>Autenticação Google, armazenamento de usuários, saldos, saques e mensagens</td>
+    </tr>
+    <tr>
+      <td><strong>Data &amp; Balanceamento</strong></td>
+      <td>Python</td>
+      <td>Modelagem matemática das probabilidades, validação de RTP e carga de dados</td>
+    </tr>
+    <tr>
+      <td><strong>CDN</strong></td>
+      <td>GitHub Raw / Pages</td>
+      <td>Hospedagem estática otimizada dos ícones e ilustrações dos rangos</td>
+    </tr>
+  </tbody>
+</table>
+
+<hr />
+
+<h2>Estrutura de Coleções (Firestore)</h2>
+
+<pre><code>firestore/
+├── users/          # Perfil, saldo atual, chave PIX e histórico de drops
+├── boxes/          # Catálogo de caixas, preços e pools de itens vinculados
+├── withdrawals/    # Solicitações de saque PIX e status de processamento
+└── support_chats/  # Sessões de atendimento e histórico de mensagens do widget</code></pre>
