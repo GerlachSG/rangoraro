@@ -80,16 +80,21 @@ Plataforma web de gamificação e delivery baseada em caixas probabilísticas de
       <br />
       <sub><strong>Escolha de Pacotes</strong></sub>
     </td>
+  </tr>
+  <tr>
     <td width="50%" align="center">
       <img src="./src/gifs/abertura.gif" alt="Abertura de Caixa" width="100%" />
       <br />
       <sub><strong>Abertura de Caixa e Roleta</strong> — Animação de sorteio e revelação de raridade</sub>
     </td>
+  </tr>
+  <tr>
     <td width="50%" align="center">
       <img src="./src/gifs/Troca.gif" alt="Modo de Trocas" width="100%" />
       <br />
       <sub><strong>Utilizando o Modo de Trocas</strong></sub>
     </td>
+  </tr>
     
 <table>
   <tr>
