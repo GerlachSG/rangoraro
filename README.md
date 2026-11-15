@@ -20,7 +20,7 @@ Plataforma web de gamificação e delivery baseada em caixas probabilísticas de
 
 <br /><br />
 
-<img src="./docs/gifs/hero-showcase.gif" alt="Demonstração principal do Rango Raro" width="100%" />
+<img src="./src/gifs/abertura.gif" alt="Demonstração principal do Rango Raro" width="75%" />
 
 </div>
 
@@ -62,6 +62,7 @@ Plataforma web de gamificação e delivery baseada em caixas probabilísticas de
 
 <ul>
   <li><strong>Sistema de Caixas Probabilísticas:</strong> Sorteio ponderado por <em>drop rates</em> definidos por tier de raridade, com roleta horizontal animada e efeitos 3D (<em>tilt</em> e perspectiva CSS).</li>
+  <li><strong>Modo de Trocas (Upgrade / Trade):</strong> Mecânica para trocar itens acumulados no inventário por novas oportunidades ou prêmios superiores.</li>
   <li><strong>Carteira Digital e Resgate PIX:</strong> Conversão instantânea dos itens sorteados em saldo e fluxo de solicitação de transferência via chave PIX.</li>
   <li><strong>Autenticação e Persistência:</strong> Login integrado com Google via Firebase Authentication e sincronização em tempo real de inventário, histórico de aberturas e saldo no Cloud Firestore.</li>
   <li><strong>Suporte Integrado:</strong> Widget flutuante embutido com FAQ dinâmico e chat de atendimento persistido no Firestore.</li>
@@ -72,53 +73,48 @@ Plataforma web de gamificação e delivery baseada em caixas probabilísticas de
 
 <h2>Demonstração</h2>
 
-<h3>Funcionabilidades do Cassino</h3>
+<h3>Funcionalidades do Cassino</h3>
+
 <table>
   <tr>
-    <td width="50%" align="center">
-      <img src="./src/gifs/Escolha-pacote.gif" alt="Escolhendo Pacotes" width="100%" />
-      <br />
-      <sub><strong>Escolha de Pacotes</strong></sub>
+    <td width="33%" align="center" valign="top">
+      <img src="./src/gifs/Escolha-pacote.gif" alt="Escolha de Pacotes" width="90%" />
+      <br /><br />
+      <sub><strong>Escolha de Pacotes</strong><br />Seleção de caixas temáticas e visualização de drops</sub>
+    </td>
+    <td width="33%" align="center" valign="top">
+      <img src="./src/gifs/abertura.gif" alt="Abertura de Caixa" width="90%" />
+      <br /><br />
+      <sub><strong>Abertura de Caixa e Roleta</strong><br />Animação de sorteio e revelação de raridade</sub>
+    </td>
+    <td width="33%" align="center" valign="top">
+      <img src="./src/gifs/Troca.gif" alt="Modo de Trocas" width="90%" />
+      <br /><br />
+      <sub><strong>Modo de Trocas</strong><br />Conversão e troca de itens do inventário</sub>
     </td>
   </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./src/gifs/abertura.gif" alt="Abertura de Caixa" width="100%" />
-      <br />
-      <sub><strong>Abertura de Caixa e Roleta</strong> — Animação de sorteio e revelação de raridade</sub>
-    </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./src/gifs/Troca.gif" alt="Modo de Trocas" width="100%" />
-      <br />
-      <sub><strong>Utilizando o Modo de Trocas</strong></sub>
-    </td>
-  </tr>
-    
+</table>
+
+<br />
+
+<h3>Sistema, Carteira e Suporte</h3>
+
 <table>
   <tr>
-    <td width="50%" align="center">
-      <img src="./docs/gifs/abertura-caixa.gif" alt="Abertura de Caixa" width="100%" />
-      <br />
-      <sub><strong>Abertura de Caixa e Roleta</strong> — Animação de sorteio e revelação de raridade</sub>
+    <td width="33%" align="center" valign="top">
+      <img src="./src/gifs/saque.gif" alt="Carteira e Saque PIX" width="90%" />
+      <br /><br />
+      <sub><strong>Carteira e Saque PIX</strong><br />Conversão de itens em saldo e solicitação de resgate</sub>
     </td>
-    <td width="50%" align="center">
-      <img src="./docs/gifs/carteira-pix.gif" alt="Carteira e Saque PIX" width="100%" />
-      <br />
-      <sub><strong>Carteira e Resgate</strong> — Conversão de itens em saldo e solicitação PIX</sub>
+    <td width="33%" align="center" valign="top">
+      <img src="./src/gifs/persistencia.gif" alt="Persistência e Inventário" width="90%" />
+      <br /><br />
+      <sub><strong>Persistência de Dados</strong><br />Sincronização em tempo real de saldo e histórico</sub>
     </td>
-  </tr>
-  <tr>
-    <td width="50%" align="center">
-      <img src="./docs/gifs/inventario-historico.gif" alt="Inventário e Histórico" width="100%" />
-      <br />
-      <sub><strong>Inventário e Histórico</strong> — Registro persistente de drops por usuário</sub>
-    </td>
-    <td width="50%" align="center">
-      <img src="./docs/gifs/suporte-chat.gif" alt="Widget de Suporte" width="100%" />
-      <br />
-      <sub><strong>Central de Suporte</strong> — Chat em tempo real e FAQ integrado</sub>
+    <td width="33%" align="center" valign="top">
+      <img src="./src/gifs/suporte.gif" alt="Central de Suporte" width="90%" />
+      <br /><br />
+      <sub><strong>Central de Suporte</strong><br />Widget flutuante com FAQ e chat integrado</sub>
     </td>
   </tr>
 </table>
